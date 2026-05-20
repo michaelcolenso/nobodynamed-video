@@ -1,0 +1,4 @@
+{
+  "spec_id": "bertha-2024",
+  "golden_frames": ["hook_f00.sha256", "reveal_f180.sha256"]
+}

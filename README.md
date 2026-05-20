@@ -1,40 +1,80 @@
 # nobodynamed-video
-nobodynamed-video/
-├── pyproject.toml
-├── .env.example                  # SATORI_URL, D1_URL, OUT_DIR
-├── README.md
-├── ARCHITECTURE.md               # data flow, scene timing, render pipeline
-├── src/nobodynamed_video/
-│   ├── config.py                 # Pydantic Settings, .env loader
-│   ├── models.py                 # NameRecord, Scene, VideoSpec, Tier
-│   ├── data/
-│   │   ├── ssa_loader.py         # pulls year/count series from D1
-│   │   └── classifier.py         # six-tier logic (extinct, critical, declining, stable, rising, resurrected)
-│   ├── scenes/
-│   │   ├── base.py               # Scene protocol: duration, frames(), props
-│   │   ├── hook.py               # 3s: name + provocative stat
-│   │   ├── reveal.py             # 6s: animated chart
-│   │   ├── narrative.py          # 6s: context line + tier badge
-│   │   └── cta.py                # 3s: "nobodynamed.com" + crimson dot
-│   ├── render/
-│   │   ├── satori_client.py      # POST /render with template + props, gets PNG
-│   │   ├── frames.py             # interpolates props across N frames at 30fps
-│   │   └── motion.py             # Ken Burns, fade, number-count-up, type-on
-│   ├── compose/
-│   │   ├── ffmpeg_runner.py      # concat frame sequences, crossfade, scale to 1080x1920
-│   │   └── audio.py              # silence bed or ambient, optional ElevenLabs hook
-│   └── cli.py                    # `nbn render`, `nbn batch`, `nbn preview`
-├── satori-service/               # Node sidecar, runs on :3001
-│   ├── server.ts                 # Express + Satori + @resvg/resvg-js
-│   └── templates/                # JSX templates matching v3 brand system
-│       ├── hook.tsx
-│       ├── reveal.tsx
-│       ├── narrative.tsx
-│       └── cta.tsx
-├── batches/
-│   └── week-1.yaml               # 14 video specs
-├── tests/
-│   ├── test_classifier.py        # tier boundaries
-│   ├── test_scene_timing.py      # total duration = 18s
-│   └── fixtures/
-└── out/                          # gitignored mp4s
+
+Agent-driven pipeline that turns SSA baby name records into 18-second 9:16 TikTok videos in the nobodynamed.com v3 brand system.
+
+One command renders an MP4 ready for TikTok upload.
+
+## Quick start
+
+```bash
+# 1. Install dependencies
+make setup
+
+# 2. Place fonts (required — Satori will not render without them)
+#    Copy SourceSerif4-Black.ttf and SourceSerif4-Regular.ttf to:
+#    satori-service/fonts/
+
+# 3. Configure environment
+cp .env.example .env
+# Edit .env with your D1_URL and D1_TOKEN
+
+# 4. Start the Satori sidecar (leave running in a separate terminal)
+make satori
+
+# 5. Run preflight check
+make doctor
+
+# 6. Render the smoke test video
+make smoke
+# → out/bertha-2024.mp4
+```
+
+## Key commands
+
+| Command | Description |
+|---|---|
+| `make setup` | Install Python + Node dependencies |
+| `make satori` | Start Node Satori sidecar on :3001 |
+| `make smoke` | Render Bertha 2024 (pipeline health check) |
+| `make batch` | Render all 14 videos in batches/week-1.yaml |
+| `make test` | Run pytest suite |
+| `make lint` | Ruff check + format check |
+| `make typecheck` | mypy --strict |
+| `make doctor` | Preflight: Node, ffmpeg, fonts, Satori, D1 |
+| `make clean` | Remove out/, caches |
+
+## Output
+
+All renders go to `out/`. Each video gets a directory of PNG frames and a final MP4:
+
+```
+out/
+  bertha-2024/
+    frames/
+      hook_000.png ... hook_089.png
+      reveal_000.png ... reveal_179.png
+      narrative_000.png ... narrative_179.png
+      cta_000.png ... cta_089.png
+  bertha-2024.mp4
+  bertha-2024.json   ← RenderManifest with frame hashes + timing
+```
+
+## Architecture
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the two-process design, data flow diagram, and scene timing.
+
+## Operations
+
+See [RUNBOOK.md](RUNBOOK.md) for daily workflow, token rotation, adding templates, and debugging.
+
+## Agent build plan
+
+See [AGENTS.md](AGENTS.md) for the full phased implementation plan.
+
+## Requirements
+
+- Python 3.12+ with `uv`
+- Node 20+ with `pnpm`
+- ffmpeg 6+
+- SourceSerif4-Black.ttf and SourceSerif4-Regular.ttf (place in `satori-service/fonts/`)
+- Cloudflare D1 token with read access to the nobodynamed database (or use local SQLite fixture)

@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nobodynamed-video"
+version = "0.1.0"
+description = "Agent-driven pipeline: SSA baby name records → TikTok MP4"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "typer==0.12.3",
+    "pydantic==2.7.4",
+    "pydantic-settings==2.3.4",
+    "httpx==0.27.0",
+    "anyio==4.4.0",
+    "ruamel.yaml==0.18.6",
+    "rich==13.7.1",
+]
+
+[project.scripts]
+nbn = "nobodynamed_video.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nobodynamed_video"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest==8.2.2",
+    "pytest-asyncio==0.23.7",
+    "pytest-httpx==0.30.0",
+    "respx==0.21.1",
+    "mypy==1.10.0",
+    "ruff==0.4.9",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
