@@ -1,0 +1,13 @@
+out/
+.venv/
+node_modules/
+*.mp4
+frames/
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
