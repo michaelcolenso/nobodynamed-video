@@ -1,0 +1,1 @@
+"""build_fixture script."""
