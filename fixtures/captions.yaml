@@ -1,0 +1,260 @@
+# fixtures/captions.yaml — caption compositor data v1
+version: 1
+
+constraints:
+  caption_max_chars: 150
+  include_hashtags_in_count: true
+  emotional_words_min: 2
+  emotional_words_max: 3
+  hashtags_min: 3
+  hashtags_max: 5
+  min_core_hashtags: 1
+  pinned_max_chars: 100
+  regeneration_attempts: 50
+
+hashtags:
+  core:
+    - tag: endangerednames
+      registers: [morbid, curious, cultural]
+      active: true
+    - tag: namedata
+      registers: [morbid, curious, nostalgic, hopeful, cultural]
+      active: true
+    - tag: ssadata
+      registers: [morbid, curious, nostalgic, hopeful, cultural]
+      active: true
+    - tag: vanishingnames
+      registers: [morbid, cultural]
+      active: true
+    - tag: namesondecline
+      registers: [morbid, cultural]
+      active: true
+
+  broad:
+    - tag: babynames
+      registers: [morbid, curious, nostalgic, hopeful, cultural]
+      active: true
+    - tag: namesoftiktok
+      registers: [morbid, curious, nostalgic, hopeful, cultural]
+      active: true
+    - tag: babynamehelp
+      registers: [hopeful, nostalgic]
+      active: true
+    - tag: namesweek
+      registers: [curious, nostalgic]
+      active: true
+    - tag: namehistory
+      registers: [curious, nostalgic, cultural]
+      active: true
+
+  emotional:
+    - tag: onthebrink
+      registers: [morbid]
+      active: true
+    - tag: namesweloved
+      registers: [morbid, nostalgic]
+      active: true
+    - tag: vintagenames
+      registers: [nostalgic, hopeful]
+      active: true
+    - tag: grandmacore
+      registers: [nostalgic, hopeful]
+      active: true
+    - tag: oldfashionednames
+      registers: [nostalgic]
+      active: true
+    - tag: classicnames
+      registers: [nostalgic]
+      active: true
+    - tag: namecomeback
+      registers: [hopeful]
+      active: true
+    - tag: vintagecomeback
+      registers: [hopeful]
+      active: true
+    - tag: culturalcollapse
+      registers: [cultural]
+      active: true
+    - tag: memehistory
+      registers: [cultural]
+      active: true
+    - tag: pophistory
+      registers: [cultural]
+      active: true
+    - tag: didyouknow
+      registers: [curious]
+      active: true
+    - tag: namefact
+      registers: [curious]
+      active: true
+    - tag: genealogy
+      registers: [nostalgic, curious]
+      active: true
+
+  trend:
+    - tag: fyp
+      registers: [morbid, curious, nostalgic, hopeful, cultural]
+      active: true
+      max_uses_per_week: 3
+    - tag: foryou
+      registers: [morbid, curious, nostalgic, hopeful, cultural]
+      active: true
+      max_uses_per_week: 3
+    - tag: namesoftiktok2026
+      registers: [morbid, curious, nostalgic, hopeful, cultural]
+      active: false
+
+emotional_words:
+  morbid:
+    - vanishing
+    - fading
+    - endangered
+    - dying
+    - on the brink
+    - shrinking
+    - dwindling
+    - quiet
+    - extinct
+    - rare
+    - hushed
+    - last
+    - final
+    - barely surviving
+
+  nostalgic:
+    - timeless
+    - classic
+    - heirloom
+    - vintage
+    - inherited
+    - storied
+    - old-world
+    - lived-in
+    - familiar
+    - generational
+    - quietly enduring
+
+  hopeful:
+    - returning
+    - reviving
+    - reborn
+    - back
+    - cycling
+    - rediscovered
+    - claimed
+    - reawakened
+    - quietly rising
+    - emerging
+
+  curious:
+    - rare
+    - underrated
+    - unexpected
+    - hidden
+    - overlooked
+    - peculiar
+    - statistical
+    - documented
+    - measured
+
+  cultural:
+    - rewritten
+    - reshaped
+    - reframed
+    - undone
+    - displaced
+    - punctuated
+    - upended
+
+pinned_patterns:
+  extinction-watch:
+    - "Do you know anyone under 30 named {{ name }}?"
+    - "When's the last time you met a {{ name }}?"
+    - "Whose grandmother was named {{ name }}?"
+    - "What's the rarest name you've heard this year?"
+
+  peak-year:
+    - "Whose name peaked in {{ peak_year }}?"
+    - "Drop a year. I'll tell you the top name."
+    - "What name does your high school class share too many of?"
+    - "Comment the year you were born + your name."
+
+  cultural-collapse:
+    - "Which name has the saddest cultural arc?"
+    - "What killed {{ name }}, in your view?"
+    - "Pop culture vs. parents: who wins more?"
+    - "Which name will collapse next?"
+
+  resurrection:
+    - "Which vintage name are you reviving?"
+    - "Three generations: would you reuse {{ name }}?"
+    - "What's the next {{ name }}?"
+    - "Comment a great-grandparent's name worth bringing back."
+
+  generation-arc:
+    - "What name has the wildest 100-year arc?"
+    - "Drop a name and a guess: which tier?"
+    - "Which name surprised you most?"
+
+  comparison-surprise:
+    - "Drop your name. I'll find the peak year."
+    - "What name is rarer than people think?"
+    - "Year + sex below. I'll respond."
+
+caption_frames:
+  extinction-watch:
+    - id: ext-frame-collapse
+      template: "{{ name }} hasn't been common since {{ peak_year }}. Just {{ current_count }} last year."
+      requires_vars: [name, peak_year, current_count]
+    - id: ext-frame-numbers
+      template: "{{ peak_count | thousands }} → {{ current_count }}. {{ name }}, in two numbers."
+      requires_vars: [name, peak_count, current_count]
+    - id: ext-frame-list
+      template: "{{ name }}: another name on the endangered list."
+      requires_vars: [name]
+    - id: ext-frame-quiet
+      template: "Names disappear quietly. {{ name }} is on the way out."
+      requires_vars: [name]
+
+  peak-year:
+    - id: peak-frame-cohort
+      template: "Every {{ name }} you've ever met was born in {{ peak_year }}, give or take."
+      requires_vars: [name, peak_year]
+    - id: peak-frame-ranked
+      template: "{{ name }} was the #{{ rank_at_peak }} name in {{ peak_year }}."
+      requires_vars: [name, rank_at_peak, peak_year]
+
+  cultural-collapse:
+    - id: cult-frame-killed
+      template: "{{ killing_event }} ended {{ name }}. {{ peak_count | thousands }} → {{ current_count }}."
+      requires_vars: [name, killing_event, peak_count, current_count]
+    - id: cult-frame-before
+      template: "{{ name }} was a real name before {{ killing_event }}."
+      requires_vars: [name, killing_event]
+
+  resurrection:
+    - id: res-frame-comeback
+      template: "{{ name }} came back. {{ trough_count }} → {{ current_count | thousands }}."
+      requires_vars: [name, trough_count, current_count]
+    - id: res-frame-cycle
+      template: "Vintage names are returning. {{ name }} is leading."
+      requires_vars: [name]
+
+  generation-arc:
+    - id: arc-frame-century
+      template: "The full {{ name }} history. {{ year_range }} years. One chart."
+      requires_vars: [name, year_range]
+    - id: arc-frame-curve
+      template: "The {{ name }} trajectory: peak, collapse, what's next."
+      requires_vars: [name]
+
+  comparison-surprise:
+    - id: cmp-frame-guess
+      template: "{{ peak_count | thousands }} named {{ name }} at peak. Guess how many last year."
+      requires_vars: [name, peak_count]
+    - id: cmp-frame-age
+      template: "Most {{ name }}s are over {{ avg_age }}. The data is the surprise."
+      requires_vars: [name, avg_age]
+
+state_db:
+  path: "state/used_combinations.db"

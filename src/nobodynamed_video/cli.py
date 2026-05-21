@@ -132,3 +132,58 @@ def smoke() -> None:
     typer.echo("Running smoke test: batches/smoke.yaml")
     ctx = click.get_current_context()
     ctx.invoke(render, spec=Path("batches/smoke.yaml"))
+
+
+captions_app = typer.Typer(name="captions", help="Manage caption combination state.")
+app.add_typer(captions_app)
+
+
+@captions_app.command("stats")
+def captions_stats() -> None:
+    """Print used vs available combination counts."""
+    from nobodynamed_video.compose.state import CombinationState
+
+    state = CombinationState(Path("state/used_combinations.db"))
+    s = state.stats()
+    console.print(f"Combinations recorded: {s['combos']}")
+    console.print(f"Total uses:            {s['uses']}")
+
+
+@captions_app.command("deprecate")
+def captions_deprecate(
+    tag: str = typer.Argument(..., help="Hashtag to mark inactive in captions.yaml"),
+) -> None:
+    """Mark a hashtag as inactive so it won't be selected for new captions."""
+    from ruamel.yaml import YAML
+
+    path = Path("fixtures/captions.yaml")
+    yaml = YAML()
+    yaml.preserve_quotes = True
+    data = yaml.load(path.read_text())
+    changed = 0
+    for _category, entries in data.get("hashtags", {}).items():
+        for entry in entries:
+            if entry.get("tag") == tag and entry.get("active", True):
+                entry["active"] = False
+                changed += 1
+    if changed:
+        with path.open("w") as fh:
+            yaml.dump(data, fh)
+        console.print(f"[green]Deprecated:[/green] #{tag}")
+    else:
+        console.print(f"[yellow]Not found or already inactive:[/yellow] #{tag}")
+
+
+@captions_app.command("reset")
+def captions_reset(
+    confirm: bool = typer.Option(False, "--confirm", help="Required to actually wipe state."),
+) -> None:
+    """Wipe all recorded hashtag combinations from state DB."""
+    from nobodynamed_video.compose.state import CombinationState
+
+    if not confirm:
+        console.print("[red]Pass --confirm to wipe the state DB.[/red]")
+        raise typer.Exit(1)
+    state = CombinationState(Path("state/used_combinations.db"))
+    state.reset()
+    console.print("[green]State DB wiped.[/green]")

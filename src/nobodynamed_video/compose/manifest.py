@@ -28,7 +28,11 @@ def build_manifest(
     program: str | None = None,
     hook_id: str | None = None,
     voice_register: str | None = None,
+    caption: str | None = None,
+    pinned_comment: str | None = None,
+    hashtag_set: list[str] | None = None,
 ) -> RenderManifest:
+    """Build a RenderManifest from render outputs."""
     return RenderManifest(
         spec_id=spec_id,
         rendered_at=datetime.now(tz=UTC),
@@ -43,4 +47,7 @@ def build_manifest(
         program=program,
         hook_id=hook_id,
         voice_register=voice_register,
+        caption=caption,
+        pinned_comment=pinned_comment,
+        hashtag_set=hashtag_set or [],
     )
