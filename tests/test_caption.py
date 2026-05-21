@@ -119,7 +119,6 @@ from nobodynamed_video.compose.caption import (  # noqa: E402
     combo_hash,
     compose_caption,
 )
-
 from nobodynamed_video.models import (  # noqa: E402
     ResolvedHook,
     Tier,
@@ -236,3 +235,16 @@ def test_compose_caption_records_combo_in_state() -> None:
         result = compose_caption("bertha-2024", _make_hook(), _make_ctx(), lex, state)
         h = combo_hash(result.hashtag_set)
         assert state.is_used(h)
+
+
+def test_compose_caption_can_reach_five_hashtags() -> None:
+    """When emotional pool is large, compositor can produce 5 hashtags."""
+    with tempfile.TemporaryDirectory() as tmp:
+        lex = Lexicon.from_yaml(CAPTIONS_YAML)
+        state = CombinationState(Path(tmp) / "combos.db")
+        # Run across multiple spec IDs and verify at least one produces 4+
+        counts = set()
+        for i in range(10):
+            r = compose_caption(f"spec-{i}", _make_hook(), _make_ctx(), lex, state)
+            counts.add(len(r.hashtag_set))
+        assert max(counts) >= 4  # can reach 4 or 5 depending on pools

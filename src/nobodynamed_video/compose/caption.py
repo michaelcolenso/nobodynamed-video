@@ -73,7 +73,7 @@ def _pick_hashtags(
     state: CombinationState,
     attempt: int,
 ) -> list[str]:
-    """Pick hashtags: 1 core + 1 broad + 1 emotional + optional trend."""
+    """Pick 3–5 hashtags: 1 core + 1 broad + 1–2 emotional + 0–1 trend."""
     core_pool = lexicon.hashtags_for(register, "core")
     broad_pool = lexicon.hashtags_for(register, "broad")
     emotional_pool = lexicon.hashtags_for(register, "emotional")
@@ -90,14 +90,22 @@ def _pick_hashtags(
     core = core_pool[_pick(seed + "core", len(core_pool))].tag
     broad = broad_pool[_pick(seed + "broad", len(broad_pool))].tag
 
-    emo_candidates = [h.tag for h in emotional_pool if h.tag not in {core, broad}]
-    if not emo_candidates:
-        emo_candidates = [h.tag for h in emotional_pool]
-    emo = emo_candidates[_pick(seed + "emo", len(emo_candidates))]
+    # Pick first emotional tag (must differ from core and broad).
+    emo1_candidates = [h.tag for h in emotional_pool if h.tag not in {core, broad}]
+    if not emo1_candidates:
+        emo1_candidates = [h.tag for h in emotional_pool]
+    emo1 = emo1_candidates[_pick(seed + "emo0", len(emo1_candidates))]
 
-    tags = [core, broad, emo]
+    tags = [core, broad, emo1]
 
-    if trend_pool:
+    # Try for a second emotional tag to reach 4 or 5.
+    emo2_candidates = [h.tag for h in emotional_pool if h.tag not in set(tags)]
+    if emo2_candidates:
+        emo2 = emo2_candidates[_pick(seed + "emo1", len(emo2_candidates))]
+        tags.append(emo2)
+
+    # Optionally add a trend tag (target up to 5 total).
+    if trend_pool and len(tags) < lexicon.constraints.hashtags_max:
         trend_candidates = [h.tag for h in trend_pool if h.tag not in set(tags)]
         if trend_candidates:
             tags.append(trend_candidates[_pick(seed + "trend", len(trend_candidates))])
