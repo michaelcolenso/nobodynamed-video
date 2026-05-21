@@ -133,3 +133,6 @@ class RenderManifest(BaseModel):
     program: str | None = None
     hook_id: str | None = None
     voice_register: str | None = None
+    caption: str | None = None
+    pinned_comment: str | None = None
+    hashtag_set: list[str] = Field(default_factory=list)
