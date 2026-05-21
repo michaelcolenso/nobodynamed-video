@@ -70,6 +70,9 @@ async def render_spec(
         if first_file.exists():
             check_or_write_golden(spec.id, f"{scene_kind}_f00", first_file.read_bytes())
 
+    if no_compose:
+        return {"id": spec.id, "frames": len(sha256_frames), "composed": False}
+
     caption: str | None = None
     pinned_comment: str | None = None
     hashtag_set: list[str] = []
@@ -81,9 +84,6 @@ async def render_spec(
             hashtag_set = composed.hashtag_set
         except CaptionExhausted as exc:
             console.print(f"[yellow]⚠[/yellow]  {spec.id}: caption exhausted — {exc}")
-
-    if no_compose:
-        return {"id": spec.id, "frames": len(sha256_frames), "composed": False}
 
     out_dir.mkdir(parents=True, exist_ok=True)
     mp4_path = out_dir / f"{spec.id}.mp4"
