@@ -3,9 +3,17 @@
 //   name: string
 //   tier: Tier
 //   series: Array<{year: number, count: number}>
-//   chart_draw_progress: number 0–1 — how far the line is drawn
+//   chart_draw_progress: number 0–1 — how far the line is drawn (0.0–4.0s)
+//   chart_alpha: number 0–1 — fade-in of the entire chart area (0.0–0.4s)
+//   tracer_glow_alpha: number 0–1 — pulse opacity around the moving tracer
+//   tracer_glow_radius: number px — pulse radius around the moving tracer
 //   dot_visible: boolean — crimson dot at current year
+//   dot_alpha: number 0–1 — landing opacity for the current-year dot
+//   dot_radius: number px — landing radius, overshoots then settles
+//   dot_ring_alpha: number 0–1 — expanding ring after the dot lands
+//   dot_ring_radius: number px — expanding ring after the dot lands
 //   count_value: number — animated count displayed below dot
+//   count_alpha: number 0–1 — fade-in for the numeric readout
 //   current_year: number
 //   peak_year: number
 //   peak_count: number
@@ -18,8 +26,16 @@ export interface RevealProps {
   tier: Tier;
   series: Array<{ year: number; count: number }>;
   chart_draw_progress: number;
+  chart_alpha: number;
+  tracer_glow_alpha: number;
+  tracer_glow_radius: number;
   dot_visible: boolean;
+  dot_alpha: number;
+  dot_radius: number;
+  dot_ring_alpha: number;
+  dot_ring_radius: number;
   count_value: number;
+  count_alpha: number;
   current_year: number;
   peak_year: number;
   peak_count: number;
@@ -28,6 +44,8 @@ export interface RevealProps {
 
 const CHART_W = CANVAS.w - CANVAS.safe.x * 2;
 const CHART_H = 600;
+const LINE_WEIGHT = 3;
+const TRACER_R = 5;
 
 export default function Reveal(props: RevealProps) {
   const {
@@ -35,18 +53,34 @@ export default function Reveal(props: RevealProps) {
     tier,
     series,
     chart_draw_progress,
+    chart_alpha,
+    tracer_glow_alpha,
+    tracer_glow_radius,
     dot_visible,
+    dot_alpha,
+    dot_radius,
+    dot_ring_alpha,
+    dot_ring_radius,
     count_value,
+    count_alpha,
     current_year,
     peak_year,
     peak_count,
     debug_safe = false,
   } = props;
 
-  // Only draw years with count >= 0 for the x-axis.
   const filtered = series.filter((p) => p.count >= 0);
   if (filtered.length === 0) {
-    return <div style={{ width: CANVAS.w, height: CANVAS.h, backgroundColor: COLORS.bg, display: "flex" }} />;
+    return (
+      <div
+        style={{
+          width: CANVAS.w,
+          height: CANVAS.h,
+          backgroundColor: COLORS.bg,
+          display: "flex",
+        }}
+      />
+    );
   }
 
   const minYear = filtered[0].year;
@@ -58,26 +92,67 @@ export default function Reveal(props: RevealProps) {
   const toY = (count: number) =>
     Math.round(CHART_H - (count / maxCount) * CHART_H);
 
-  // How many points to draw based on progress.
+  // Smooth line drawing: compute how many full segments + partial.
   const totalPoints = filtered.length;
-  const visibleCount = Math.max(1, Math.round(chart_draw_progress * totalPoints));
-  const visible = filtered.slice(0, visibleCount);
+  const progressPoints = chart_draw_progress * totalPoints;
+  const fullSegments = Math.floor(progressPoints);
+  const partialT = progressPoints - fullSegments; // 0–1 for the in-progress segment
 
-  // Build a simple polyline as a series of absolute-positioned rectangles
-  // (Satori doesn't support SVG, so we approximate with line segments).
-  const segments: Array<{ x: number; y: number; w: number; h: number; angle: number }> = [];
-  for (let i = 1; i < visible.length; i++) {
-    const x1 = toX(visible[i - 1].year);
-    const y1 = toY(visible[i - 1].count);
-    const x2 = toX(visible[i].year);
-    const y2 = toY(visible[i].count);
-    segments.push({ x: x1, y: y1, w: x2 - x1, h: y2 - y1, angle: 0 });
+  // Take all points needed: fullSegments complete + maybe the next one.
+  const drawnPoints = filtered.slice(0, fullSegments + 2);
+
+  // Build line segments — each connects consecutive drawn points.
+  const segments: Array<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    angle: number;
+  }> = [];
+
+  let tracerX = toX(filtered[0].year);
+  let tracerY = toY(filtered[0].count);
+
+  for (let i = 1; i < drawnPoints.length; i++) {
+    const x1 = toX(drawnPoints[i - 1].year);
+    const y1 = toY(drawnPoints[i - 1].count);
+    const x2 = toX(drawnPoints[i].year);
+    const y2 = toY(drawnPoints[i].count);
+
+    // Determine if this is the partial segment being drawn right now.
+    const segIndex = i - 1; // 0-based segment index
+    if (segIndex < fullSegments) {
+      // Fully drawn segment.
+      segments.push({ x: x1, y: y1, w: x2 - x1, h: y2 - y1, angle: 0 });
+      tracerX = x2;
+      tracerY = y2;
+    } else if (segIndex === fullSegments && partialT > 0) {
+      // Partially drawn — interpolate the endpoint.
+      const ix = Math.round(x1 + (x2 - x1) * partialT);
+      const iy = Math.round(y1 + (y2 - y1) * partialT);
+      segments.push({ x: x1, y: y1, w: ix - x1, h: iy - y1, angle: 0 });
+      tracerX = ix;
+      tracerY = iy;
+    }
+    // else: not yet drawn, skip.
   }
 
-  // Crimson dot position.
-  const dotPoint = filtered.find((p) => p.year === current_year) ?? filtered[filtered.length - 1];
+  // If no progress yet, tracer sits at the first point.
+  if (fullSegments === 0 && partialT === 0) {
+    tracerX = toX(filtered[0].year);
+    tracerY = toY(filtered[0].count);
+  }
+
+  // Crimson dot position (only after full draw completes).
+  const dotPoint =
+    filtered.find((p) => p.year === current_year) ??
+    filtered[filtered.length - 1];
   const dotX = toX(dotPoint.year);
   const dotY = toY(dotPoint.count);
+
+  // Y-axis labels.
+  const midCount = Math.round(maxCount / 2);
+  const midY = toY(midCount);
 
   return (
     <div
@@ -98,13 +173,41 @@ export default function Reveal(props: RevealProps) {
     >
       {debug_safe && (
         <>
-          <div style={{ position: "absolute", top: 0, left: 0, width: CANVAS.w, height: CANVAS.safe.top, backgroundColor: "rgba(255,0,0,0.35)", display: "flex" }} />
-          <div style={{ position: "absolute", bottom: 0, left: 0, width: CANVAS.w, height: CANVAS.safe.bottom, backgroundColor: "rgba(255,0,0,0.35)", display: "flex" }} />
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: CANVAS.w,
+              height: CANVAS.safe.top,
+              backgroundColor: "rgba(255,0,0,0.35)",
+              display: "flex",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              width: CANVAS.w,
+              height: CANVAS.safe.bottom,
+              backgroundColor: "rgba(255,0,0,0.35)",
+              display: "flex",
+            }}
+          />
         </>
       )}
 
-      {/* Header row */}
-      <div style={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: 32, width: "100%" }}>
+      {/* Header row — name + tier badge */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          marginBottom: 32,
+          width: "100%",
+        }}
+      >
         <div
           style={{
             fontFamily: TYPE.display.family,
@@ -120,15 +223,69 @@ export default function Reveal(props: RevealProps) {
         <TierBadge tier={tier} />
       </div>
 
-      {/* Chart area */}
+      {/* Chart area — fades in as a group */}
       <div
         style={{
           position: "relative",
           width: CHART_W,
           height: CHART_H,
+          opacity: chart_alpha,
           display: "flex",
         }}
       >
+        {/* Y-axis: max count label (top-left) */}
+        <div
+          style={{
+            position: "absolute",
+            top: -18,
+            left: -8,
+            display: "flex",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: TYPE.body.family,
+              fontSize: RAMP.body[4],
+              color: COLORS.fade,
+            }}
+          >
+            {maxCount.toLocaleString("en-US")}
+          </span>
+        </div>
+
+        {/* Y-axis: midpoint label */}
+        <div
+          style={{
+            position: "absolute",
+            top: midY - 10,
+            left: -8,
+            display: "flex",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: TYPE.body.family,
+              fontSize: RAMP.body[4],
+              color: COLORS.fade,
+            }}
+          >
+            {midCount.toLocaleString("en-US")}
+          </span>
+        </div>
+
+        {/* Midpoint gridline (subtle) */}
+        <div
+          style={{
+            position: "absolute",
+            top: midY,
+            left: 0,
+            width: CHART_W,
+            height: 1,
+            backgroundColor: COLORS.rule,
+            display: "flex",
+          }}
+        />
+
         {/* Axis baseline */}
         <div
           style={{
@@ -142,7 +299,7 @@ export default function Reveal(props: RevealProps) {
           }}
         />
 
-        {/* Chart line segments — rendered as thin rectangles */}
+        {/* Chart line segments */}
         {segments.map((seg, i) => {
           const length = Math.sqrt(seg.w * seg.w + seg.h * seg.h);
           const angle = Math.atan2(seg.h, seg.w) * (180 / Math.PI);
@@ -154,7 +311,7 @@ export default function Reveal(props: RevealProps) {
                 left: seg.x,
                 top: seg.y,
                 width: Math.max(length, 1),
-                height: 3,
+                height: LINE_WEIGHT,
                 backgroundColor: COLORS.ink,
                 transformOrigin: "0 50%",
                 transform: `rotate(${angle}deg)`,
@@ -164,24 +321,73 @@ export default function Reveal(props: RevealProps) {
           );
         })}
 
-        {/* Crimson dot at current year */}
+        {/* Tracer dot — leads the line draw */}
+        {chart_draw_progress > 0 && chart_draw_progress < 1 && (
+          <>
+            <div
+              style={{
+                position: "absolute",
+                left: tracerX - tracer_glow_radius,
+                top: tracerY - tracer_glow_radius,
+                width: tracer_glow_radius * 2,
+                height: tracer_glow_radius * 2,
+                borderRadius: tracer_glow_radius,
+                backgroundColor: COLORS.ink,
+                opacity: tracer_glow_alpha,
+                display: "flex",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                left: tracerX - TRACER_R,
+                top: tracerY - TRACER_R,
+                width: TRACER_R * 2,
+                height: TRACER_R * 2,
+                borderRadius: TRACER_R,
+                backgroundColor: COLORS.ink,
+                display: "flex",
+              }}
+            />
+          </>
+        )}
+
+        {/* Crimson dot at current year — lands at t=4.0s */}
         {dot_visible && (
-          <div
-            style={{
-              position: "absolute",
-              left: dotX - 12,
-              top: dotY - 12,
-              width: 24,
-              height: 24,
-              borderRadius: 12,
-              backgroundColor: COLORS.crimson,
-              display: "flex",
-            }}
-          />
+          <>
+            {dot_ring_alpha > 0 && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: dotX - dot_ring_radius,
+                  top: dotY - dot_ring_radius,
+                  width: dot_ring_radius * 2,
+                  height: dot_ring_radius * 2,
+                  borderRadius: dot_ring_radius,
+                  border: `2px solid ${COLORS.crimson}`,
+                  opacity: dot_ring_alpha,
+                  display: "flex",
+                }}
+              />
+            )}
+            <div
+              style={{
+                position: "absolute",
+                left: dotX - dot_radius,
+                top: dotY - dot_radius,
+                width: dot_radius * 2,
+                height: dot_radius * 2,
+                borderRadius: dot_radius,
+                backgroundColor: COLORS.crimson,
+                opacity: dot_alpha,
+                display: "flex",
+              }}
+            />
+          </>
         )}
       </div>
 
-      {/* Axis labels */}
+      {/* X-axis labels */}
       <div
         style={{
           display: "flex",
@@ -189,23 +395,37 @@ export default function Reveal(props: RevealProps) {
           justifyContent: "space-between",
           width: CHART_W,
           marginTop: 16,
+          opacity: chart_alpha,
         }}
       >
-        <span style={{ fontFamily: TYPE.body.family, fontSize: RAMP.body[4], color: COLORS.fade }}>
+        <span
+          style={{
+            fontFamily: TYPE.body.family,
+            fontSize: RAMP.body[4],
+            color: COLORS.fade,
+          }}
+        >
           {minYear}
         </span>
-        <span style={{ fontFamily: TYPE.body.family, fontSize: RAMP.body[4], color: COLORS.fade }}>
+        <span
+          style={{
+            fontFamily: TYPE.body.family,
+            fontSize: RAMP.body[4],
+            color: COLORS.fade,
+          }}
+        >
           {maxYear}
         </span>
       </div>
 
-      {/* Count-up display */}
+      {/* Count-up display — appears after dot lands */}
       {dot_visible && (
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             marginTop: 48,
+            opacity: count_alpha,
           }}
         >
           <span

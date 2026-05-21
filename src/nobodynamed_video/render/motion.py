@@ -3,8 +3,6 @@
 All easing functions take t ∈ [0, 1] and return a value ∈ [0, 1].
 """
 
-import math
-
 
 # ── Easing functions ──────────────────────────────────────────────────────────
 
@@ -52,6 +50,14 @@ def progress_in_window(t: float, start: float, end: float) -> float:
     if end <= start:
         return 1.0
     return clamp((t - start) / (end - start), 0.0, 1.0)
+
+
+def triangle_wave(t: float, period: float) -> float:
+    """Return a repeating 0..1..0 triangle wave."""
+    if period <= 0:
+        return 0.0
+    phase = (t % period) / period
+    return 1.0 - abs(phase * 2.0 - 1.0)
 
 
 # ── CTA dot pulse ─────────────────────────────────────────────────────────────

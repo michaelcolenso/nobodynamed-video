@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from nobodynamed_video.models import RenderManifest
@@ -26,10 +25,13 @@ def build_manifest(
     ffmpeg_version: str,
     scene_render_times_s: dict[str, float] | None = None,
     total_render_time_s: float = 0.0,
+    program: str | None = None,
+    hook_id: str | None = None,
+    voice_register: str | None = None,
 ) -> RenderManifest:
     return RenderManifest(
         spec_id=spec_id,
-        rendered_at=datetime.now(tz=timezone.utc),
+        rendered_at=datetime.now(tz=UTC),
         frame_count=frame_count,
         duration_s=duration_s,
         output_path=output_path,
@@ -38,4 +40,7 @@ def build_manifest(
         ffmpeg_version=ffmpeg_version,
         scene_render_times_s=scene_render_times_s or {},
         total_render_time_s=total_render_time_s,
+        program=program,
+        hook_id=hook_id,
+        voice_register=voice_register,
     )

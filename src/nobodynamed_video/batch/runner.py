@@ -12,9 +12,8 @@ from rich.table import Table
 
 from nobodynamed_video.compose.ffmpeg import build_ffmpeg_cmd, get_ffmpeg_version, run_ffmpeg
 from nobodynamed_video.compose.manifest import build_manifest, write_manifest
-from nobodynamed_video.config import get_settings
 from nobodynamed_video.models import VideoSpec
-from nobodynamed_video.render.frame_planner import plan_frames, total_frame_count
+from nobodynamed_video.render.frame_planner import plan_frames
 from nobodynamed_video.render.golden import check_or_write_golden, sha256_bytes
 from nobodynamed_video.render.satori_client import SatoriClient
 
@@ -31,7 +30,6 @@ async def render_spec(
     debug_safe: bool = False,
     audio_path: Path | None = None,
 ) -> dict[str, object]:
-    settings = get_settings()
     spec_out = out_dir / spec.id
     frames_dir = spec_out / "frames"
     frames_dir.mkdir(parents=True, exist_ok=True)
@@ -46,9 +44,8 @@ async def render_spec(
 
         # Check frame cache first.
         import hashlib
-        cache_key = hashlib.sha256(
-            (template + str(sorted(props.items()))).encode()
-        ).hexdigest()
+
+        cache_key = hashlib.sha256((template + str(sorted(props.items()))).encode()).hexdigest()
         cache_path = out_dir / ".cache" / f"{cache_key}.png"
 
         if cache_path.exists():
@@ -100,6 +97,9 @@ async def render_spec(
         ffmpeg_version=ffmpeg_version,
         scene_render_times_s=scene_times,
         total_render_time_s=total_time,
+        program=spec.program.value if spec.program else None,
+        hook_id=spec.hook.id if spec.hook else None,
+        voice_register=spec.hook.voice_register if spec.hook else None,
     )
     write_manifest(manifest, out_dir)
 

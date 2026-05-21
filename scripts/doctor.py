@@ -117,7 +117,7 @@ def check_d1() -> bool:
         resp = httpx.post(
             settings.d1_url,
             json={"sql": "SELECT 1", "params": []},
-            headers={"Authorization": f"Bearer {settings.d1_token}"},
+            headers={"Authorization": f"Bearer {settings.get_d1_token()}"},
             timeout=5.0,
         )
         ok = resp.status_code == 200

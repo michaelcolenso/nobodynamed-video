@@ -43,6 +43,10 @@
 4. Narrow the props: add `console.log(props)` in the failing template, re-run preview.
 5. Confirm the template name matches the dispatch map in `server.ts`.
 6. If the issue is a JSX runtime error, run `cd satori-service && pnpm build` to see TypeScript errors.
+7. If startup fails with `EADDRINUSE`, another process already owns the port.
+   Reuse the existing sidecar if `curl http://localhost:3001/health` returns `status=ok`,
+   otherwise stop the conflicting process or restart with `PORT=3002 make satori` and
+   `SATORI_URL=http://localhost:3002`.
 
 ---
 

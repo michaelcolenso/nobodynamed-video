@@ -1,8 +1,8 @@
 """Tests for easing math and CTA dot-pulse — verifies monotonicity, bounds, and values."""
 
 import math
-import pytest
 
+import pytest
 from nobodynamed_video.render.motion import (
     cta_dot_alpha,
     ease_in_out_cubic,
@@ -11,10 +11,11 @@ from nobodynamed_video.render.motion import (
     lerp_int,
     linear,
     progress_in_window,
+    triangle_wave,
 )
 
-
 # ── linear ────────────────────────────────────────────────────────────────────
+
 
 def test_linear_at_boundaries() -> None:
     assert linear(0.0) == 0.0
@@ -35,6 +36,7 @@ def test_linear_clamps_above_one() -> None:
 
 # ── ease_out_quart ────────────────────────────────────────────────────────────
 
+
 def test_ease_out_quart_boundaries() -> None:
     assert math.isclose(ease_out_quart(0.0), 0.0)
     assert math.isclose(ease_out_quart(1.0), 1.0)
@@ -51,6 +53,7 @@ def test_ease_out_quart_fast_early() -> None:
 
 
 # ── ease_in_out_cubic ─────────────────────────────────────────────────────────
+
 
 def test_ease_in_out_cubic_boundaries() -> None:
     assert math.isclose(ease_in_out_cubic(0.0), 0.0)
@@ -76,6 +79,7 @@ def test_ease_in_out_cubic_slow_at_ends() -> None:
 
 # ── lerp / lerp_int ───────────────────────────────────────────────────────────
 
+
 def test_lerp_endpoints() -> None:
     assert lerp(0.0, 10.0, 0.0) == 0.0
     assert lerp(0.0, 10.0, 1.0) == 10.0
@@ -91,6 +95,7 @@ def test_lerp_int_rounds() -> None:
 
 # ── progress_in_window ────────────────────────────────────────────────────────
 
+
 def test_progress_before_window() -> None:
     assert progress_in_window(0.0, 1.0, 2.0) == 0.0
 
@@ -101,6 +106,17 @@ def test_progress_after_window() -> None:
 
 def test_progress_midway() -> None:
     assert math.isclose(progress_in_window(1.5, 1.0, 2.0), 0.5)
+
+
+def test_triangle_wave_boundaries() -> None:
+    assert triangle_wave(0.0, 1.0) == pytest.approx(0.0)
+    assert triangle_wave(0.5, 1.0) == pytest.approx(1.0)
+    assert triangle_wave(1.0, 1.0) == pytest.approx(0.0)
+
+
+def test_triangle_wave_stays_in_bounds() -> None:
+    values = [triangle_wave(t / 20, 0.6) for t in range(21)]
+    assert all(0.0 <= value <= 1.0 for value in values)
 
 
 # ── CTA dot pulse ─────────────────────────────────────────────────────────────

@@ -8,7 +8,7 @@ export interface FontData {
   style: "normal";
 }
 
-const FONT_DIR = path.resolve(process.env["FONT_DIR"] ?? path.join(__dirname, "../../fonts"));
+const FONT_DIR = path.resolve(process.env["FONT_DIR"] ?? path.join(__dirname, "../fonts"));
 
 function loadFont(filename: string, name: string, weight: 400 | 900): FontData {
   const p = path.join(FONT_DIR, filename);

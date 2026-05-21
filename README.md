@@ -20,6 +20,9 @@ cp .env.example .env
 
 # 4. Start the Satori sidecar (leave running in a separate terminal)
 make satori
+# If :3001 is already in use, either reuse the running sidecar or:
+# PORT=3002 make satori
+# SATORI_URL=http://localhost:3002 make doctor
 
 # 5. Run preflight check
 make doctor
@@ -34,7 +37,7 @@ make smoke
 | Command | Description |
 |---|---|
 | `make setup` | Install Python + Node dependencies |
-| `make satori` | Start Node Satori sidecar on :3001 |
+| `make satori` | Start Node Satori sidecar on `:3001` (or `PORT=3002 make satori`) |
 | `make smoke` | Render Bertha 2024 (pipeline health check) |
 | `make batch` | Render all 14 videos in batches/week-1.yaml |
 | `make test` | Run pytest suite |
@@ -66,10 +69,6 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the two-process design, data flow dia
 ## Operations
 
 See [RUNBOOK.md](RUNBOOK.md) for daily workflow, token rotation, adding templates, and debugging.
-
-## Agent build plan
-
-See [AGENTS.md](AGENTS.md) for the full phased implementation plan.
 
 ## Requirements
 

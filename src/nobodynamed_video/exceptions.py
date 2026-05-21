@@ -23,3 +23,7 @@ class FfmpegFailed(RuntimeError):
 
 class DataSourceError(RuntimeError):
     """Raised when the data source cannot return a NameRecord."""
+
+
+class HookResolutionError(RuntimeError):
+    """Raised when no compatible editorial hook can be resolved."""

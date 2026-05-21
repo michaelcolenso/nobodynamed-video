@@ -32,7 +32,7 @@ class SatoriClient:
         self._semaphore = asyncio.Semaphore(_CONCURRENCY)
         self._client: httpx.AsyncClient | None = None
 
-    async def __aenter__(self) -> "SatoriClient":
+    async def __aenter__(self) -> SatoriClient:
         timeout = httpx.Timeout(connect=_CONNECT_TIMEOUT, read=_READ_TIMEOUT, write=5.0, pool=None)
         self._client = httpx.AsyncClient(base_url=self._base_url, timeout=timeout)
         await self._health_check()
@@ -54,9 +54,7 @@ class SatoriClient:
                 "Start it with: cd satori-service && pnpm dev"
             ) from exc
         except httpx.HTTPStatusError as exc:
-            raise SatoriUnavailable(
-                f"Satori /health returned {exc.response.status_code}"
-            ) from exc
+            raise SatoriUnavailable(f"Satori /health returned {exc.response.status_code}") from exc
 
     @property
     def _http(self) -> httpx.AsyncClient:
@@ -83,10 +81,13 @@ class SatoriClient:
                 except (httpx.ConnectError, httpx.TimeoutException) as exc:
                     last_exc = exc
                     if attempt < _MAX_RETRIES:
-                        delay = _BACKOFF_BASE * (2 ** attempt)
+                        delay = _BACKOFF_BASE * (2**attempt)
                         log.warning(
                             "Satori render attempt %d/%d failed (%s), retrying in %.1fs",
-                            attempt + 1, _MAX_RETRIES + 1, exc, delay,
+                            attempt + 1,
+                            _MAX_RETRIES + 1,
+                            exc,
+                            delay,
                         )
                         await asyncio.sleep(delay)
                 except FrameRenderFailed:

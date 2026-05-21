@@ -1,6 +1,7 @@
 """Scene protocol — every scene must implement this interface."""
 
-from typing import Any, Iterator, Protocol
+from collections.abc import Iterator
+from typing import Any, Protocol
 
 
 class SceneProtocol(Protocol):

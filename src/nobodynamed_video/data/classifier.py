@@ -34,7 +34,7 @@ def _slope_5y(record: NameRecord) -> float:
     if len(years_with_counts) < 2:
         return 0.0
     # Take up to 5 most-recent years.
-    recent = years_with_counts[-min(6, len(years_with_counts)):]
+    recent = years_with_counts[-min(6, len(years_with_counts)) :]
     if len(recent) < 2:
         return 0.0
     base_count = recent[0][1]
@@ -50,17 +50,14 @@ def _avg_10y(record: NameRecord) -> float:
     years_with_counts = [yc.count for yc in record.series if yc.count > 0]
     if not years_with_counts:
         return 0.0
-    recent = years_with_counts[-min(10, len(years_with_counts)):]
+    recent = years_with_counts[-min(10, len(years_with_counts)) :]
     return sum(recent) / len(recent)
 
 
 def _was_low_recently(record: NameRecord, threshold: int, lookback: int) -> bool:
     """Return True if any year within *lookback* years had count <= *threshold*."""
     cutoff = record.current_year - lookback
-    for yc in record.series:
-        if yc.year >= cutoff and yc.count <= threshold:
-            return True
-    return False
+    return any(yc.year >= cutoff and yc.count <= threshold for yc in record.series)
 
 
 def classify(record: NameRecord) -> Tier:
