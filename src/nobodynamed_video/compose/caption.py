@@ -41,6 +41,7 @@ def _pick_frame(spec_id: str, frames: list[CaptionFrame]) -> CaptionFrame:
 
 def _pick_words(spec_id: str, pool: list[str], count: int) -> list[str]:
     """Pick *count* distinct words from *pool* deterministically."""
+    count = min(count, len(pool))
     chosen: list[str] = []
     for i in range(count * 4):
         idx = _pick(f"{spec_id}emo{i}", len(pool))
