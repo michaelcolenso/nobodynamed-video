@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
+
+from nobodynamed_video.compose.state import CombinationState
 
 from nobodynamed_video.compose.lexicon import Lexicon
 
@@ -66,3 +69,43 @@ def test_lexicon_patterns_for_filters_unresolvable() -> None:
     assert len(patterns) > 0
     for p in patterns:
         assert "{{" not in p
+
+
+def test_state_new_combo_not_used() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        state = CombinationState(Path(tmp) / "combos.db")
+        assert not state.is_used("abc123")
+
+
+def test_state_record_then_is_used() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        state = CombinationState(Path(tmp) / "combos.db")
+        state.record("deadbeef", ["namedata", "babynames", "onthebrink"], "bertha-2024")
+        assert state.is_used("deadbeef")
+
+
+def test_state_different_combos_independent() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        state = CombinationState(Path(tmp) / "combos.db")
+        state.record("hash1", ["a", "b", "c"], "spec-1")
+        assert state.is_used("hash1")
+        assert not state.is_used("hash2")
+
+
+def test_state_tag_uses_this_week_counts_correctly() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        state = CombinationState(Path(tmp) / "combos.db")
+        state.record("h1", ["fyp", "namedata", "babynames"], "spec-1")
+        state.record("h2", ["fyp", "ssadata", "onthebrink"], "spec-2")
+        state.record("h3", ["namedata", "babynames", "namefact"], "spec-3")
+        assert state.tag_uses_this_week("fyp") == 2
+        assert state.tag_uses_this_week("namedata") == 2
+        assert state.tag_uses_this_week("culturalcollapse") == 0
+
+
+def test_state_reset_clears_all_records() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        state = CombinationState(Path(tmp) / "combos.db")
+        state.record("h1", ["a", "b", "c"], "spec-1")
+        state.reset()
+        assert not state.is_used("h1")
