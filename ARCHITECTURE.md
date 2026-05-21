@@ -25,6 +25,7 @@ nobodynamed-video is a two-process pipeline: a Python orchestrator and a Node.js
 │  scenes/*.py  →  Scene list                 │
 │       │                                     │
 │  render/frame_planner.py  →  FramePlan      │
+│  render/hyperframes.py   →  Scalar tracks   │
 │       │          │                          │
 │       │    render/satori_client.py ──────── │── HTTP POST :3001/render
 │       │                                     │
@@ -81,6 +82,8 @@ Scene list:  [Hook(3s), Reveal(6s), Narrative(6s), CTA(3s)]
         ▼
 FramePlanner.plan(spec, scenes)  →  list[FrameJob]
   Each FrameJob: { scene, frame_index, t, template, props }
+  Motion-heavy scenes can sample declarative hyperframe tracks for
+  chart reveals, dot landings, and staged text fades.
         │
         ▼
 SatoriClient.render(template, props)  →  PNG bytes

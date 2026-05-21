@@ -26,36 +26,21 @@ class SqliteSource:
 
     async def get_record(self, name: str, sex: str, year: int) -> NameRecord:
         """Return a NameRecord for *name*/*sex* including all years up to *year*."""
-        try:
-            conn = sqlite3.connect(str(self._path))
-        except sqlite3.Error as exc:
-            raise DataSourceError(f"Cannot open {self._path}: {exc}") from exc
-
-        try:
-            rows = conn.execute(
-                "SELECT year, count FROM names "
-                "WHERE name = ? AND sex = ? AND year <= ? "
-                "ORDER BY year ASC",
-                (name, sex, year),
-            ).fetchall()
-        except sqlite3.Error as exc:
-            conn.close()
-            raise DataSourceError(f"Query failed: {exc}") from exc
-        finally:
-            conn.close()
+        rows = self._query(
+            "SELECT year, count FROM names "
+            "WHERE name = ? AND sex = ? AND year <= ? "
+            "ORDER BY year ASC",
+            (name, sex, year),
+        )
 
         if not rows:
-            raise DataSourceError(
-                f"No data found for name={name!r} sex={sex!r} year<={year}"
-            )
+            raise DataSourceError(f"No data found for name={name!r} sex={sex!r} year<={year}")
 
         series = [YearCount(year=r[0], count=r[1]) for r in rows]
         nonzero = [yc for yc in series if yc.count > 0]
 
         if not nonzero:
-            raise DataSourceError(
-                f"All counts are zero for name={name!r} sex={sex!r}"
-            )
+            raise DataSourceError(f"All counts are zero for name={name!r} sex={sex!r}")
 
         peak = max(nonzero, key=lambda yc: yc.count)
         current = series[-1]
@@ -69,3 +54,62 @@ class SqliteSource:
             current_year=current.year,
             current_count=current.count,
         )
+
+    def _query(self, sql: str, params: tuple[object, ...]) -> list[sqlite3.Row]:
+        try:
+            conn = sqlite3.connect(str(self._path))
+            conn.row_factory = sqlite3.Row
+        except sqlite3.Error as exc:
+            raise DataSourceError(f"Cannot open {self._path}: {exc}") from exc
+
+        try:
+            return list(conn.execute(sql, params).fetchall())
+        except sqlite3.Error as exc:
+            raise DataSourceError(f"Query failed: {exc}") from exc
+        finally:
+            conn.close()
+
+    async def get_rank(self, name: str, sex: str, year: int) -> int:
+        rows = self._query(
+            (
+                "SELECT 1 + COUNT(*) AS rank FROM names "
+                "WHERE sex = ? AND year = ? AND count > ("
+                "  SELECT count FROM names WHERE name = ? AND sex = ? AND year = ?"
+                ")"
+            ),
+            (sex, year, name, sex, year),
+        )
+        if not rows or rows[0]["rank"] is None:
+            return 9999
+        return int(rows[0]["rank"])
+
+    async def get_last_top_year(self, name: str, sex: str, threshold: int) -> int | None:
+        rows = self._query(
+            (
+                "SELECT base.year FROM names AS base "
+                "WHERE base.name = ? AND base.sex = ? AND "
+                "(SELECT 1 + COUNT(*) FROM names AS ranked "
+                " WHERE ranked.sex = base.sex AND ranked.year = base.year "
+                " AND ranked.count > base.count) <= ? "
+                "ORDER BY base.year DESC LIMIT 1"
+            ),
+            (name, sex, threshold),
+        )
+        if not rows:
+            return None
+        return int(rows[0]["year"])
+
+    async def count_years_in_top(self, name: str, sex: str, threshold: int) -> int:
+        rows = self._query(
+            (
+                "SELECT COUNT(*) AS count_years FROM names AS base "
+                "WHERE base.name = ? AND base.sex = ? AND "
+                "(SELECT 1 + COUNT(*) FROM names AS ranked "
+                " WHERE ranked.sex = base.sex AND ranked.year = base.year "
+                " AND ranked.count > base.count) <= ?"
+            ),
+            (name, sex, threshold),
+        )
+        if not rows:
+            return 0
+        return int(rows[0]["count_years"])

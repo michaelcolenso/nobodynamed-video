@@ -1,0 +1,432 @@
+# cultural_events.yaml
+# nobodynamed.com — curated killing-event mappings v1
+#
+# Contract: this file is loaded by `data/ctx.py` and provides the optional
+# `killing_event`, `event_year`, `collapse_year`, and `moment_length`
+# variables for any name with a curated entry. Names not in this file MUST
+# return None for these variables and will be skipped by cultural-collapse
+# hooks (which declare `requires_var: killing_event`).
+#
+# Purpose: prevent the runner from inventing cultural narratives. If a name
+# has an editorially defensible story tied to a specific event, it lives
+# here. Otherwise the classifier handles tier assignment alone, and the
+# runner uses non-cultural hooks.
+#
+# Editorial standard: every entry must have data evidence and a defensible
+# causation. "Karen got less popular" is not enough. "Karen dropped 41%
+# between 2017 and 2020, coinciding with viral spread of the meme starting
+# in 2018" is enough.
+#
+# Confidence levels:
+#   high    — SSA-documented sharp decline correlating with a specific event,
+#             cited by at least two journalistic or academic sources.
+#   medium  — Clear cultural narrative + visible decline, but causation
+#             relies on inference rather than documented analysis.
+#   low     — Plausible narrative, decline present, but I'd want to verify
+#             before publishing. Listed for Michael's review.
+#
+# Workflow: review each entry before launch. Move medium → high after
+# verifying SSA data shows ≥30% YoY drop within 3 years of event_year, or
+# downgrade to low. Delete low-confidence entries you don't want to defend
+# in a comments thread.
+
+version: 1
+
+# =============================================================================
+# CONTRACT
+# =============================================================================
+
+variables_provided:
+  killing_event:    "str — short phrase used directly in hook text. Edit for editorial fit."
+  event_year:       "int — the year the cultural event occurred or peaked"
+  collapse_year:    "int | None — first year after event_year where SSA count dropped ≥30% YoY; auto-computed if null"
+  moment_length:    "int | None — for names that rose THEN fell, years between rise and collapse"
+
+selection_rules:
+  - "If a name appears in this file but the candidate VideoSpec has sex != entry.sex, the entry is ignored."
+  - "If `event_year` is in the future relative to LATEST_YEAR, the entry is treated as not-yet-applicable."
+  - "If a name has multiple entries for different events (M vs F, e.g. Karen), the runner picks by sex."
+  - "If `phrasing_options` is set, the runner picks one variant per video using the spec_id seed."
+
+# =============================================================================
+# ENTRIES
+# =============================================================================
+
+events:
+
+  # ---------------------------------------------------------------------------
+  # HIGH CONFIDENCE — SSA-documented, widely cited
+  # ---------------------------------------------------------------------------
+
+  - name: Adolf
+    sex: M
+    killing_event: "World War II"
+    event_year: 1945
+    collapse_year: 1946
+    confidence: high
+    evidence: "Adolf was at SSA rank ~#555 at the end of WWII; never recovered. Universally cited as the canonical 'name killed by association' case."
+    phrasing_options:
+      - "World War II"
+      - "the Third Reich"
+    review_notes: "Default phrasing 'World War II'. Avoid naming the individual in the headline."
+
+  - name: Adolph
+    sex: M
+    killing_event: "World War II"
+    event_year: 1945
+    collapse_year: 1946
+    confidence: high
+    evidence: "Variant spelling, same trajectory. Slightly more common in US records pre-1940."
+    review_notes: ~
+
+  - name: Isis
+    sex: F
+    killing_event: "the militant group"
+    event_year: 2014
+    collapse_year: 2015
+    confidence: high
+    evidence: "Held steady in the middle of the top 1,000 names for 15 years, then dropped completely off the SSA list in 2015 after the ISIS group seized international attention (Times of Israel, May 2016, citing SSA data). Wattenberg called it a rare instance of news eliminating a name."
+    phrasing_options:
+      - "the militant group"
+      - "a terrorist acronym"
+    review_notes: "Default 'the militant group'. Never spell out the group's full name in the headline."
+
+  - name: Alexa
+    sex: F
+    killing_event: "Amazon Echo"
+    event_year: 2014
+    collapse_year: 2016
+    confidence: high
+    evidence: "6,052 births in 2015 → 574 in 2022, a 90% decline. Rank dropped from #32 to #536. Analyzed by Philip Cohen (U. Maryland) and covered by Washington Post, Statista, Digital Trends. Causation cited explicitly by multiple sources."
+    phrasing_options:
+      - "Amazon Echo"
+      - "a voice assistant"
+    review_notes: ~
+
+  - name: Karen
+    sex: F
+    killing_event: "the meme"
+    event_year: 2018
+    collapse_year: 2019
+    moment_length: ~
+    confidence: high
+    evidence: "Peak 1965 at 32,873 births (rank #3). Already in long secular decline. Accelerated sharply: 552 (2017) → 469 (2018) → 438 (2019) → 325 (2020), a 41% drop in 3 years. Fell 171 ranks in 2020 alone to #831, the lowest since 1929. The meme is widely credited as the proximate accelerant per HuffPost, ABC10, Romper citing SSA data."
+    phrasing_options:
+      - "the meme"
+      - "one viral word"
+    review_notes: "The name was already declining; frame this as 'accelerated' rather than 'caused' if the hook allows nuance. Some hooks ('Karen wasn't always a meme') already implicitly acknowledge this."
+
+  - name: Katrina
+    sex: F
+    killing_event: "the hurricane"
+    event_year: 2005
+    collapse_year: 2006
+    confidence: high
+    evidence: "Fell off the SSA top 1,000 list after Hurricane Katrina, cited as canonical example alongside Isis in HuffPost 2021. Verify the specific YoY drop in SSA data during the fixture build."
+    phrasing_options:
+      - "the hurricane"
+      - "Hurricane Katrina"
+    review_notes: ~
+
+  - name: Hillary
+    sex: F
+    killing_event: "the 2008 primary"
+    event_year: 2008
+    collapse_year: 2009
+    confidence: high
+    evidence: "Hillary dropped off the SSA top 1,000 in 2009, the year after Clinton lost the Democratic primary to Obama. Cited by Times of Israel alongside Isis and Adolf as a rare news-driven elimination."
+    phrasing_options:
+      - "the 2008 primary"
+      - "a presidential campaign"
+    review_notes: "Politically loaded — keep framing factual and neutral. Don't editorialize about either candidate."
+
+  - name: Brandon
+    sex: M
+    killing_event: "a viral chant"
+    event_year: 2021
+    collapse_year: 2022
+    confidence: high
+    evidence: "Brandon peaked at #6 in 1992-1994 and was in long slow decline. Sharp drop in 2021-2022 following the 'Let's Go Brandon' chant (originating at an Alabama NASCAR race, October 2021). FamilyEducation cited Brandon as one of the biggest drops for 2022."
+    phrasing_options:
+      - "a viral chant"
+      - "a stadium chant"
+    review_notes: "Politically loaded. Frame as cultural phenomenon, not partisan. The chant's origin is the documented event."
+
+  # ---------------------------------------------------------------------------
+  # MEDIUM CONFIDENCE — clear cultural story, decline visible, causation inferred
+  # ---------------------------------------------------------------------------
+
+  - name: Siri
+    sex: F
+    killing_event: "Apple"
+    event_year: 2011
+    collapse_year: 2012
+    confidence: medium
+    evidence: "120 births in 2013 dropped to ~20 by 2017 per University of Maryland analysis (Digital Trends, 2018). Small absolute numbers; large percentage drop."
+    phrasing_options:
+      - "Apple"
+      - "a voice assistant"
+    review_notes: "Verify SSA data for Siri specifically — absolute counts may be too low to use the count-up animation effectively."
+
+  - name: Cortana
+    sex: F
+    killing_event: "Microsoft"
+    event_year: 2014
+    collapse_year: 2015
+    confidence: medium
+    evidence: "Never a common name in the US. Microsoft's voice assistant launched 2014 named after a Halo character. Decline assumed by analogy to Alexa and Siri."
+    phrasing_options:
+      - "Microsoft"
+      - "a voice assistant"
+    review_notes: "Verify if Cortana ever appeared in the SSA top 1,000 — may be too rare for a strong story."
+
+  - name: Osama
+    sex: M
+    killing_event: "September 11"
+    event_year: 2001
+    collapse_year: 2002
+    confidence: medium
+    evidence: "Osama was a rare but stable name in the US pre-2001 (largely among Muslim-American families). Decline post-9/11 is well documented anecdotally; SSA data verification needed."
+    phrasing_options:
+      - "September 11"
+      - "one news cycle"
+    review_notes: "Sensitive territory. Frame as a documented data story, not as commentary on the community most affected. Consider whether this entry should ship in v1 at all."
+
+  - name: Saddam
+    sex: M
+    killing_event: "the Gulf War"
+    event_year: 1991
+    collapse_year: 1992
+    confidence: medium
+    evidence: "Saddam was uncommon but present in SSA pre-1991. Sharp decline expected after Gulf War media coverage. Verify SSA data shows the drop."
+    phrasing_options:
+      - "the Gulf War"
+      - "one dictator"
+    review_notes: "Verify data. Editorially safer than Osama because the eponymous person is universally condemned and the timing is cleaner."
+
+  - name: Andrew
+    sex: M
+    killing_event: "Hurricane Andrew"
+    event_year: 1992
+    collapse_year: ~
+    confidence: low
+    evidence: "Andrew was a very popular name through the 1980s-1990s. Hurricane Andrew 1992 did not noticeably interrupt the name's popularity in SSA data. Including for completeness but the data probably does NOT support the cultural-collapse framing."
+    phrasing_options:
+      - "Hurricane Andrew"
+    review_notes: "Probably remove. The name's decline is generational, not hurricane-driven."
+
+  - name: Sandy
+    sex: F
+    killing_event: "Hurricane Sandy"
+    event_year: 2012
+    collapse_year: ~
+    confidence: low
+    evidence: "Sandy was already in long decline pre-2012. Hurricane Sandy may have nailed the coffin shut but the name was nearly out of use already. Verify before claiming causation."
+    phrasing_options:
+      - "Hurricane Sandy"
+    review_notes: "Probably remove. Don't claim a 'collapse' that was nearly complete before the named event."
+
+  - name: Harvey
+    sex: M
+    killing_event: "2017"
+    event_year: 2017
+    collapse_year: ~
+    confidence: medium
+    evidence: "Harvey had been quietly rising as a vintage-revival name in the 2010s. Sharp decline after 2017 coincides with both Hurricane Harvey (August 2017) and Harvey Weinstein scandal (October 2017). Compound causation."
+    phrasing_options:
+      - "2017"
+      - "a year of two scandals"
+    review_notes: "The compound causation makes this an interesting entry — neither event alone would have killed it, but together they did. Worth verifying in SSA data."
+
+  - name: Bertha
+    sex: F
+    killing_event: "the Great War"
+    event_year: 1918
+    collapse_year: 1920
+    confidence: medium
+    evidence: "Bertha peaked in the early 1900s. 'Big Bertha' was a German super-heavy howitzer used in WWI starting 1914. The name's decline accelerated during and after WWI, though generational fashion was also a factor."
+    phrasing_options:
+      - "the Great War"
+      - "a German howitzer"
+    review_notes: "Compound causation (war + generational fashion). Framing as 'the Great War' is editorially defensible since the data shows the steepest drops aligned with WWI."
+
+  # ---------------------------------------------------------------------------
+  # LOWER CONFIDENCE — narrative present, data verification needed
+  # ---------------------------------------------------------------------------
+
+  - name: Becky
+    sex: F
+    killing_event: "one Beyoncé lyric"
+    event_year: 2016
+    collapse_year: ~
+    confidence: low
+    evidence: "Becky was already in steep decline pre-2016. 'Becky with the good hair' (Lemonade, April 2016) became a pop culture moment, but the name was nearly gone already. Verify SSA data shows a discernible YoY drop in 2017-2018."
+    phrasing_options:
+      - "one Beyoncé lyric"
+      - "one album"
+    review_notes: "Probably weak data. Keep only if verification holds up."
+
+  - name: Stacy
+    sex: F
+    killing_event: "incel slang"
+    event_year: 2015
+    collapse_year: ~
+    confidence: low
+    evidence: "Stacy was already in long decline. Online incel communities adopted 'Stacy' as a pejorative term in the mid-2010s. Causation is hard to establish given the name was nearly out of use."
+    phrasing_options:
+      - "online slang"
+    review_notes: "Editorially fraught — explaining 'incel' on TikTok is a tangent the brand doesn't need. Probably drop."
+
+  - name: Chad
+    sex: M
+    killing_event: "online slang"
+    event_year: 2015
+    collapse_year: ~
+    confidence: low
+    evidence: "Same dynamic as Stacy. Chad as a meme term for a particular masculine archetype dates to mid-2010s incel subculture. The name was already declining."
+    phrasing_options:
+      - "online slang"
+    review_notes: "Same caution as Stacy. Probably drop."
+
+  - name: Felicia
+    sex: F
+    killing_event: "one movie quote"
+    event_year: 1995
+    collapse_year: 2015
+    confidence: low
+    evidence: "'Bye, Felicia' from Friday (1995) became a widely used dismissal phrase in the 2010s. Felicia was already declining; the meme's revival in mid-2010s probably accelerated the trough."
+    phrasing_options:
+      - "one movie quote"
+      - "a 90s catchphrase"
+    review_notes: "The 20-year gap between movie and meme makes the causation story complex. Verify the data shows a sharp drop in 2014-2016."
+
+  - name: Damien
+    sex: M
+    killing_event: "The Omen"
+    event_year: 1976
+    collapse_year: ~
+    confidence: low
+    evidence: "Damien is a popular name globally and rose in the US through the 1990s — the opposite of what 'killed by horror movie' would predict. Likely should be removed entirely."
+    phrasing_options:
+      - "The Omen"
+    review_notes: "Data contradicts the narrative. Probably drop."
+
+  - name: Lolita
+    sex: F
+    killing_event: "one novel"
+    event_year: 1955
+    collapse_year: 1960
+    confidence: medium
+    evidence: "Lolita was a rare but present name pre-1955. The Nabokov novel (1955) and its film adaptations (1962, 1997) gave the name predatory connotations. Data should show effective extinction post-1960."
+    phrasing_options:
+      - "one novel"
+      - "Nabokov"
+    review_notes: "Editorially sensitive due to the novel's subject matter. The hook should not be flippant. Consider whether this fits the brand voice at all."
+
+  - name: Heather
+    sex: F
+    killing_event: "the 90s"
+    event_year: 1989
+    collapse_year: ~
+    confidence: low
+    evidence: "Heather peaked in 1975 and was in long decline by 1989 (the year of the movie Heathers). The name's association with a particular archetype is cultural, not a single event. Probably drop."
+    phrasing_options:
+      - "the 90s"
+    review_notes: "Generational drift, not a single killing event. Drop."
+
+  - name: Hannibal
+    sex: M
+    killing_event: "Silence of the Lambs"
+    event_year: 1991
+    collapse_year: ~
+    confidence: low
+    evidence: "Hannibal was never popular in the US. SSA data probably doesn't support a clean 'collapse' narrative. Drop."
+    phrasing_options:
+      - "Silence of the Lambs"
+    review_notes: "Drop."
+
+  - name: Whitney
+    sex: F
+    killing_event: "the 90s"
+    event_year: 1991
+    collapse_year: ~
+    confidence: low
+    evidence: "Whitney peaked in 1990. Decline correlates with Whitney Houston's career trajectory but causation is unclear — the name may have peaked simply because it was at peak fashion."
+    phrasing_options:
+      - "one decade"
+    review_notes: "Causation murky. Probably drop."
+
+# =============================================================================
+# BLOCKED NAMES — never use cultural-collapse hooks even if criteria fit
+# =============================================================================
+# These names should be classified by the tier system normally and may appear
+# in extinction-watch, peak-year, or generation-arc videos, but the runner must
+# never select a cultural-collapse hook for them. Editorial reasons vary.
+
+blocked_names:
+  - name: Trayvon
+    sex: M
+    reason: "Victim of a high-profile shooting. Any cultural-collapse framing would be exploitative."
+  - name: Emmett
+    sex: M
+    reason: "Emmett Till association makes any 'killing event' framing inappropriate."
+  - name: Brianna
+    sex: F
+    reason: "Breonna Taylor association; same logic as Emmett."
+  - name: Breonna
+    sex: F
+    reason: "Breonna Taylor. Off-limits."
+  - name: George
+    sex: M
+    reason: "George Floyd association makes recent decline analysis editorially risky."
+  - name: Mohammed
+    sex: M
+    reason: "Religiously significant name; any 'cultural collapse' framing risks anti-Muslim reading."
+  - name: Muhammad
+    sex: M
+    reason: "Same as Mohammed."
+  - name: Jesus
+    sex: M
+    reason: "Religiously significant; any decline narrative will be misread regardless of data."
+  - name: Donald
+    sex: M
+    reason: "Politically polarized in both directions. SSA decline exists but causation framing creates unavoidable partisan reading."
+  - name: Barack
+    sex: M
+    reason: "Same as Donald — politically loaded."
+  - name: Kamala
+    sex: F
+    reason: "Same — politically loaded."
+
+# =============================================================================
+# VALIDATION RULES (enforced by `data/ctx.py` on load)
+# =============================================================================
+
+validation:
+
+  schema:
+    - "Every entry MUST have: name, sex, killing_event, event_year, confidence, evidence"
+    - "killing_event MUST be ≤ 30 characters (fits the subhead line)"
+    - "killing_event MUST NOT name a living individual (use a phrase like 'a viral chant' instead of the person)"
+    - "killing_event MUST NOT name a specific terrorist organization (use 'the militant group')"
+    - "confidence MUST be one of [high, medium, low]"
+    - "event_year MUST be between 1880 and LATEST_YEAR"
+    - "If `phrasing_options` is set, it MUST contain at least one string and all must satisfy the killing_event rules above"
+
+  data_check:
+    - "For confidence: high — SSA data MUST show ≥30% cumulative decline within 5 years of event_year"
+    - "For confidence: medium — SSA data MUST show visible decline trend within 10 years of event_year"
+    - "If confidence: low and SSA data does not support causation, the entry is logged and skipped at runtime"
+
+  cross_reference:
+    - "Names in `blocked_names` MUST NOT appear in `events`. The loader fails if both."
+    - "If a name has both M and F entries, both must be present in `events` and the loader checks sex matches the candidate"
+
+# =============================================================================
+# OPERATIONAL NOTES
+# =============================================================================
+
+operational:
+  review_cadence: "Re-review this file annually when SSA publishes new data. New cultural events may warrant new entries; old low-confidence entries may need to be dropped."
+  growth_strategy: "Add new entries only when (a) a specific event happened, (b) SSA data shows ≥30% cumulative YoY decline within 3 years, and (c) the editorial framing can be stated factually in under 30 characters."
+  drop_threshold: "Any entry that remains 'low' confidence after data verification SHOULD be dropped rather than published. The signal-to-noise ratio of the account depends on every cultural-collapse video being defensible."

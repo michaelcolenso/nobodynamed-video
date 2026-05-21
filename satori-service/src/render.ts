@@ -8,14 +8,16 @@ import Hook, { HookProps } from "./templates/hook";
 import Reveal, { RevealProps } from "./templates/reveal";
 import Narrative, { NarrativeProps } from "./templates/narrative";
 import Cta, { CtaProps } from "./templates/cta";
+import Canvas, { CanvasProps } from "./templates/canvas";
 
-type TemplateName = "hook" | "reveal" | "narrative" | "cta";
+type TemplateName = "hook" | "reveal" | "narrative" | "cta" | "canvas";
 
 type PropsMap = {
   hook: HookProps;
   reveal: RevealProps;
   narrative: NarrativeProps;
   cta: CtaProps;
+  canvas: CanvasProps;
 };
 
 function buildElement(template: TemplateName, props: Record<string, unknown>): React.ReactElement {
@@ -28,6 +30,8 @@ function buildElement(template: TemplateName, props: Record<string, unknown>): R
       return React.createElement(Narrative, props as unknown as NarrativeProps);
     case "cta":
       return React.createElement(Cta, props as unknown as CtaProps);
+    case "canvas":
+      return React.createElement(Canvas, props as unknown as CanvasProps);
     default: {
       const _: never = template;
       throw new Error(`Unknown template: ${template}`);

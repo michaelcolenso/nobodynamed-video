@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+import click
 import typer
 from rich.console import Console
 
@@ -25,7 +26,7 @@ console = Console()
 def render(
     spec: Path = typer.Option(..., help="Path to batch YAML spec"),
     no_compose: bool = typer.Option(False, help="Render frames only, skip ffmpeg"),
-    debug_safe: bool = typer.Option(False, "--debug-safe", help="Overlay TikTok safe-area guides"),
+    debug_safe: bool = typer.Option(False, help="Overlay TikTok safe-area guides"),
     audio: Optional[Path] = typer.Option(None, help="Optional audio bed (.wav/.mp3/.aac)"),
     force: bool = typer.Option(False, help="Override blocklist"),
 ) -> None:
@@ -74,7 +75,7 @@ def preview(
     spec_id: str = typer.Option(..., help="Spec ID, e.g. bertha-2024"),
     scene: str = typer.Option(..., help="Scene name: hook|reveal|narrative|cta"),
     frame: int = typer.Option(0, help="Frame index within the scene"),
-    spec_file: Path = typer.Option(Path("batches/smoke.yaml"), "--spec", help="Batch YAML"),
+    spec_file: Path = typer.Option(Path("batches/smoke.yaml"), help="Batch YAML spec file"),
 ) -> None:
     """Render a single frame and open it in the system viewer."""
     settings = get_settings()
@@ -110,7 +111,18 @@ def preview(
 @app.command()
 def doctor() -> None:
     """Pre-flight check: Python, Node, ffmpeg, Satori, fonts, D1."""
-    from scripts.doctor import run_doctor  # type: ignore[import]
+    import importlib.util
+    from pathlib import Path
+
+    # The nbn entry point sets sys.path[0] to .venv/bin, not the project
+    # root.  Load doctor.py from the repo root (relative to this file).
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    doctor_path = repo_root / "scripts" / "doctor.py"
+    spec = importlib.util.spec_from_file_location("doctor", doctor_path)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    run_doctor = mod.run_doctor
     run_doctor()
 
 
@@ -118,5 +130,5 @@ def doctor() -> None:
 def smoke() -> None:
     """Render the Bertha smoke test video."""
     typer.echo("Running smoke test: batches/smoke.yaml")
-    ctx = typer.get_current_context()
+    ctx = click.get_current_context()
     ctx.invoke(render, spec=Path("batches/smoke.yaml"))

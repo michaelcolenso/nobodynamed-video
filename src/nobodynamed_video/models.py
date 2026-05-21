@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel, Field, PositiveInt
 
@@ -37,6 +38,75 @@ class Scene(BaseModel):
     static_props: dict  # type: ignore[type-arg]
 
 
+class ProgramType(str, Enum):
+    CASE_FILE = "case_file"
+    RETURN_NOTICE = "return_notice"
+    CULTURAL_EVENT = "cultural_event"
+
+
+class ResolvedCulturalEvent(BaseModel):
+    name: str
+    sex: str
+    killing_event: str
+    event_year: int
+    collapse_year: int | None = None
+    moment_length: int | None = None
+    confidence: str = "unknown"
+
+
+class ResolvedHook(BaseModel):
+    id: str
+    pillar: str
+    voice_register: str
+    headline: str
+    subhead: str
+    pinned_comment: str
+    caption: str
+    requires_var: str | None = None
+
+
+class VideoContext(BaseModel):
+    name: str
+    sex: str
+    first_letter: str
+    tier: Tier
+    current_year: int
+    current_count: int
+    current_rank: int
+    current_decade: int
+    peak_year: int
+    peak_count: int
+    peak_decade: int
+    rank_at_peak: int
+    trough_year: int
+    trough_count: int
+    years_since_peak: int
+    trough_to_now_years: int
+    decline_pct: int
+    rise_pct: int
+    year_range: int
+    start_year: int
+    avg_age: int
+    generation_at_peak: str
+    last_top_1000_year: int | None = None
+    last_top_10_year: int | None = None
+    top10_years: int = 0
+    killing_event: str | None = None
+    comparison_name: str | None = None
+    moment_length: int | None = None
+    collapse_year: int | None = None
+    rise_year: int | None = None
+    event_year: int | None = None
+    program: ProgramType | None = None
+    hook: ResolvedHook | None = None
+    narrative_text: str = ""
+    supporting_text: str | None = None
+    cultural_event: ResolvedCulturalEvent | None = None
+
+    def as_template_context(self) -> dict[str, Any]:
+        return self.model_dump()
+
+
 class VideoSpec(BaseModel):
     id: str
     record: NameRecord
@@ -44,6 +114,9 @@ class VideoSpec(BaseModel):
     scenes: list[Scene]
     fps: int = 30
     seed: int
+    program: ProgramType = ProgramType.CASE_FILE
+    hook: ResolvedHook | None = None
+    context: VideoContext | None = None
 
 
 class RenderManifest(BaseModel):
@@ -57,3 +130,6 @@ class RenderManifest(BaseModel):
     ffmpeg_version: str
     scene_render_times_s: dict[str, float] = Field(default_factory=dict)
     total_render_time_s: float = 0.0
+    program: str | None = None
+    hook_id: str | None = None
+    voice_register: str | None = None

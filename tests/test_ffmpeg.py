@@ -2,10 +2,7 @@
 
 from pathlib import Path
 
-import pytest
-
 from nobodynamed_video.compose.ffmpeg import (
-    XFADE_DURATION,
     _xfade_offsets,
     build_ffmpeg_cmd,
 )
@@ -24,15 +21,15 @@ def test_xfade_offset_first() -> None:
 
 
 def test_xfade_offset_second() -> None:
-    # hook(3) + reveal(6) = 9.0 → offset = 9.0 - 0.2 = 8.8
+    # [v01] duration = 3+6-0.2 = 8.8; transition starts 0.2s before its end → 8.6
     offsets = _xfade_offsets()
-    assert abs(offsets[1] - 8.8) < 1e-6
+    assert abs(offsets[1] - 8.6) < 1e-6
 
 
 def test_xfade_offset_third() -> None:
-    # hook(3) + reveal(6) + narrative(6) = 15.0 → offset = 15.0 - 0.2 = 14.8
+    # [v12] duration = 8.8+6-0.2 = 14.6; transition starts 0.2s before its end → 14.4
     offsets = _xfade_offsets()
-    assert abs(offsets[2] - 14.8) < 1e-6
+    assert abs(offsets[2] - 14.4) < 1e-6
 
 
 def test_build_ffmpeg_cmd_has_four_inputs() -> None:

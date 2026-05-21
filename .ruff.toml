@@ -2,5 +2,22 @@ line-length = 100
 target-version = "py312"
 
 [lint]
-select = ["E", "F", "I", "N", "UP", "ANN", "B", "SIM"]
-ignore = ["ANN101", "ANN102"]
+select = ["E", "F", "I", "N", "UP", "ANN", "B", "SIM", "D"]
+ignore = [
+    "ANN101",  # self is fine without type annotation
+    "ANN102",  # cls is fine without type annotation
+    "B008",    # typer.Option calls in defaults are idiomatic
+    "N818",    # exception naming — follow AGENTS.md conventions
+    "UP007",   # Typer 0.12.3 doesn't support X | Y union syntax
+    "D100",    # module docstrings optional
+    "D101",    # class docstrings optional
+    "D102",    # method docstrings optional
+    "D104",    # package docstrings optional
+    "D107",    # __init__ docstrings optional
+    "D203",    # conflicts with D211
+    "D213",    # conflicts with D212
+]
+
+[lint.per-file-ignores]
+"tests/*.py" = ["D103", "ANN"]
+"scripts/*.py" = ["D103"]

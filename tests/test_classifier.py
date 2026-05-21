@@ -1,7 +1,5 @@
 """Classifier tests — 18+ cases covering every tier and every boundary condition."""
 
-import pytest
-
 from nobodynamed_video.data.classifier import (
     CRITICAL_PEAK_FLOOR,
     CRITICAL_THRESHOLD,
@@ -10,7 +8,6 @@ from nobodynamed_video.data.classifier import (
     classify,
 )
 from nobodynamed_video.models import NameRecord, Tier, YearCount
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -114,8 +111,8 @@ def test_resurrected_from_critical() -> None:
     record = make_record(
         series=[
             (1920, 5000),
-            (lookback_year, 20),         # critically low within lookback window
-            (2024, 500),                  # now well above threshold
+            (lookback_year, 20),  # critically low within lookback window
+            (2024, 500),  # now well above threshold
         ]
     )
     assert classify(record) == Tier.RESURRECTED
@@ -126,7 +123,7 @@ def test_resurrected_from_extinct() -> None:
     record = make_record(
         series=[
             (1930, 8000),
-            (near_year, 0),               # was extinct recently
+            (near_year, 0),  # was extinct recently
             (2024, 300),
         ]
     )
@@ -140,7 +137,7 @@ def test_not_resurrected_low_current() -> None:
         series=[
             (1940, 5000),
             (lookback_year, 10),
-            (2024, CRITICAL_THRESHOLD),   # still at the boundary
+            (2024, CRITICAL_THRESHOLD),  # still at the boundary
         ]
     )
     # current == CRITICAL_THRESHOLD means it fails the "> CRITICAL_THRESHOLD" check
@@ -213,16 +210,12 @@ def test_stable_slight_variation() -> None:
 
 
 def test_boundary_critical_threshold_minus_one() -> None:
-    record = make_record(
-        series=[(1940, CRITICAL_PEAK_FLOOR), (2024, CRITICAL_THRESHOLD - 1)]
-    )
+    record = make_record(series=[(1940, CRITICAL_PEAK_FLOOR), (2024, CRITICAL_THRESHOLD - 1)])
     assert classify(record) == Tier.CRITICAL
 
 
 def test_boundary_critical_peak_floor_minus_one() -> None:
     # Peak just below the floor → should NOT be CRITICAL
-    record = make_record(
-        series=[(1940, CRITICAL_PEAK_FLOOR - 1), (2024, CRITICAL_THRESHOLD - 1)]
-    )
+    record = make_record(series=[(1940, CRITICAL_PEAK_FLOOR - 1), (2024, CRITICAL_THRESHOLD - 1)])
     result = classify(record)
     assert result != Tier.CRITICAL

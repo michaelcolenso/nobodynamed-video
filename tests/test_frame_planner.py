@@ -1,7 +1,15 @@
-"""Frame planner tests — verifies exact frame counts and prop structure."""
+"""Frame planner tests — verifies shared-canvas planning over fixed frame buckets."""
 
 from nobodynamed_video.data.classifier import classify
-from nobodynamed_video.models import NameRecord, Tier, YearCount
+from nobodynamed_video.models import (
+    NameRecord,
+    ProgramType,
+    ResolvedHook,
+    Scene,
+    VideoContext,
+    VideoSpec,
+    YearCount,
+)
 from nobodynamed_video.render.frame_planner import (
     SCENE_ORDER,
     frame_count,
@@ -11,16 +19,14 @@ from nobodynamed_video.render.frame_planner import (
 from nobodynamed_video.seed import spec_seed
 
 
-def make_bertha_spec() -> object:
-    """Build a minimal VideoSpec for Bertha-2024 suitable for frame planning."""
-    from nobodynamed_video.models import VideoSpec, Scene
-
+def make_bertha_spec() -> VideoSpec:
     series = [
+        YearCount(year=1880, count=39),
         YearCount(year=1910, count=5000),
         YearCount(year=1940, count=2000),
         YearCount(year=1980, count=60),
         YearCount(year=2000, count=30),
-        YearCount(year=2024, count=9),
+        YearCount(year=2024, count=29),
     ]
     record = NameRecord(
         name="Bertha",
@@ -29,15 +35,53 @@ def make_bertha_spec() -> object:
         peak_year=1910,
         peak_count=5000,
         current_year=2024,
-        current_count=9,
+        current_count=29,
     )
     tier = classify(record)
     scenes = [
-        Scene(kind="hook",      duration_s=3.0,  template="hook",      static_props={}),
-        Scene(kind="reveal",    duration_s=6.0,  template="reveal",    static_props={}),
-        Scene(kind="narrative", duration_s=6.0,  template="narrative", static_props={}),
-        Scene(kind="cta",       duration_s=3.0,  template="cta",       static_props={}),
+        Scene(kind="hook", duration_s=3.0, template="hook", static_props={}),
+        Scene(kind="reveal", duration_s=6.0, template="reveal", static_props={}),
+        Scene(kind="narrative", duration_s=6.0, template="narrative", static_props={}),
+        Scene(kind="cta", duration_s=3.0, template="cta", static_props={}),
     ]
+    hook = ResolvedHook(
+        id="ext-001-only-n-last-year",
+        pillar="extinction-watch",
+        voice_register="morbid",
+        headline="Only 29 babies were named Bertha last year.",
+        subhead="In 1910, there were 5,000.",
+        pinned_comment="Do you know a Bertha under 30?",
+        caption="Bertha is on the brink.",
+    )
+    context = VideoContext(
+        name="Bertha",
+        sex="F",
+        first_letter="B",
+        tier=tier,
+        current_year=2024,
+        current_count=29,
+        current_rank=9999,
+        current_decade=2020,
+        peak_year=1910,
+        peak_count=5000,
+        peak_decade=1910,
+        rank_at_peak=8,
+        trough_year=1880,
+        trough_count=39,
+        years_since_peak=114,
+        trough_to_now_years=144,
+        decline_pct=99,
+        rise_pct=12,
+        year_range=144,
+        start_year=1880,
+        avg_age=71,
+        generation_at_peak="Greatest",
+        top10_years=3,
+        program=ProgramType.CASE_FILE,
+        hook=hook,
+        narrative_text="Bertha now survives mostly as inherited memory.",
+        supporting_text="Current births: 29.",
+    )
     return VideoSpec(
         id="bertha-2024",
         record=record,
@@ -45,10 +89,11 @@ def make_bertha_spec() -> object:
         scenes=scenes,
         fps=30,
         seed=spec_seed("bertha-2024"),
+        program=ProgramType.CASE_FILE,
+        hook=hook,
+        context=context,
     )
 
-
-# ── Frame count assertions ────────────────────────────────────────────────────
 
 def test_hook_frame_count() -> None:
     assert frame_count("hook", fps=30) == 90
@@ -71,21 +116,19 @@ def test_total_frame_count() -> None:
 
 
 def test_scene_order() -> None:
-    assert SCENE_ORDER == ["hook", "reveal", "narrative", "cta"]
+    assert ["hook", "reveal", "narrative", "cta"] == SCENE_ORDER
 
-
-# ── plan_frames produces exactly 540 frames for Bertha ───────────────────────
 
 def test_plan_frames_total_count() -> None:
     spec = make_bertha_spec()
-    frames = list(plan_frames(spec, fps=30))  # type: ignore[arg-type]
+    frames = list(plan_frames(spec, fps=30))
     assert len(frames) == 540
 
 
 def test_plan_frames_scene_distribution() -> None:
     spec = make_bertha_spec()
     counts: dict[str, int] = {}
-    for scene_kind, _idx, _tpl, _props in plan_frames(spec, fps=30):  # type: ignore[arg-type]
+    for scene_kind, _idx, _tpl, _props in plan_frames(spec, fps=30):
         counts[scene_kind] = counts.get(scene_kind, 0) + 1
     assert counts["hook"] == 90
     assert counts["reveal"] == 180
@@ -93,70 +136,34 @@ def test_plan_frames_scene_distribution() -> None:
     assert counts["cta"] == 90
 
 
-# ── Props structure sanity checks ─────────────────────────────────────────────
-
-def test_hook_props_have_required_keys() -> None:
+def test_plan_frames_use_shared_canvas_template() -> None:
     spec = make_bertha_spec()
-    first_hook = next(
-        props for sk, _i, _t, props in plan_frames(spec, fps=30)  # type: ignore[arg-type]
-        if sk == "hook"
-    )
-    assert "name" in first_hook
-    assert "tier" in first_hook
-    assert "headline_chars_visible" in first_hook
-    assert "subhead_alpha" in first_hook
+    first = next(iter(plan_frames(spec, fps=30)))
+    assert first[2] == "canvas"
 
 
-def test_reveal_props_have_required_keys() -> None:
+def test_canvas_props_have_required_blocks() -> None:
     spec = make_bertha_spec()
-    first_reveal = next(
-        props for sk, _i, _t, props in plan_frames(spec, fps=30)  # type: ignore[arg-type]
-        if sk == "reveal"
-    )
-    assert "chart_draw_progress" in first_reveal
-    assert "dot_visible" in first_reveal
-    assert "count_value" in first_reveal
-    assert "series" in first_reveal
+    props = next(props for _scene, _idx, _tpl, props in plan_frames(spec, fps=30))
+    assert "header" in props
+    assert "diagnosis" in props
+    assert "chart" in props
+    assert "stats" in props
+    assert "narrative" in props
+    assert "footer" in props
 
 
-def test_narrative_kb_scale_increases() -> None:
+def test_recompose_progress_increases_after_dot_lands() -> None:
     spec = make_bertha_spec()
-    narrative_frames = [
-        props for sk, _i, _t, props in plan_frames(spec, fps=30)  # type: ignore[arg-type]
-        if sk == "narrative"
-    ]
-    scales = [p["kb_scale"] for p in narrative_frames]
-    # Ken Burns scale should be non-decreasing overall (ease_in_out_cubic is monotonic).
-    assert scales[0] <= scales[-1]
-    assert scales[0] >= 1.00
-    assert scales[-1] <= 1.04 + 1e-6
+    frames = [props for _scene, _idx, _tpl, props in plan_frames(spec, fps=30)]
+    pre_land = frames[245]["chart"]["layout_progress"]
+    later = frames[290]["chart"]["layout_progress"]
+    assert pre_land <= later
 
 
-def test_hook_type_on_monotonic() -> None:
+def test_narrative_alpha_appears_in_second_half() -> None:
     spec = make_bertha_spec()
-    hook_frames = [
-        props for sk, _i, _t, props in plan_frames(spec, fps=30)  # type: ignore[arg-type]
-        if sk == "hook"
-    ]
-    chars = [p["headline_chars_visible"] for p in hook_frames]
-    assert all(chars[i] <= chars[i + 1] for i in range(len(chars) - 1))
-
-
-def test_reveal_chart_progress_monotonic() -> None:
-    spec = make_bertha_spec()
-    reveal_frames = [
-        props for sk, _i, _t, props in plan_frames(spec, fps=30)  # type: ignore[arg-type]
-        if sk == "reveal"
-    ]
-    progs = [p["chart_draw_progress"] for p in reveal_frames]
-    assert all(progs[i] <= progs[i + 1] for i in range(len(progs) - 1))
-
-
-def test_deterministic_narrative_seed() -> None:
-    """Identical specs must produce identical Ken Burns values."""
-    spec = make_bertha_spec()
-    frames_a = list(plan_frames(spec, fps=30))  # type: ignore[arg-type]
-    frames_b = list(plan_frames(spec, fps=30))  # type: ignore[arg-type]
-    scales_a = [p["kb_scale"] for _, _, _, p in frames_a if _ == "narrative"]
-    scales_b = [p["kb_scale"] for _, _, _, p in frames_b if _ == "narrative"]
-    assert scales_a == scales_b
+    frames = [props for _scene, _idx, _tpl, props in plan_frames(spec, fps=30)]
+    first_half = frames[180]["narrative"]["alpha"]
+    second_half = frames[330]["narrative"]["alpha"]
+    assert first_half <= second_half
