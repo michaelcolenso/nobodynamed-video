@@ -9,6 +9,7 @@ ignore = [
     "B008",    # typer.Option calls in defaults are idiomatic
     "N818",    # exception naming — follow AGENTS.md conventions
     "UP007",   # Typer 0.12.3 doesn't support X | Y union syntax
+    "UP045",   # Typer 0.12.3 requires Optional[X] not X | None with from __future__ import annotations
     "D100",    # module docstrings optional
     "D101",    # class docstrings optional
     "D102",    # method docstrings optional
