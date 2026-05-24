@@ -17,6 +17,8 @@ from nobodynamed_video.compose.lexicon import Lexicon
 from nobodynamed_video.compose.manifest import build_manifest, write_manifest
 from nobodynamed_video.compose.state import CombinationState
 from nobodynamed_video.models import VideoSpec
+from nobodynamed_video.qc.checks import run_all_checks
+from nobodynamed_video.qc.report import build_qc_report
 from nobodynamed_video.render.frame_planner import plan_frames
 from nobodynamed_video.render.golden import check_or_write_golden, sha256_bytes
 from nobodynamed_video.render.satori_client import SatoriClient
@@ -58,7 +60,8 @@ async def render_spec(
         else:
             t_start = time.monotonic()
             png_bytes = await client.render(template, props)
-            scene_times[scene_kind] = scene_times.get(scene_kind, 0.0) + (time.monotonic() - t_start)
+            elapsed = time.monotonic() - t_start
+            scene_times[scene_kind] = scene_times.get(scene_kind, 0.0) + elapsed
             cache_path.parent.mkdir(parents=True, exist_ok=True)
             cache_path.write_bytes(png_bytes)
 
@@ -179,6 +182,21 @@ async def run_batch(
         table.add_row(spec_id, f"[red]FAILED: {exc}[/red]", "—")
     console.print(table)
 
+    qc_results = []
+    for r in results:
+        if r.get("composed"):
+            qc = run_all_checks(r, out_dir)
+            qc_results.append(qc)
+            qc_issues: list[dict[str, str]] = []
+            for issue in qc.issues:
+                sev, code, msg = issue.severity, issue.code, issue.message
+                qc_issues.append({"severity": sev, "code": code, "message": msg})
+            r["qc"] = {"passed": qc.passed, "issues": qc_issues}
+
+    if qc_results:
+        report_path = build_qc_report(batch_name, qc_results, out_dir)
+        console.print(f"[cyan]QC report:[/cyan] {report_path}")
+
     summary = {
         "batch": batch_name,
         "total": len(specs),
@@ -188,7 +206,8 @@ async def run_batch(
         "errors": [{"id": sid, "error": str(exc)} for sid, exc in errors],
     }
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / f"{batch_name}.summary.json").write_text(json.dumps(summary, indent=2, default=str) + "\n")
+    summary_json = json.dumps(summary, indent=2, default=str) + "\n"
+    (out_dir / f"{batch_name}.summary.json").write_text(summary_json)
 
     if errors:
         raise SystemExit(f"{len(errors)} video(s) failed in batch '{batch_name}'")
