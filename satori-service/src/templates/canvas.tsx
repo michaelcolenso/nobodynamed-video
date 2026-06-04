@@ -123,6 +123,35 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone: 
   );
 }
 
+function formatYLabel(val: number): string {
+  if (val >= 1000000) {
+    return parseFloat((val / 1000000).toFixed(1)) + "M";
+  }
+  if (val >= 1000) {
+    return parseFloat((val / 1000).toFixed(1)) + "K";
+  }
+  return Math.round(val).toString();
+}
+
+function AxisLabel({ top, text }: { top: number; text: string }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 12,
+        top: top,
+        fontFamily: TYPE.body.family,
+        fontSize: 18,
+        color: COLORS.fade,
+        opacity: 0.5,
+        display: "flex",
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
 export default function Canvas(props: CanvasProps) {
   const { tier, header, diagnosis, chart, stats, narrative, comparison, footer, debug_safe = false } = props;
 
@@ -136,8 +165,8 @@ export default function Canvas(props: CanvasProps) {
   const chartWidth = mix(CANVAS.w - CANVAS.safe.x * 2, 920, chart.layout_progress);
   const chartHeight = mix(760, 420, chart.layout_progress);
 
-  const toX = (year: number) => Math.round(((year - minYear) / Math.max(maxYear - minYear, 1)) * chartWidth);
-  const toY = (count: number) => Math.round(chartHeight - (count / maxCount) * chartHeight);
+  const toX = (year: number) => ((year - minYear) / Math.max(maxYear - minYear, 1)) * chartWidth;
+  const toY = (count: number) => chartHeight - (count / maxCount) * chartHeight;
 
   const totalPoints = filtered.length;
   const progressPoints = chart.draw_progress * totalPoints;
@@ -145,31 +174,37 @@ export default function Canvas(props: CanvasProps) {
   const partialT = progressPoints - fullSegments;
   const drawnPoints = filtered.slice(0, fullSegments + 2);
 
-  const segments: Array<{ x: number; y: number; length: number; angle: number }> = [];
   let tracerX = toX(filtered[0]?.year ?? chart.current_year);
   let tracerY = toY(filtered[0]?.count ?? 0);
 
-  for (let i = 1; i < drawnPoints.length; i++) {
-    const x1 = toX(drawnPoints[i - 1].year);
-    const y1 = toY(drawnPoints[i - 1].count);
-    const x2 = toX(drawnPoints[i].year);
-    const y2 = toY(drawnPoints[i].count);
-    const segmentIndex = i - 1;
-    if (segmentIndex < fullSegments) {
-      const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-      const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
-      segments.push({ x: x1, y: y1, length, angle });
-      tracerX = x2;
-      tracerY = y2;
-    } else if (segmentIndex === fullSegments && partialT > 0) {
-      const ix = Math.round(x1 + (x2 - x1) * partialT);
-      const iy = Math.round(y1 + (y2 - y1) * partialT);
-      const length = Math.sqrt((ix - x1) ** 2 + (iy - y1) ** 2);
-      const angle = Math.atan2(iy - y1, ix - x1) * (180 / Math.PI);
-      segments.push({ x: x1, y: y1, length, angle });
-      tracerX = ix;
-      tracerY = iy;
+  // Build SVG path string for smooth continuous line.
+  let pathD = "";
+  if (drawnPoints.length > 0) {
+    pathD = `M ${toX(drawnPoints[0].year)} ${toY(drawnPoints[0].count)}`;
+    for (let i = 1; i < drawnPoints.length; i++) {
+      const x1 = toX(drawnPoints[i - 1].year);
+      const y1 = toY(drawnPoints[i - 1].count);
+      const x2 = toX(drawnPoints[i].year);
+      const y2 = toY(drawnPoints[i].count);
+      const segmentIndex = i - 1;
+      if (segmentIndex < fullSegments) {
+        pathD += ` L ${x2} ${y2}`;
+        tracerX = x2;
+        tracerY = y2;
+      } else if (segmentIndex === fullSegments && partialT > 0) {
+        const ix = x1 + (x2 - x1) * partialT;
+        const iy = y1 + (y2 - y1) * partialT;
+        pathD += ` L ${ix} ${iy}`;
+        tracerX = ix;
+        tracerY = iy;
+      }
     }
+  }
+
+  let pathAreaD = "";
+  if (drawnPoints.length > 0) {
+    const startX = toX(drawnPoints[0].year);
+    pathAreaD = `M ${startX} ${chartHeight} L ${pathD.slice(2)} L ${tracerX} ${chartHeight} Z`;
   }
 
   const currentPoint = filtered.find((point) => point.year === chart.current_year) ?? filtered[filtered.length - 1];
@@ -311,6 +346,7 @@ export default function Canvas(props: CanvasProps) {
           display: "flex",
         }}
       >
+        {/* Horizontal solid rule at the bottom x-axis */}
         <div
           style={{
             position: "absolute",
@@ -322,17 +358,13 @@ export default function Canvas(props: CanvasProps) {
             display: "flex",
           }}
         />
-        <div
-          style={{
-            position: "absolute",
-            top: Math.round(chartHeight / 2),
-            left: 0,
-            width: chartWidth,
-            height: 1,
-            backgroundColor: COLORS.rule,
-            display: "flex",
-          }}
-        />
+
+        {/* Y-axis labels */}
+        <AxisLabel top={-26} text={formatYLabel(maxCount)} />
+        <AxisLabel top={chartHeight * 0.25 - 26} text={formatYLabel(maxCount * 0.75)} />
+        <AxisLabel top={chartHeight * 0.5 - 26} text={formatYLabel(maxCount * 0.5)} />
+        <AxisLabel top={chartHeight * 0.75 - 26} text={formatYLabel(maxCount * 0.25)} />
+        <AxisLabel top={chartHeight - 26} text="0" />
 
         {chart.event_alpha > 0 && chart.event_year != null && chart.event_label && (
           <>
@@ -376,22 +408,80 @@ export default function Canvas(props: CanvasProps) {
           </>
         )}
 
-        {segments.map((segment, index) => (
-          <div
-            key={index}
-            style={{
-              position: "absolute",
-              left: segment.x,
-              top: segment.y,
-              width: Math.max(segment.length, 1),
-              height: 3,
-              backgroundColor: COLORS.ink,
-              transform: `rotate(${segment.angle}deg)`,
-              transformOrigin: "0 50%",
-              display: "flex",
-            }}
+        <svg
+          width={chartWidth}
+          height={chartHeight}
+          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            overflow: "visible",
+          }}
+        >
+          <defs>
+            <linearGradient id="chartAreaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={COLORS.ink} stopOpacity={0.2} />
+              <stop offset="100%" stopColor={COLORS.ink} stopOpacity={0.0} />
+            </linearGradient>
+          </defs>
+
+          {/* Grid lines */}
+          <line
+            x1={0}
+            y1={chartHeight * 0.25}
+            x2={chartWidth}
+            y2={chartHeight * 0.25}
+            stroke={COLORS.rule}
+            strokeWidth={1}
+            strokeDasharray="4 4"
           />
-        ))}
+          <line
+            x1={0}
+            y1={chartHeight * 0.5}
+            x2={chartWidth}
+            y2={chartHeight * 0.5}
+            stroke={COLORS.rule}
+            strokeWidth={1}
+            strokeDasharray="4 4"
+          />
+          <line
+            x1={0}
+            y1={chartHeight * 0.75}
+            x2={chartWidth}
+            y2={chartHeight * 0.75}
+            stroke={COLORS.rule}
+            strokeWidth={1}
+            strokeDasharray="4 4"
+          />
+          <line
+            x1={0}
+            y1={0}
+            x2={chartWidth}
+            y2={0}
+            stroke={COLORS.rule}
+            strokeWidth={1}
+            strokeDasharray="4 4"
+          />
+
+          {/* Fading gradient area under the chart line */}
+          {pathAreaD && (
+            <path
+              d={pathAreaD}
+              fill="url(#chartAreaGrad)"
+            />
+          )}
+
+          {/* Chart line */}
+          <path
+            d={pathD}
+            fill="none"
+            stroke={COLORS.ink}
+            strokeWidth={3}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
 
         {chart.draw_progress > 0 && chart.draw_progress < 1 && (
           <>

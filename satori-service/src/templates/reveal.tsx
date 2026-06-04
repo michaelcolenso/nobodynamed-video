@@ -101,40 +101,31 @@ export default function Reveal(props: RevealProps) {
   // Take all points needed: fullSegments complete + maybe the next one.
   const drawnPoints = filtered.slice(0, fullSegments + 2);
 
-  // Build line segments — each connects consecutive drawn points.
-  const segments: Array<{
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-    angle: number;
-  }> = [];
-
   let tracerX = toX(filtered[0].year);
   let tracerY = toY(filtered[0].count);
 
-  for (let i = 1; i < drawnPoints.length; i++) {
-    const x1 = toX(drawnPoints[i - 1].year);
-    const y1 = toY(drawnPoints[i - 1].count);
-    const x2 = toX(drawnPoints[i].year);
-    const y2 = toY(drawnPoints[i].count);
-
-    // Determine if this is the partial segment being drawn right now.
-    const segIndex = i - 1; // 0-based segment index
-    if (segIndex < fullSegments) {
-      // Fully drawn segment.
-      segments.push({ x: x1, y: y1, w: x2 - x1, h: y2 - y1, angle: 0 });
-      tracerX = x2;
-      tracerY = y2;
-    } else if (segIndex === fullSegments && partialT > 0) {
-      // Partially drawn — interpolate the endpoint.
-      const ix = Math.round(x1 + (x2 - x1) * partialT);
-      const iy = Math.round(y1 + (y2 - y1) * partialT);
-      segments.push({ x: x1, y: y1, w: ix - x1, h: iy - y1, angle: 0 });
-      tracerX = ix;
-      tracerY = iy;
+  // Build SVG path string for smooth continuous line.
+  let pathD = "";
+  if (drawnPoints.length > 0) {
+    pathD = `M ${toX(drawnPoints[0].year)} ${toY(drawnPoints[0].count)}`;
+    for (let i = 1; i < drawnPoints.length; i++) {
+      const x1 = toX(drawnPoints[i - 1].year);
+      const y1 = toY(drawnPoints[i - 1].count);
+      const x2 = toX(drawnPoints[i].year);
+      const y2 = toY(drawnPoints[i].count);
+      const segIndex = i - 1;
+      if (segIndex < fullSegments) {
+        pathD += ` L ${x2} ${y2}`;
+        tracerX = x2;
+        tracerY = y2;
+      } else if (segIndex === fullSegments && partialT > 0) {
+        const ix = x1 + (x2 - x1) * partialT;
+        const iy = y1 + (y2 - y1) * partialT;
+        pathD += ` L ${ix} ${iy}`;
+        tracerX = ix;
+        tracerY = iy;
+      }
     }
-    // else: not yet drawn, skip.
   }
 
   // If no progress yet, tracer sits at the first point.
@@ -299,27 +290,27 @@ export default function Reveal(props: RevealProps) {
           }}
         />
 
-        {/* Chart line segments */}
-        {segments.map((seg, i) => {
-          const length = Math.sqrt(seg.w * seg.w + seg.h * seg.h);
-          const angle = Math.atan2(seg.h, seg.w) * (180 / Math.PI);
-          return (
-            <div
-              key={i}
-              style={{
-                position: "absolute",
-                left: seg.x,
-                top: seg.y,
-                width: Math.max(length, 1),
-                height: LINE_WEIGHT,
-                backgroundColor: COLORS.ink,
-                transformOrigin: "0 50%",
-                transform: `rotate(${angle}deg)`,
-                display: "flex",
-              }}
-            />
-          );
-        })}
+        {/* Chart line */}
+        <svg
+          width={CHART_W}
+          height={CHART_H}
+          viewBox={`0 0 ${CHART_W} ${CHART_H}`}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            overflow: "visible",
+          }}
+        >
+          <path
+            d={pathD}
+            fill="none"
+            stroke={COLORS.ink}
+            strokeWidth={LINE_WEIGHT}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
 
         {/* Tracer dot — leads the line draw */}
         {chart_draw_progress > 0 && chart_draw_progress < 1 && (
