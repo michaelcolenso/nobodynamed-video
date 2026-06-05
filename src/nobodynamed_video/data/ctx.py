@@ -151,7 +151,7 @@ def build_narrative_text(
 ) -> tuple[str, str | None]:
     if program == ProgramType.CULTURAL_EVENT and event is not None:
         primary = f"{name} was already moving. {event.killing_event} accelerated the decline."
-        supporting = f"Down {decline_pct}% from its peak, with the break visible in the record."
+        supporting = "The break is visible in the record — a sharp turn that never corrected."
         return primary, supporting
     if program == ProgramType.RETURN_NOTICE:
         primary = f"{name} fell almost out of circulation and then returned."
@@ -163,11 +163,14 @@ def build_narrative_text(
         return primary, supporting
     if tier == Tier.DECLINING:
         primary = f"{name} is no longer reproducing at anything like its former scale."
-        supporting = f"It is down {decline_pct}% from peak."
+        supporting = f"Down {decline_pct}% from peak — a decline measured in generations, not years."
         return primary, supporting
     if tier in (Tier.CRITICAL, Tier.EXTINCT):
         primary = f"{name} now survives mostly as inherited memory."
-        supporting = f"Current births: {current_count}."
+        if current_count == 0:
+            supporting = "Zero recorded births. The name exists only in the people already carrying it."
+        else:
+            supporting = f"At {current_count} births per year, each one is now a demographic outlier."
         return primary, supporting
     primary = f"{name} is back in circulation after a long period of dormancy."
     supporting = f"Peak year: {peak_year}."

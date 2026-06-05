@@ -132,9 +132,9 @@ export default function Canvas(props: CanvasProps) {
   const maxCount = Math.max(...filtered.map((point) => point.count), 1);
 
   const chartLeft = CANVAS.safe.x;
-  const chartTop = mix(560, 470, chart.layout_progress);
+  const chartTop = mix(470, 400, chart.layout_progress);
   const chartWidth = mix(CANVAS.w - CANVAS.safe.x * 2, 920, chart.layout_progress);
-  const chartHeight = mix(760, 420, chart.layout_progress);
+  const chartHeight = mix(580, 420, chart.layout_progress);
 
   const toX = (year: number) => Math.round(((year - minYear) / Math.max(maxYear - minYear, 1)) * chartWidth);
   const toY = (count: number) => Math.round(chartHeight - (count / maxCount) * chartHeight);
@@ -177,7 +177,7 @@ export default function Canvas(props: CanvasProps) {
   const dotY = toY(currentPoint?.count ?? 0);
   const eventX = chart.event_year != null ? toX(Math.max(minYear, Math.min(maxYear, chart.event_year))) : 0;
 
-  const narrativeTop = mix(1250, 1080, chart.layout_progress);
+  const narrativeTop = mix(1240, 1060, chart.layout_progress);
 
   return (
     <div
@@ -460,7 +460,7 @@ export default function Canvas(props: CanvasProps) {
       <div
         style={{
           position: "absolute",
-          top: mix(1370, 930, chart.layout_progress),
+          top: mix(1100, 930, chart.layout_progress),
           left: CANVAS.safe.x,
           opacity: stats.alpha,
           display: "flex",
@@ -477,11 +477,13 @@ export default function Canvas(props: CanvasProps) {
         <div
           style={{
             position: "absolute",
-            top: mix(chartTop + chartHeight + 18, chartTop + chartHeight - 24, chart.layout_progress),
+            top: mix(1100, 930, chart.layout_progress),
             right: CANVAS.safe.x,
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-end",
+            justifyContent: "center",
+            height: 100,
             opacity: chart.dot_alpha,
           }}
         >

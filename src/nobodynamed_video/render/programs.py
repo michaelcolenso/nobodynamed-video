@@ -13,7 +13,12 @@ DOT_LAND_T = 8.2
 RECOMPOSE_END_T = 9.4
 
 HEADER_ALPHA = (Hyperframe(0.0, 0.0, ease_out_quart), Hyperframe(0.5, 1.0))
-DIAGNOSIS_ALPHA = (Hyperframe(0.35, 0.0, ease_out_quart), Hyperframe(1.0, 1.0))
+DIAGNOSIS_ALPHA = (
+    Hyperframe(0.35, 0.0, ease_out_quart),
+    Hyperframe(1.0, 1.0),
+    Hyperframe(3.5, 1.0, ease_in_out_cubic),
+    Hyperframe(5.0, 0.0),
+)
 CHART_ALPHA = (Hyperframe(1.0, 0.0, ease_out_quart), Hyperframe(1.6, 1.0))
 CHART_DRAW = (Hyperframe(1.6, 0.0), Hyperframe(DOT_LAND_T, 1.0))
 DOT_ALPHA = (Hyperframe(DOT_LAND_T, 0.0, ease_out_quart), Hyperframe(DOT_LAND_T + 0.45, 1.0))
@@ -26,7 +31,7 @@ DOT_RING_RADIUS = (
 LAYOUT_PROGRESS = (Hyperframe(DOT_LAND_T, 0.0, ease_in_out_cubic), Hyperframe(RECOMPOSE_END_T, 1.0))
 NARRATIVE_ALPHA = (Hyperframe(9.4, 0.0, ease_out_quart), Hyperframe(10.2, 1.0))
 SUPPORT_ALPHA = (Hyperframe(9.9, 0.0, ease_out_quart), Hyperframe(10.8, 1.0))
-FOOTER_ALPHA = (Hyperframe(15.2, 0.0, ease_out_quart), Hyperframe(16.0, 1.0))
+FOOTER_ALPHA = (Hyperframe(13.0, 0.0, ease_out_quart), Hyperframe(13.8, 1.0))
 EVENT_ALPHA = (Hyperframe(9.6, 0.0, ease_out_quart), Hyperframe(10.2, 1.0))
 STAT_ALPHA = (Hyperframe(1.2, 0.0, ease_out_quart), Hyperframe(2.0, 1.0))
 
