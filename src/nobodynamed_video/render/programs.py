@@ -51,9 +51,9 @@ def _stats_cards(ctx: VideoContext) -> list[dict[str, str]]:
         {"label": "Current", "value": f"{ctx.current_count:,}", "tone": "crimson"},
     ]
     if ctx.program == ProgramType.RETURN_NOTICE:
-        cards[2] = {"label": "5y growth", "value": f"{ctx.rise_pct}%", "tone": "emerald"}
+        cards[1] = {"label": "5y growth", "value": f"{ctx.rise_pct}%", "tone": "emerald"}
     elif ctx.program == ProgramType.CULTURAL_EVENT and ctx.killing_event:
-        cards[2] = {"label": "Trigger", "value": ctx.killing_event, "tone": "crimson"}
+        cards[1] = {"label": "Trigger", "value": ctx.killing_event, "tone": "crimson"}
     return cards
 
 
