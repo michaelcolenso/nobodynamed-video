@@ -132,9 +132,9 @@ export default function Canvas(props: CanvasProps) {
   const maxCount = Math.max(...filtered.map((point) => point.count), 1);
 
   const chartLeft = CANVAS.safe.x;
-  const chartTop = mix(470, 400, chart.layout_progress);
+  const chartTop = mix(500, 400, chart.layout_progress);
   const chartWidth = mix(CANVAS.w - CANVAS.safe.x * 2, 920, chart.layout_progress);
-  const chartHeight = mix(580, 420, chart.layout_progress);
+  const chartHeight = mix(550, 420, chart.layout_progress);
 
   const toX = (year: number) => Math.round(((year - minYear) / Math.max(maxYear - minYear, 1)) * chartWidth);
   const toY = (count: number) => Math.round(chartHeight - (count / maxCount) * chartHeight);
@@ -177,7 +177,7 @@ export default function Canvas(props: CanvasProps) {
   const dotY = toY(currentPoint?.count ?? 0);
   const eventX = chart.event_year != null ? toX(Math.max(minYear, Math.min(maxYear, chart.event_year))) : 0;
 
-  const narrativeTop = mix(1240, 1060, chart.layout_progress);
+  const narrativeTop = mix(1220, 1060, chart.layout_progress);
 
   return (
     <div
@@ -472,45 +472,6 @@ export default function Canvas(props: CanvasProps) {
           <StatCard key={index} label={card.label} value={card.value} tone={card.tone} />
         ))}
       </div>
-
-      {chart.dot_visible && (
-        <div
-          style={{
-            position: "absolute",
-            top: mix(1100, 930, chart.layout_progress),
-            right: CANVAS.safe.x,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-end",
-            justifyContent: "center",
-            height: 100,
-            opacity: chart.dot_alpha,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: TYPE.display.family,
-              fontWeight: TYPE.display.weight,
-              fontSize: RAMP.body[0],
-              color: COLORS.crimson,
-              display: "flex",
-            }}
-          >
-            {chart.count_value.toLocaleString("en-US")}
-          </span>
-          <span
-            style={{
-              fontFamily: TYPE.body.family,
-              fontSize: RAMP.body[4],
-              color: COLORS.fade,
-              marginTop: 6,
-              display: "flex",
-            }}
-          >
-            births in {chart.current_year}
-          </span>
-        </div>
-      )}
 
       <div
         style={{

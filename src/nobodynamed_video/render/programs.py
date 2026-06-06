@@ -16,8 +16,8 @@ HEADER_ALPHA = (Hyperframe(0.0, 0.0, ease_out_quart), Hyperframe(0.5, 1.0))
 DIAGNOSIS_ALPHA = (
     Hyperframe(0.35, 0.0, ease_out_quart),
     Hyperframe(1.0, 1.0),
-    Hyperframe(3.5, 1.0, ease_in_out_cubic),
-    Hyperframe(5.0, 0.0),
+    Hyperframe(2.5, 1.0, ease_in_out_cubic),
+    Hyperframe(4.0, 0.0),
 )
 CHART_ALPHA = (Hyperframe(1.0, 0.0, ease_out_quart), Hyperframe(1.6, 1.0))
 CHART_DRAW = (Hyperframe(1.6, 0.0), Hyperframe(DOT_LAND_T, 1.0))
