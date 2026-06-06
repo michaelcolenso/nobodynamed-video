@@ -15,9 +15,13 @@ RECOMPOSE_END_T = 9.4
 HEADER_ALPHA = (Hyperframe(0.0, 0.0, ease_out_quart), Hyperframe(0.5, 1.0))
 DIAGNOSIS_ALPHA = (Hyperframe(0.35, 0.0, ease_out_quart), Hyperframe(1.0, 1.0))
 CHART_ALPHA = (Hyperframe(1.0, 0.0, ease_out_quart), Hyperframe(1.6, 1.0))
-CHART_DRAW = (Hyperframe(1.6, 0.0), Hyperframe(DOT_LAND_T, 1.0))
+CHART_DRAW = (Hyperframe(1.6, 0.0, ease_in_out_cubic), Hyperframe(DOT_LAND_T, 1.0))
 DOT_ALPHA = (Hyperframe(DOT_LAND_T, 0.0, ease_out_quart), Hyperframe(DOT_LAND_T + 0.45, 1.0))
-DOT_RADIUS = (Hyperframe(DOT_LAND_T, 18.0, ease_out_quart), Hyperframe(DOT_LAND_T + 0.45, 12.0))
+DOT_RADIUS = (
+    Hyperframe(DOT_LAND_T, 20.0, ease_out_quart),
+    Hyperframe(DOT_LAND_T + 0.15, 8.0, ease_in_out_cubic),
+    Hyperframe(DOT_LAND_T + 0.45, 12.0),
+)
 DOT_RING_ALPHA = (Hyperframe(DOT_LAND_T, 0.7), Hyperframe(DOT_LAND_T + 0.6, 0.0))
 DOT_RING_RADIUS = (
     Hyperframe(DOT_LAND_T, 10.0, ease_out_quart),
@@ -28,7 +32,9 @@ NARRATIVE_ALPHA = (Hyperframe(9.4, 0.0, ease_out_quart), Hyperframe(10.2, 1.0))
 SUPPORT_ALPHA = (Hyperframe(9.9, 0.0, ease_out_quart), Hyperframe(10.8, 1.0))
 FOOTER_ALPHA = (Hyperframe(15.2, 0.0, ease_out_quart), Hyperframe(16.0, 1.0))
 EVENT_ALPHA = (Hyperframe(9.6, 0.0, ease_out_quart), Hyperframe(10.2, 1.0))
-STAT_ALPHA = (Hyperframe(1.2, 0.0, ease_out_quart), Hyperframe(2.0, 1.0))
+STAT_ALPHA_0 = (Hyperframe(1.2, 0.0, ease_out_quart), Hyperframe(2.0, 1.0))
+STAT_ALPHA_1 = (Hyperframe(1.35, 0.0, ease_out_quart), Hyperframe(2.15, 1.0))
+STAT_ALPHA_2 = (Hyperframe(1.5, 0.0, ease_out_quart), Hyperframe(2.3, 1.0))
 
 
 def _status_label(ctx: VideoContext) -> str:
@@ -69,7 +75,23 @@ def sample_program_frame(
         ease_out_quart(min(1.0, max(0.0, (t - DOT_LAND_T) / 1.7))) if dot_visible else 0.0
     )
 
-    chart_cards = _stats_cards(ctx)
+    stat_alphas = [
+        round(sample_scalar_track(STAT_ALPHA_0, t), 6),
+        round(sample_scalar_track(STAT_ALPHA_1, t), 6),
+        round(sample_scalar_track(STAT_ALPHA_2, t), 6),
+    ]
+    chart_cards: list[dict[str, Any]] = [
+        {**card, "alpha": alpha}
+        for card, alpha in zip(_stats_cards(ctx), stat_alphas)
+    ]
+
+    if t >= 16.0:
+        cta_local = t - 16.0
+        dot_wave = triangle_wave(cta_local, 1.0)
+        footer_dot_alpha = lerp(0.4, 1.0, ease_out_quart(dot_wave))
+    else:
+        footer_dot_alpha = 1.0
+
     return {
         "program": spec.program.value,
         "register": spec.hook.voice_register,
@@ -119,7 +141,7 @@ def sample_program_frame(
             "count_value": round(spec.record.current_count * count_progress),
         },
         "stats": {
-            "alpha": round(sample_scalar_track(STAT_ALPHA, t), 6),
+            "alpha": max(stat_alphas),
             "cards": chart_cards,
         },
         "narrative": {
@@ -137,6 +159,7 @@ def sample_program_frame(
             "alpha": round(sample_scalar_track(FOOTER_ALPHA, t), 6),
             "site": "nobodynamed.com",
             "cta": "Run your name",
+            "dot_alpha": round(footer_dot_alpha, 6),
         },
         "debug_safe": debug_safe,
     }

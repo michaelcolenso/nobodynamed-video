@@ -36,7 +36,7 @@ interface ChartState {
 
 interface StatsState {
   alpha: number;
-  cards: Array<{ label: string; value: string; tone: string }>;
+  cards: Array<{ label: string; value: string; tone: string; alpha?: number }>;
 }
 
 interface NarrativeState {
@@ -56,6 +56,7 @@ interface FooterState {
   alpha: number;
   site: string;
   cta: string;
+  dot_alpha?: number;
 }
 
 export interface CanvasProps {
@@ -74,6 +75,22 @@ export interface CanvasProps {
 
 function mix(a: number, b: number, progress: number) {
   return a + (b - a) * progress;
+}
+
+function smoothCurveParts(pts: Array<[number, number]>): string {
+  let d = "";
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
+    const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
+    const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]}`;
+  }
+  return d;
 }
 
 function StatCard({ label, value, tone }: { label: string; value: string; tone: string }) {
@@ -168,44 +185,32 @@ export default function Canvas(props: CanvasProps) {
   const toX = (year: number) => ((year - minYear) / Math.max(maxYear - minYear, 1)) * chartWidth;
   const toY = (count: number) => chartHeight - (count / maxCount) * chartHeight;
 
-  const totalPoints = filtered.length;
-  const progressPoints = chart.draw_progress * totalPoints;
-  const fullSegments = Math.floor(progressPoints);
-  const partialT = progressPoints - fullSegments;
-  const drawnPoints = filtered.slice(0, fullSegments + 2);
+  const allPts: Array<[number, number]> = filtered.map((p) => [toX(p.year), toY(p.count)]);
+  const totalSegs = Math.max(1, allPts.length - 1);
+  const progressSegs = chart.draw_progress * totalSegs;
+  const fullCount = Math.floor(progressSegs);
+  const partialT = progressSegs - fullCount;
 
-  let tracerX = toX(filtered[0]?.year ?? chart.current_year);
-  let tracerY = toY(filtered[0]?.count ?? 0);
-
-  // Build SVG path string for smooth continuous line.
-  let pathD = "";
-  if (drawnPoints.length > 0) {
-    pathD = `M ${toX(drawnPoints[0].year)} ${toY(drawnPoints[0].count)}`;
-    for (let i = 1; i < drawnPoints.length; i++) {
-      const x1 = toX(drawnPoints[i - 1].year);
-      const y1 = toY(drawnPoints[i - 1].count);
-      const x2 = toX(drawnPoints[i].year);
-      const y2 = toY(drawnPoints[i].count);
-      const segmentIndex = i - 1;
-      if (segmentIndex < fullSegments) {
-        pathD += ` L ${x2} ${y2}`;
-        tracerX = x2;
-        tracerY = y2;
-      } else if (segmentIndex === fullSegments && partialT > 0) {
-        const ix = x1 + (x2 - x1) * partialT;
-        const iy = y1 + (y2 - y1) * partialT;
-        pathD += ` L ${ix} ${iy}`;
-        tracerX = ix;
-        tracerY = iy;
-      }
-    }
+  const drawnPts: Array<[number, number]> = [];
+  for (let i = 0; i <= Math.min(fullCount, allPts.length - 1); i++) {
+    drawnPts.push(allPts[i]);
+  }
+  if (fullCount < allPts.length - 1 && partialT > 0) {
+    const p1 = allPts[fullCount];
+    const p2 = allPts[fullCount + 1];
+    drawnPts.push([p1[0] + (p2[0] - p1[0]) * partialT, p1[1] + (p2[1] - p1[1]) * partialT]);
   }
 
-  let pathAreaD = "";
-  if (drawnPoints.length > 0) {
-    const startX = toX(drawnPoints[0].year);
-    pathAreaD = `M ${startX} ${chartHeight} L ${pathD.slice(2)} L ${tracerX} ${chartHeight} Z`;
-  }
+  const tracerX = drawnPts[drawnPts.length - 1]?.[0] ?? allPts[0]?.[0] ?? 0;
+  const tracerY = drawnPts[drawnPts.length - 1]?.[1] ?? allPts[0]?.[1] ?? 0;
+
+  const curveParts = smoothCurveParts(drawnPts);
+  const pathD =
+    drawnPts.length >= 2 ? `M ${drawnPts[0][0]} ${drawnPts[0][1]}${curveParts}` : "";
+  const pathAreaD =
+    drawnPts.length >= 2
+      ? `M ${drawnPts[0][0]} ${chartHeight} L ${drawnPts[0][0]} ${drawnPts[0][1]}${curveParts} L ${tracerX} ${chartHeight} Z`
+      : "";
 
   const currentPoint = filtered.find((point) => point.year === chart.current_year) ?? filtered[filtered.length - 1];
   const dotX = toX(currentPoint?.year ?? chart.current_year);
@@ -213,6 +218,9 @@ export default function Canvas(props: CanvasProps) {
   const eventX = chart.event_year != null ? toX(Math.max(minYear, Math.min(maxYear, chart.event_year))) : 0;
 
   const narrativeTop = mix(1250, 1080, chart.layout_progress);
+  const dotColor =
+    tier === "rising" || tier === "resurrected" ? COLORS.emerald : COLORS.crimson;
+  const peakX = toX(chart.peak_year);
 
   return (
     <div
@@ -365,6 +373,52 @@ export default function Canvas(props: CanvasProps) {
         <AxisLabel top={chartHeight * 0.5 - 26} text={formatYLabel(maxCount * 0.5)} />
         <AxisLabel top={chartHeight * 0.75 - 26} text={formatYLabel(maxCount * 0.25)} />
         <AxisLabel top={chartHeight - 26} text="0" />
+
+        {/* X-axis year labels */}
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: chartHeight + 8,
+            fontFamily: TYPE.body.family,
+            fontSize: 18,
+            color: COLORS.fade,
+            opacity: 0.5,
+            display: "flex",
+          }}
+        >
+          {String(minYear)}
+        </div>
+        {peakX > 60 && peakX < chartWidth - 60 && (
+          <div
+            style={{
+              position: "absolute",
+              left: peakX - 16,
+              top: chartHeight + 8,
+              fontFamily: TYPE.body.family,
+              fontSize: 18,
+              color: COLORS.fade,
+              opacity: 0.5,
+              display: "flex",
+            }}
+          >
+            {String(chart.peak_year)}
+          </div>
+        )}
+        <div
+          style={{
+            position: "absolute",
+            right: 0,
+            top: chartHeight + 8,
+            fontFamily: TYPE.body.family,
+            fontSize: 18,
+            color: COLORS.fade,
+            opacity: 0.5,
+            display: "flex",
+          }}
+        >
+          {String(maxYear)}
+        </div>
 
         {chart.event_alpha > 0 && chart.event_year != null && chart.event_label && (
           <>
@@ -524,7 +578,7 @@ export default function Canvas(props: CanvasProps) {
                   width: chart.dot_ring_radius * 2,
                   height: chart.dot_ring_radius * 2,
                   borderRadius: chart.dot_ring_radius,
-                  border: `2px solid ${COLORS.crimson}`,
+                  border: `2px solid ${dotColor}`,
                   opacity: chart.dot_ring_alpha,
                   display: "flex",
                 }}
@@ -538,7 +592,7 @@ export default function Canvas(props: CanvasProps) {
                 width: chart.dot_radius * 2,
                 height: chart.dot_radius * 2,
                 borderRadius: chart.dot_radius,
-                backgroundColor: COLORS.crimson,
+                backgroundColor: dotColor,
                 opacity: chart.dot_alpha,
                 display: "flex",
               }}
@@ -552,14 +606,15 @@ export default function Canvas(props: CanvasProps) {
           position: "absolute",
           top: mix(1370, 930, chart.layout_progress),
           left: CANVAS.safe.x,
-          opacity: stats.alpha,
           display: "flex",
           flexDirection: "row",
           gap: 16,
         }}
       >
         {stats.cards.slice(0, 3).map((card, index) => (
-          <StatCard key={index} label={card.label} value={card.value} tone={card.tone} />
+          <div key={index} style={{ display: "flex", opacity: card.alpha ?? stats.alpha }}>
+            <StatCard label={card.label} value={card.value} tone={card.tone} />
+          </div>
         ))}
       </div>
 
@@ -580,7 +635,7 @@ export default function Canvas(props: CanvasProps) {
               fontFamily: TYPE.display.family,
               fontWeight: TYPE.display.weight,
               fontSize: RAMP.body[0],
-              color: COLORS.crimson,
+              color: dotColor,
               display: "flex",
             }}
           >
@@ -738,6 +793,7 @@ export default function Canvas(props: CanvasProps) {
             height: 20,
             borderRadius: 10,
             backgroundColor: COLORS.crimson,
+            opacity: footer.dot_alpha ?? 1.0,
             display: "flex",
           }}
         />
