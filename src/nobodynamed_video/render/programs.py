@@ -6,56 +6,35 @@ from typing import Any
 
 from nobodynamed_video.models import ProgramType, VideoContext, VideoSpec
 from nobodynamed_video.render.hyperframes import Hyperframe, sample_scalar_track
-from nobodynamed_video.render.motion import (
-    ease_in_out_cubic,
-    ease_in_out_sine,
-    ease_out_back,
-    ease_out_quart,
-    lerp,
-    triangle_wave,
-)
+from nobodynamed_video.render.motion import ease_in_out_cubic, ease_out_quart, lerp, triangle_wave
 
 TOTAL_DURATION_S = 18.0
-DOT_LAND_T = 7.4
-# Collapse starts a beat AFTER the dot lands (not simultaneously) so the landing and
-# count-up read clearly in the still-expanded chart before the layout recomposes.
-RECOMPOSE_START_T = 8.6
-RECOMPOSE_END_T = 9.6
+DOT_LAND_T = 8.2
+RECOMPOSE_END_T = 9.4
 
 HEADER_ALPHA = (Hyperframe(0.0, 0.0, ease_out_quart), Hyperframe(0.5, 1.0))
 DIAGNOSIS_ALPHA = (Hyperframe(0.35, 0.0, ease_out_quart), Hyperframe(1.0, 1.0))
 CHART_ALPHA = (Hyperframe(1.0, 0.0, ease_out_quart), Hyperframe(1.6, 1.0))
-CHART_DRAW = (Hyperframe(1.6, 0.0, ease_out_quart), Hyperframe(DOT_LAND_T, 1.0))
+CHART_DRAW = (Hyperframe(1.6, 0.0, ease_in_out_cubic), Hyperframe(DOT_LAND_T, 1.0))
 DOT_ALPHA = (Hyperframe(DOT_LAND_T, 0.0, ease_out_quart), Hyperframe(DOT_LAND_T + 0.45, 1.0))
-DOT_RADIUS = (Hyperframe(DOT_LAND_T, 18.0, ease_out_back), Hyperframe(DOT_LAND_T + 0.45, 12.0))
+DOT_RADIUS = (
+    Hyperframe(DOT_LAND_T, 20.0, ease_out_quart),
+    Hyperframe(DOT_LAND_T + 0.15, 8.0, ease_in_out_cubic),
+    Hyperframe(DOT_LAND_T + 0.45, 12.0),
+)
 DOT_RING_ALPHA = (Hyperframe(DOT_LAND_T, 0.7), Hyperframe(DOT_LAND_T + 0.6, 0.0))
 DOT_RING_RADIUS = (
     Hyperframe(DOT_LAND_T, 10.0, ease_out_quart),
     Hyperframe(DOT_LAND_T + 0.6, 30.0),
 )
-LAYOUT_PROGRESS = (
-    Hyperframe(RECOMPOSE_START_T, 0.0, ease_in_out_cubic),
-    Hyperframe(RECOMPOSE_END_T, 1.0),
-)
-NARRATIVE_ALPHA = (
-    Hyperframe(RECOMPOSE_END_T, 0.0, ease_out_quart),
-    Hyperframe(RECOMPOSE_END_T + 0.8, 1.0),
-)
-SUPPORT_ALPHA = (
-    Hyperframe(RECOMPOSE_END_T + 0.5, 0.0, ease_out_quart),
-    Hyperframe(RECOMPOSE_END_T + 1.4, 1.0),
-)
-# Footer fades in linearly over 13.8–15.6s, straddling the start of the CTA window
-# (frame 450 = t=15.0s). At t=15.0 it is ~0.67 opacity — clearly present, so the CTA beat
-# reads distinctly from the narrative tail — yet still animating through the first CTA
-# frames, which keeps them from being byte-identical (avoids FROZEN_FRAMES). Previously it
-# began at 15.0s, so the opening CTA frames matched the narrative tail exactly.
-FOOTER_ALPHA = (Hyperframe(13.8, 0.0), Hyperframe(15.6, 1.0))
-EVENT_ALPHA = (
-    Hyperframe(RECOMPOSE_END_T + 0.2, 0.0, ease_out_quart),
-    Hyperframe(RECOMPOSE_END_T + 0.8, 1.0),
-)
-STAT_ALPHA = (Hyperframe(1.2, 0.0, ease_out_quart), Hyperframe(2.0, 1.0))
+LAYOUT_PROGRESS = (Hyperframe(DOT_LAND_T, 0.0, ease_in_out_cubic), Hyperframe(RECOMPOSE_END_T, 1.0))
+NARRATIVE_ALPHA = (Hyperframe(9.4, 0.0, ease_out_quart), Hyperframe(10.2, 1.0))
+SUPPORT_ALPHA = (Hyperframe(9.9, 0.0, ease_out_quart), Hyperframe(10.8, 1.0))
+FOOTER_ALPHA = (Hyperframe(15.2, 0.0, ease_out_quart), Hyperframe(16.0, 1.0))
+EVENT_ALPHA = (Hyperframe(9.6, 0.0, ease_out_quart), Hyperframe(10.2, 1.0))
+STAT_ALPHA_0 = (Hyperframe(1.2, 0.0, ease_out_quart), Hyperframe(2.0, 1.0))
+STAT_ALPHA_1 = (Hyperframe(1.35, 0.0, ease_out_quart), Hyperframe(2.15, 1.0))
+STAT_ALPHA_2 = (Hyperframe(1.5, 0.0, ease_out_quart), Hyperframe(2.3, 1.0))
 
 
 def _status_label(ctx: VideoContext) -> str:
@@ -93,16 +72,26 @@ def sample_program_frame(
     tracer_wave = triangle_wave(t, 0.7)
     chart_draw_progress = sample_scalar_track(CHART_DRAW, t)
     count_progress = (
-        # Count finishes as the collapse begins, so the hero number lands in the expanded chart.
-        ease_out_quart(min(1.0, max(0.0, (t - DOT_LAND_T) / 1.2))) if dot_visible else 0.0
+        ease_out_quart(min(1.0, max(0.0, (t - DOT_LAND_T) / 1.7))) if dot_visible else 0.0
     )
 
-    chart_cards = _stats_cards(ctx)
-    CARD_STAGGER_S = 0.15
-    card_alphas = [
-        round(sample_scalar_track(STAT_ALPHA, t - CARD_STAGGER_S * i), 6)
-        for i in range(len(chart_cards))
+    stat_alphas = [
+        round(sample_scalar_track(STAT_ALPHA_0, t), 6),
+        round(sample_scalar_track(STAT_ALPHA_1, t), 6),
+        round(sample_scalar_track(STAT_ALPHA_2, t), 6),
     ]
+    chart_cards: list[dict[str, Any]] = [
+        {**card, "alpha": alpha}
+        for card, alpha in zip(_stats_cards(ctx), stat_alphas)
+    ]
+
+    if t >= 16.0:
+        cta_local = t - 16.0
+        dot_wave = triangle_wave(cta_local, 1.0)
+        footer_dot_alpha = lerp(0.4, 1.0, ease_out_quart(dot_wave))
+    else:
+        footer_dot_alpha = 1.0
+
     return {
         "program": spec.program.value,
         "register": spec.hook.voice_register,
@@ -152,9 +141,8 @@ def sample_program_frame(
             "count_value": round(spec.record.current_count * count_progress),
         },
         "stats": {
-            "alpha": round(sample_scalar_track(STAT_ALPHA, t), 6),
+            "alpha": max(stat_alphas),
             "cards": chart_cards,
-            "card_alphas": card_alphas,
         },
         "narrative": {
             "alpha": round(sample_scalar_track(NARRATIVE_ALPHA, t), 6),
@@ -171,9 +159,7 @@ def sample_program_frame(
             "alpha": round(sample_scalar_track(FOOTER_ALPHA, t), 6),
             "site": "nobodynamed.com",
             "cta": "Run your name",
-            # Breathing pulse on the CTA dot gives the otherwise-static 15–18s tail motion
-            # (so frames stay distinct) and makes the CTA beat read as its own moment.
-            "dot_alpha": round(lerp(0.5, 1.0, ease_in_out_sine(triangle_wave(t, 1.2))), 6),
+            "dot_alpha": round(footer_dot_alpha, 6),
         },
         "debug_safe": debug_safe,
     }
