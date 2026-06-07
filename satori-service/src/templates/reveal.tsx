@@ -238,6 +238,7 @@ export default function Reveal(props: RevealProps) {
               fontFamily: TYPE.body.family,
               fontSize: RAMP.body[4],
               color: COLORS.fade,
+              fontVariantNumeric: "tabular-nums",
             }}
           >
             {maxCount.toLocaleString("en-US")}
@@ -258,6 +259,7 @@ export default function Reveal(props: RevealProps) {
               fontFamily: TYPE.body.family,
               fontSize: RAMP.body[4],
               color: COLORS.fade,
+              fontVariantNumeric: "tabular-nums",
             }}
           >
             {midCount.toLocaleString("en-US")}
@@ -394,6 +396,7 @@ export default function Reveal(props: RevealProps) {
             fontFamily: TYPE.body.family,
             fontSize: RAMP.body[4],
             color: COLORS.fade,
+            fontVariantNumeric: "tabular-nums",
           }}
         >
           {minYear}
@@ -403,6 +406,7 @@ export default function Reveal(props: RevealProps) {
             fontFamily: TYPE.body.family,
             fontSize: RAMP.body[4],
             color: COLORS.fade,
+            fontVariantNumeric: "tabular-nums",
           }}
         >
           {maxYear}
@@ -425,6 +429,8 @@ export default function Reveal(props: RevealProps) {
               fontWeight: TYPE.display.weight,
               fontSize: RAMP.display[1],
               color: COLORS.crimson,
+              lineHeight: 1.05,
+              fontVariantNumeric: "tabular-nums",
               display: "flex",
             }}
           >
@@ -436,6 +442,7 @@ export default function Reveal(props: RevealProps) {
               fontSize: RAMP.body[2],
               color: COLORS.fade,
               marginTop: 8,
+              fontVariantNumeric: "tabular-nums",
               display: "flex",
             }}
           >

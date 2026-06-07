@@ -36,7 +36,8 @@ interface ChartState {
 
 interface StatsState {
   alpha: number;
-  cards: Array<{ label: string; value: string; tone: string; alpha?: number }>;
+  cards: Array<{ label: string; value: string; tone: string }>;
+  card_alphas: number[];
 }
 
 interface NarrativeState {
@@ -116,8 +117,9 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone: 
           fontFamily: TYPE.body.family,
           fontSize: RAMP.body[4],
           color: COLORS.fade,
-          letterSpacing: 1.2,
+          letterSpacing: 2,
           textTransform: "uppercase",
+          fontVariantNumeric: "tabular-nums",
           display: "flex",
         }}
       >
@@ -130,7 +132,8 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone: 
           fontSize: RAMP.body[1],
           color: valueColor,
           marginTop: 10,
-          lineHeight: 1.05,
+          lineHeight: 1.15,
+          fontVariantNumeric: "tabular-nums",
           display: "flex",
         }}
       >
@@ -139,6 +142,81 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone: 
     </div>
   );
 }
+
+function smoothPathD(
+  points: Array<{ x: number; y: number }>,
+  drawProgress: number,
+): { pathD: string; tracerX: number; tracerY: number } {
+  if (points.length === 0) return { pathD: "", tracerX: 0, tracerY: 0 };
+  if (points.length === 1) return { pathD: `M ${points[0].x} ${points[0].y}`, tracerX: points[0].x, tracerY: points[0].y };
+
+  // Standard Catmull-Rom → cubic bezier conversion.
+  // For segment i→i+1, control points are:
+  //   cp1 = Pi + (Pi+1 - Pi-1) / 6
+  //   cp2 = Pi+1 - (Pi+2 - Pi) / 6
+  // Edge segments mirror the previous/next point.
+
+  const totalSegments = points.length - 1;
+  const fullSegments = Math.min(Math.floor(drawProgress * totalSegments), totalSegments);
+  const partialT = drawProgress * totalSegments - fullSegments;
+
+  let pathD = "";
+  let tracerX = points[0].x;
+  let tracerY = points[0].y;
+
+  const cp = (i: number, isEnd: boolean): { x: number; y: number } => {
+    const pi = points[i];
+    const pj = points[isEnd ? i + 1 : i - 1];
+    const dx = (pj.x - pi.x) / 6;
+    const dy = (pj.y - pi.y) / 6;
+    return { x: pi.x + dx, y: pi.y + dy };
+  };
+
+  for (let seg = 0; seg < fullSegments; seg++) {
+    const p0 = points[Math.max(0, seg - 1)];
+    const p1 = points[seg];
+    const p2 = points[seg + 1];
+    const p3 = points[Math.min(points.length - 1, seg + 2)];
+
+    const cp1 = { x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 };
+    const cp2 = { x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 };
+
+    const cmd = seg === 0 ? `M ${p1.x} ${p1.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}` : ` C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}`;
+    pathD += cmd;
+    tracerX = p2.x;
+    tracerY = p2.y;
+  }
+
+  // Partial segment — use De Casteljau to split the bezier at partialT
+  if (fullSegments < totalSegments && partialT > 0) {
+    const seg = fullSegments;
+    const p0 = points[Math.max(0, seg - 1)];
+    const p1 = points[seg];
+    const p2 = points[seg + 1];
+    const p3 = points[Math.min(points.length - 1, seg + 2)];
+
+    const cp1 = { x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 };
+    const cp2 = { x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 };
+
+    // De Casteljau at partialT — first cubic segment
+    const q0 = mix(p1.x, cp1.x, partialT); const r0 = mix(p1.y, cp1.y, partialT);
+    const q1 = mix(cp1.x, cp2.x, partialT); const r1 = mix(cp1.y, cp2.y, partialT);
+    const q2 = mix(cp2.x, p2.x, partialT); const r2 = mix(cp2.y, p2.y, partialT);
+    const s0 = mix(q0, q1, partialT); const t0 = mix(r0, r1, partialT);
+    const s1 = mix(q1, q2, partialT); const t1 = mix(r1, r2, partialT);
+    const endX = mix(s0, s1, partialT); const endY = mix(t0, t1, partialT);
+
+    const cmd = seg === 0
+      ? `M ${p1.x} ${p1.y} C ${q0} ${r0}, ${s0} ${t0}, ${endX} ${endY}`
+      : ` C ${q0} ${r0}, ${s0} ${t0}, ${endX} ${endY}`;
+    pathD += cmd;
+    tracerX = endX;
+    tracerY = endY;
+  }
+
+  return { pathD, tracerX, tracerY };
+}
+
 
 function formatYLabel(val: number): string {
   if (val >= 1000000) {
@@ -158,9 +236,10 @@ function AxisLabel({ top, text }: { top: number; text: string }) {
         left: 12,
         top: top,
         fontFamily: TYPE.body.family,
-        fontSize: 18,
+        fontSize: RAMP.body[4],
         color: COLORS.fade,
         opacity: 0.5,
+        fontVariantNumeric: "tabular-nums",
         display: "flex",
       }}
     >
@@ -178,46 +257,34 @@ export default function Canvas(props: CanvasProps) {
   const maxCount = Math.max(...filtered.map((point) => point.count), 1);
 
   const chartLeft = CANVAS.safe.x;
-  const chartTop = mix(560, 470, chart.layout_progress);
+  // Keep the chart top fixed at 560 across the recompose: the top y-axis label sits at
+  // top:-26 (y≈534), which clears the diagnosis subhead (ends ~489). Collapsing toward 470
+  // pushed the "5K" label and curve peak up into the "N born last year." subhead. Instead,
+  // grow the chart *downward* on recompose (taller collapsed height) so it anchors the
+  // middle of the canvas; the stats/narrative blocks below are pushed down to match, which
+  // distributes content over the full height instead of leaving a void above the footer.
+  const chartTop = 560;
   const chartWidth = mix(CANVAS.w - CANVAS.safe.x * 2, 920, chart.layout_progress);
-  const chartHeight = mix(760, 420, chart.layout_progress);
+  const chartHeight = mix(760, 450, chart.layout_progress);
 
   const toX = (year: number) => ((year - minYear) / Math.max(maxYear - minYear, 1)) * chartWidth;
   const toY = (count: number) => chartHeight - (count / maxCount) * chartHeight;
 
-  const allPts: Array<[number, number]> = filtered.map((p) => [toX(p.year), toY(p.count)]);
-  const totalSegs = Math.max(1, allPts.length - 1);
-  const progressSegs = chart.draw_progress * totalSegs;
-  const fullCount = Math.floor(progressSegs);
-  const partialT = progressSegs - fullCount;
+  const curvePoints = filtered.map((p) => ({ x: toX(p.year), y: toY(p.count) }));
+  const { pathD, tracerX, tracerY } = smoothPathD(curvePoints, chart.draw_progress);
 
-  const drawnPts: Array<[number, number]> = [];
-  for (let i = 0; i <= Math.min(fullCount, allPts.length - 1); i++) {
-    drawnPts.push(allPts[i]);
-  }
-  if (fullCount < allPts.length - 1 && partialT > 0) {
-    const p1 = allPts[fullCount];
-    const p2 = allPts[fullCount + 1];
-    drawnPts.push([p1[0] + (p2[0] - p1[0]) * partialT, p1[1] + (p2[1] - p1[1]) * partialT]);
-  }
-
-  const tracerX = drawnPts[drawnPts.length - 1]?.[0] ?? allPts[0]?.[0] ?? 0;
-  const tracerY = drawnPts[drawnPts.length - 1]?.[1] ?? allPts[0]?.[1] ?? 0;
-
-  const curveParts = smoothCurveParts(drawnPts);
-  const pathD =
-    drawnPts.length >= 2 ? `M ${drawnPts[0][0]} ${drawnPts[0][1]}${curveParts}` : "";
-  const pathAreaD =
-    drawnPts.length >= 2
-      ? `M ${drawnPts[0][0]} ${chartHeight} L ${drawnPts[0][0]} ${drawnPts[0][1]}${curveParts} L ${tracerX} ${chartHeight} Z`
-      : "";
+  // Area fill — closes the path with a clean line to baseline, then smooth bezier back.
+  const pathAreaD = pathD
+    ? `M ${curvePoints[0]?.x ?? 0} ${chartHeight} ${pathD.replace(/^M /, "L ")} L ${tracerX} ${chartHeight} Z`
+    : "";
 
   const currentPoint = filtered.find((point) => point.year === chart.current_year) ?? filtered[filtered.length - 1];
   const dotX = toX(currentPoint?.year ?? chart.current_year);
   const dotY = toY(currentPoint?.count ?? 0);
   const eventX = chart.event_year != null ? toX(Math.max(minYear, Math.min(maxYear, chart.event_year))) : 0;
 
-  const narrativeTop = mix(1250, 1080, chart.layout_progress);
+  const narrativeTop = mix(1250, 1340, chart.layout_progress);
+  const comparisonTop = mix(1640, 1420, chart.layout_progress);
   const dotColor =
     tier === "rising" || tier === "resurrected" ? COLORS.emerald : COLORS.crimson;
   const peakX = toX(chart.peak_year);
@@ -275,7 +342,7 @@ export default function Canvas(props: CanvasProps) {
             fontFamily: TYPE.body.family,
             fontSize: RAMP.body[4],
             color: COLORS.fade,
-            letterSpacing: 3,
+            letterSpacing: 2,
             textTransform: "uppercase",
             display: "flex",
           }}
@@ -324,6 +391,7 @@ export default function Canvas(props: CanvasProps) {
             fontSize: RAMP.body[0],
             color: COLORS.ink,
             lineHeight: 1.08,
+            fontVariantNumeric: "tabular-nums",
             display: "flex",
           }}
         >
@@ -335,7 +403,8 @@ export default function Canvas(props: CanvasProps) {
             fontSize: RAMP.body[3],
             color: COLORS.fade,
             lineHeight: 1.5,
-            marginTop: 18,
+            marginTop: 22,
+            fontVariantNumeric: "tabular-nums",
             display: "flex",
           }}
         >
@@ -453,6 +522,7 @@ export default function Canvas(props: CanvasProps) {
                 style={{
                   fontFamily: TYPE.body.family,
                   fontSize: RAMP.body[4],
+                  fontVariantNumeric: "tabular-nums",
                   display: "flex",
                 }}
               >
@@ -475,8 +545,9 @@ export default function Canvas(props: CanvasProps) {
         >
           <defs>
             <linearGradient id="chartAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={COLORS.ink} stopOpacity={0.2} />
-              <stop offset="100%" stopColor={COLORS.ink} stopOpacity={0.0} />
+              <stop offset="0%" stopColor={COLORS.ink} stopOpacity={0.3} />
+              <stop offset="70%" stopColor={COLORS.ink} stopOpacity={0.05} />
+              <stop offset="100%" stopColor={COLORS.crimson} stopOpacity={0.1} />
             </linearGradient>
           </defs>
 
@@ -604,7 +675,7 @@ export default function Canvas(props: CanvasProps) {
       <div
         style={{
           position: "absolute",
-          top: mix(1370, 930, chart.layout_progress),
+          top: mix(1370, 1100, chart.layout_progress),
           left: CANVAS.safe.x,
           display: "flex",
           flexDirection: "row",
@@ -612,7 +683,7 @@ export default function Canvas(props: CanvasProps) {
         }}
       >
         {stats.cards.slice(0, 3).map((card, index) => (
-          <div key={index} style={{ display: "flex", opacity: card.alpha ?? stats.alpha }}>
+          <div key={index} style={{ opacity: stats.card_alphas?.[index] ?? stats.alpha, display: "flex" }}>
             <StatCard label={card.label} value={card.value} tone={card.tone} />
           </div>
         ))}
@@ -622,8 +693,10 @@ export default function Canvas(props: CanvasProps) {
         <div
           style={{
             position: "absolute",
-            top: mix(chartTop + chartHeight + 18, chartTop + chartHeight - 24, chart.layout_progress),
-            right: CANVAS.safe.x,
+            // Anchor the callout just above-and-left of the landing dot (chartTop/chartLeft +
+            // dotY/dotX, which track the collapse) so it never overlaps the crimson dot.
+            top: chartTop + dotY - 112,
+            right: CANVAS.w - (chartLeft + dotX) + 36,
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-end",
@@ -636,6 +709,8 @@ export default function Canvas(props: CanvasProps) {
               fontWeight: TYPE.display.weight,
               fontSize: RAMP.body[0],
               color: dotColor,
+              lineHeight: 1.05,
+              fontVariantNumeric: "tabular-nums",
               display: "flex",
             }}
           >
@@ -647,6 +722,7 @@ export default function Canvas(props: CanvasProps) {
               fontSize: RAMP.body[4],
               color: COLORS.fade,
               marginTop: 6,
+              fontVariantNumeric: "tabular-nums",
               display: "flex",
             }}
           >
@@ -671,7 +747,7 @@ export default function Canvas(props: CanvasProps) {
             width: CANVAS.w - CANVAS.safe.x * 2,
             height: 1,
             backgroundColor: COLORS.rule,
-            marginBottom: 34,
+            marginBottom: 26,
             display: "flex",
           }}
         />
@@ -681,7 +757,7 @@ export default function Canvas(props: CanvasProps) {
             fontWeight: TYPE.display.weight,
             fontSize: RAMP.body[1],
             color: COLORS.ink,
-            lineHeight: 1.12,
+            lineHeight: 1.2,
             maxWidth: 840,
             display: "flex",
           }}
@@ -695,7 +771,7 @@ export default function Canvas(props: CanvasProps) {
               fontSize: RAMP.body[3],
               color: COLORS.fade,
               lineHeight: 1.45,
-              marginTop: 20,
+              marginTop: 24,
               opacity: narrative.support_alpha,
               maxWidth: 820,
               display: "flex",
@@ -710,7 +786,7 @@ export default function Canvas(props: CanvasProps) {
         <div
           style={{
             position: "absolute",
-            top: 1540,
+            top: comparisonTop,
             left: CANVAS.safe.x,
             opacity: comparison.alpha,
             display: "flex",
@@ -724,7 +800,7 @@ export default function Canvas(props: CanvasProps) {
               fontFamily: TYPE.body.family,
               fontSize: RAMP.body[4],
               color: COLORS.fade,
-              letterSpacing: 1.5,
+              letterSpacing: 2,
               textTransform: "uppercase",
               display: "flex",
             }}
@@ -737,6 +813,7 @@ export default function Canvas(props: CanvasProps) {
               fontWeight: TYPE.display.weight,
               fontSize: RAMP.body[2],
               color: COLORS.ink,
+              fontVariantNumeric: "tabular-nums",
               display: "flex",
             }}
           >
@@ -748,7 +825,7 @@ export default function Canvas(props: CanvasProps) {
       <div
         style={{
           position: "absolute",
-          bottom: 118,
+          bottom: 320,
           left: CANVAS.safe.x,
           opacity: footer.alpha,
           display: "flex",
@@ -770,6 +847,8 @@ export default function Canvas(props: CanvasProps) {
               fontWeight: TYPE.display.weight,
               fontSize: RAMP.body[2],
               color: COLORS.ink,
+              letterSpacing: 2,
+              lineHeight: 1.05,
               display: "flex",
             }}
           >
@@ -781,6 +860,7 @@ export default function Canvas(props: CanvasProps) {
               fontSize: RAMP.body[4],
               color: COLORS.fade,
               marginTop: 6,
+              lineHeight: 1.4,
               display: "flex",
             }}
           >

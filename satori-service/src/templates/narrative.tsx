@@ -103,10 +103,10 @@ export default function Narrative(props: NarrativeProps) {
             gap: 24,
           }}
         >
-          <span style={{ fontFamily: TYPE.display.family, fontWeight: TYPE.display.weight, fontSize: RAMP.body[0], color: COLORS.crimson, display: "flex" }}>
+          <span style={{ fontFamily: TYPE.display.family, fontWeight: TYPE.display.weight, fontSize: RAMP.body[0], color: COLORS.crimson, lineHeight: 1.05, fontVariantNumeric: "tabular-nums", display: "flex" }}>
             {peak_count.toLocaleString("en-US")}
           </span>
-          <span style={{ fontFamily: TYPE.body.family, fontSize: RAMP.body[2], color: COLORS.fade, display: "flex" }}>
+          <span style={{ fontFamily: TYPE.body.family, fontSize: RAMP.body[2], color: COLORS.fade, fontVariantNumeric: "tabular-nums", display: "flex" }}>
             peak in {peak_year}
           </span>
         </div>
