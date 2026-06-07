@@ -105,6 +105,7 @@ export default function Hook(props: HookProps) {
           opacity: subhead_alpha,
           maxWidth: CANVAS.w - CANVAS.safe.x * 2,
           lineHeight: 1.4,
+          fontVariantNumeric: "tabular-nums",
           display: "flex",
         }}
       >

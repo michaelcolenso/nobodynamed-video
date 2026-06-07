@@ -67,7 +67,7 @@ export function TierBadge({ tier }: { tier: Tier }) {
           fontWeight: TYPE.display.weight,
           fontSize: RAMP.body[3],
           color: text,
-          letterSpacing: 3,
+          letterSpacing: 2,
         }}
       >
         {label}

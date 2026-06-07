@@ -93,6 +93,7 @@ def _check_mp4(mp4_path: Path) -> list[QCIssue]:
                 "-print_format",
                 "json",
                 "-show_streams",
+                "-show_format",
                 str(mp4_path),
             ],
             capture_output=True,
@@ -119,7 +120,11 @@ def _check_mp4(mp4_path: Path) -> list[QCIssue]:
     w, h = video.get("width"), video.get("height")
     if w != _EXPECTED_WIDTH or h != _EXPECTED_HEIGHT:
         issues.append(QCIssue("error", "MP4_INVALID", f"unexpected resolution: {w}x{h}"))
-    duration = float(str(video.get("duration", 0)))
+    # Use the container (format) duration — the user-facing length. The video stream
+    # itself is ~0.6s shorter because the xfade compositor overlaps transitions.
+    fmt = data.get("format", {})
+    fmt_duration = fmt.get("duration") if isinstance(fmt, dict) else None
+    duration = float(str(fmt_duration if fmt_duration is not None else video.get("duration", 0)))
     if duration < _MIN_DURATION_S:
         msg = f"duration {duration:.2f}s < {_MIN_DURATION_S}s"
         issues.append(QCIssue("error", "MP4_INVALID", msg))
