@@ -21,7 +21,6 @@ from nobodynamed_video.qc.checks import run_all_checks
 from nobodynamed_video.qc.report import build_qc_report
 from nobodynamed_video.render.frame_planner import plan_frames
 from nobodynamed_video.render.golden import check_or_write_golden, sha256_bytes
-from nobodynamed_video.render.programs import TOTAL_DURATION_S
 from nobodynamed_video.render.satori_client import SatoriClient
 
 console = Console()
@@ -106,7 +105,7 @@ async def render_spec(
     manifest = build_manifest(
         spec_id=spec.id,
         frame_count=len(sha256_frames),
-        duration_s=TOTAL_DURATION_S,
+        duration_s=18.0,
         output_path=str(mp4_path),
         sha256_frames=sha256_frames,
         satori_version=satori_version,
@@ -127,8 +126,7 @@ async def render_spec(
         "frames": len(sha256_frames),
         "composed": True,
         "mp4": str(mp4_path),
-        "duration_s": TOTAL_DURATION_S,
-        "render_time_s": total_time,
+        "duration_s": total_time,
         "caption": caption,
     }
 
@@ -179,7 +177,7 @@ async def run_batch(
     table.add_column("Status")
     table.add_column("Time (s)")
     for r in results:
-        table.add_row(str(r["id"]), "ok", f"{r.get('render_time_s', 0):.1f}")
+        table.add_row(str(r["id"]), "ok", f"{r.get('duration_s', 0):.1f}")
     for spec_id, exc in errors:
         table.add_row(spec_id, f"[red]FAILED: {exc}[/red]", "—")
     console.print(table)
