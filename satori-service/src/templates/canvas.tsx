@@ -57,7 +57,7 @@ interface FooterState {
   alpha: number;
   site: string;
   cta: string;
-  dot_alpha: number;
+  dot_alpha?: number;
 }
 
 export interface CanvasProps {
@@ -76,6 +76,22 @@ export interface CanvasProps {
 
 function mix(a: number, b: number, progress: number) {
   return a + (b - a) * progress;
+}
+
+function smoothCurveParts(pts: Array<[number, number]>): string {
+  let d = "";
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
+    const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
+    const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]}`;
+  }
+  return d;
 }
 
 function StatCard({ label, value, tone }: { label: string; value: string; tone: string }) {
@@ -269,6 +285,9 @@ export default function Canvas(props: CanvasProps) {
 
   const narrativeTop = mix(1250, 1340, chart.layout_progress);
   const comparisonTop = mix(1640, 1420, chart.layout_progress);
+  const dotColor =
+    tier === "rising" || tier === "resurrected" ? COLORS.emerald : COLORS.crimson;
+  const peakX = toX(chart.peak_year);
 
   return (
     <div
@@ -423,6 +442,52 @@ export default function Canvas(props: CanvasProps) {
         <AxisLabel top={chartHeight * 0.5 - 26} text={formatYLabel(maxCount * 0.5)} />
         <AxisLabel top={chartHeight * 0.75 - 26} text={formatYLabel(maxCount * 0.25)} />
         <AxisLabel top={chartHeight - 26} text="0" />
+
+        {/* X-axis year labels */}
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: chartHeight + 8,
+            fontFamily: TYPE.body.family,
+            fontSize: 18,
+            color: COLORS.fade,
+            opacity: 0.5,
+            display: "flex",
+          }}
+        >
+          {String(minYear)}
+        </div>
+        {peakX > 60 && peakX < chartWidth - 60 && (
+          <div
+            style={{
+              position: "absolute",
+              left: peakX - 16,
+              top: chartHeight + 8,
+              fontFamily: TYPE.body.family,
+              fontSize: 18,
+              color: COLORS.fade,
+              opacity: 0.5,
+              display: "flex",
+            }}
+          >
+            {String(chart.peak_year)}
+          </div>
+        )}
+        <div
+          style={{
+            position: "absolute",
+            right: 0,
+            top: chartHeight + 8,
+            fontFamily: TYPE.body.family,
+            fontSize: 18,
+            color: COLORS.fade,
+            opacity: 0.5,
+            display: "flex",
+          }}
+        >
+          {String(maxYear)}
+        </div>
 
         {chart.event_alpha > 0 && chart.event_year != null && chart.event_label && (
           <>
@@ -584,7 +649,7 @@ export default function Canvas(props: CanvasProps) {
                   width: chart.dot_ring_radius * 2,
                   height: chart.dot_ring_radius * 2,
                   borderRadius: chart.dot_ring_radius,
-                  border: `2px solid ${COLORS.crimson}`,
+                  border: `2px solid ${dotColor}`,
                   opacity: chart.dot_ring_alpha,
                   display: "flex",
                 }}
@@ -598,7 +663,7 @@ export default function Canvas(props: CanvasProps) {
                 width: chart.dot_radius * 2,
                 height: chart.dot_radius * 2,
                 borderRadius: chart.dot_radius,
-                backgroundColor: COLORS.crimson,
+                backgroundColor: dotColor,
                 opacity: chart.dot_alpha,
                 display: "flex",
               }}
@@ -643,7 +708,7 @@ export default function Canvas(props: CanvasProps) {
               fontFamily: TYPE.display.family,
               fontWeight: TYPE.display.weight,
               fontSize: RAMP.body[0],
-              color: COLORS.crimson,
+              color: dotColor,
               lineHeight: 1.05,
               fontVariantNumeric: "tabular-nums",
               display: "flex",
@@ -808,7 +873,7 @@ export default function Canvas(props: CanvasProps) {
             height: 20,
             borderRadius: 10,
             backgroundColor: COLORS.crimson,
-            opacity: footer.dot_alpha ?? 1,
+            opacity: footer.dot_alpha ?? 1.0,
             display: "flex",
           }}
         />
