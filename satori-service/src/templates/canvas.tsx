@@ -244,11 +244,12 @@ export default function Canvas(props: CanvasProps) {
   // Keep the chart top fixed at 560 across the recompose: the top y-axis label sits at
   // top:-26 (y≈534), which clears the diagnosis subhead (ends ~489). Collapsing toward 470
   // pushed the "5K" label and curve peak up into the "N born last year." subhead. Instead,
-  // shrink the collapsed height so the chart's bottom edge stays anchored (~830), preserving
-  // the count-readout and stats-card spacing below.
+  // grow the chart *downward* on recompose (taller collapsed height) so it anchors the
+  // middle of the canvas; the stats/narrative blocks below are pushed down to match, which
+  // distributes content over the full height instead of leaving a void above the footer.
   const chartTop = 560;
   const chartWidth = mix(CANVAS.w - CANVAS.safe.x * 2, 920, chart.layout_progress);
-  const chartHeight = mix(760, 270, chart.layout_progress);
+  const chartHeight = mix(760, 400, chart.layout_progress);
 
   const toX = (year: number) => ((year - minYear) / Math.max(maxYear - minYear, 1)) * chartWidth;
   const toY = (count: number) => chartHeight - (count / maxCount) * chartHeight;
@@ -266,7 +267,7 @@ export default function Canvas(props: CanvasProps) {
   const dotY = toY(currentPoint?.count ?? 0);
   const eventX = chart.event_year != null ? toX(Math.max(minYear, Math.min(maxYear, chart.event_year))) : 0;
 
-  const narrativeTop = mix(1250, 1080, chart.layout_progress);
+  const narrativeTop = mix(1250, 1240, chart.layout_progress);
   const comparisonTop = mix(1640, 1420, chart.layout_progress);
 
   return (
@@ -608,7 +609,7 @@ export default function Canvas(props: CanvasProps) {
       <div
         style={{
           position: "absolute",
-          top: mix(1370, 930, chart.layout_progress),
+          top: mix(1370, 1040, chart.layout_progress),
           left: CANVAS.safe.x,
           display: "flex",
           flexDirection: "row",
