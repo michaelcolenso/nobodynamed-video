@@ -249,7 +249,7 @@ export default function Canvas(props: CanvasProps) {
   // distributes content over the full height instead of leaving a void above the footer.
   const chartTop = 560;
   const chartWidth = mix(CANVAS.w - CANVAS.safe.x * 2, 920, chart.layout_progress);
-  const chartHeight = mix(760, 400, chart.layout_progress);
+  const chartHeight = mix(760, 450, chart.layout_progress);
 
   const toX = (year: number) => ((year - minYear) / Math.max(maxYear - minYear, 1)) * chartWidth;
   const toY = (count: number) => chartHeight - (count / maxCount) * chartHeight;
@@ -267,7 +267,7 @@ export default function Canvas(props: CanvasProps) {
   const dotY = toY(currentPoint?.count ?? 0);
   const eventX = chart.event_year != null ? toX(Math.max(minYear, Math.min(maxYear, chart.event_year))) : 0;
 
-  const narrativeTop = mix(1250, 1240, chart.layout_progress);
+  const narrativeTop = mix(1250, 1340, chart.layout_progress);
   const comparisonTop = mix(1640, 1420, chart.layout_progress);
 
   return (
@@ -480,8 +480,9 @@ export default function Canvas(props: CanvasProps) {
         >
           <defs>
             <linearGradient id="chartAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={COLORS.ink} stopOpacity={0.2} />
-              <stop offset="100%" stopColor={COLORS.ink} stopOpacity={0.0} />
+              <stop offset="0%" stopColor={COLORS.ink} stopOpacity={0.3} />
+              <stop offset="70%" stopColor={COLORS.ink} stopOpacity={0.05} />
+              <stop offset="100%" stopColor={COLORS.crimson} stopOpacity={0.1} />
             </linearGradient>
           </defs>
 
@@ -609,7 +610,7 @@ export default function Canvas(props: CanvasProps) {
       <div
         style={{
           position: "absolute",
-          top: mix(1370, 1040, chart.layout_progress),
+          top: mix(1370, 1100, chart.layout_progress),
           left: CANVAS.safe.x,
           display: "flex",
           flexDirection: "row",
@@ -627,8 +628,10 @@ export default function Canvas(props: CanvasProps) {
         <div
           style={{
             position: "absolute",
-            top: mix(chartTop + chartHeight + 18, chartTop + chartHeight - 24, chart.layout_progress),
-            right: CANVAS.safe.x,
+            // Anchor the callout just above-and-left of the landing dot (chartTop/chartLeft +
+            // dotY/dotX, which track the collapse) so it never overlaps the crimson dot.
+            top: chartTop + dotY - 112,
+            right: CANVAS.w - (chartLeft + dotX) + 36,
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-end",

@@ -16,8 +16,11 @@ from nobodynamed_video.render.motion import (
 )
 
 TOTAL_DURATION_S = 18.0
-DOT_LAND_T = 8.2
-RECOMPOSE_END_T = 9.4
+DOT_LAND_T = 7.4
+# Collapse starts a beat AFTER the dot lands (not simultaneously) so the landing and
+# count-up read clearly in the still-expanded chart before the layout recomposes.
+RECOMPOSE_START_T = 8.6
+RECOMPOSE_END_T = 9.6
 
 HEADER_ALPHA = (Hyperframe(0.0, 0.0, ease_out_quart), Hyperframe(0.5, 1.0))
 DIAGNOSIS_ALPHA = (Hyperframe(0.35, 0.0, ease_out_quart), Hyperframe(1.0, 1.0))
@@ -30,16 +33,28 @@ DOT_RING_RADIUS = (
     Hyperframe(DOT_LAND_T, 10.0, ease_out_quart),
     Hyperframe(DOT_LAND_T + 0.6, 30.0),
 )
-LAYOUT_PROGRESS = (Hyperframe(DOT_LAND_T, 0.0, ease_in_out_cubic), Hyperframe(RECOMPOSE_END_T, 1.0))
-NARRATIVE_ALPHA = (Hyperframe(9.4, 0.0, ease_out_quart), Hyperframe(10.2, 1.0))
-SUPPORT_ALPHA = (Hyperframe(9.9, 0.0, ease_out_quart), Hyperframe(10.8, 1.0))
+LAYOUT_PROGRESS = (
+    Hyperframe(RECOMPOSE_START_T, 0.0, ease_in_out_cubic),
+    Hyperframe(RECOMPOSE_END_T, 1.0),
+)
+NARRATIVE_ALPHA = (
+    Hyperframe(RECOMPOSE_END_T, 0.0, ease_out_quart),
+    Hyperframe(RECOMPOSE_END_T + 0.8, 1.0),
+)
+SUPPORT_ALPHA = (
+    Hyperframe(RECOMPOSE_END_T + 0.5, 0.0, ease_out_quart),
+    Hyperframe(RECOMPOSE_END_T + 1.4, 1.0),
+)
 # Footer fades in linearly over 13.8–15.6s, straddling the start of the CTA window
 # (frame 450 = t=15.0s). At t=15.0 it is ~0.67 opacity — clearly present, so the CTA beat
 # reads distinctly from the narrative tail — yet still animating through the first CTA
 # frames, which keeps them from being byte-identical (avoids FROZEN_FRAMES). Previously it
 # began at 15.0s, so the opening CTA frames matched the narrative tail exactly.
 FOOTER_ALPHA = (Hyperframe(13.8, 0.0), Hyperframe(15.6, 1.0))
-EVENT_ALPHA = (Hyperframe(9.6, 0.0, ease_out_quart), Hyperframe(10.2, 1.0))
+EVENT_ALPHA = (
+    Hyperframe(RECOMPOSE_END_T + 0.2, 0.0, ease_out_quart),
+    Hyperframe(RECOMPOSE_END_T + 0.8, 1.0),
+)
 STAT_ALPHA = (Hyperframe(1.2, 0.0, ease_out_quart), Hyperframe(2.0, 1.0))
 
 
@@ -78,7 +93,8 @@ def sample_program_frame(
     tracer_wave = triangle_wave(t, 0.7)
     chart_draw_progress = sample_scalar_track(CHART_DRAW, t)
     count_progress = (
-        ease_out_quart(min(1.0, max(0.0, (t - DOT_LAND_T) / 1.7))) if dot_visible else 0.0
+        # Count finishes as the collapse begins, so the hero number lands in the expanded chart.
+        ease_out_quart(min(1.0, max(0.0, (t - DOT_LAND_T) / 1.2))) if dot_visible else 0.0
     )
 
     chart_cards = _stats_cards(ctx)

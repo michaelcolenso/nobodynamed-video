@@ -50,7 +50,12 @@ def _compute_rise_pct(record: NameRecord) -> int:
 def _compute_decline_pct(record: NameRecord) -> int:
     if record.peak_count <= 0:
         return 0
-    return _round_pct(((record.peak_count - record.current_count) / record.peak_count) * 100)
+    pct = _round_pct(((record.peak_count - record.current_count) / record.peak_count) * 100)
+    # A name with surviving births is never a 100% decline (that reads as extinction);
+    # rounding 99.8% → 100% would contradict the live count, so cap just below.
+    if record.current_count > 0 and pct >= 100:
+        pct = 99
+    return pct
 
 
 def _weighted_mean_year(record: NameRecord) -> float:
@@ -167,7 +172,7 @@ def build_narrative_text(
         return primary, supporting
     if tier in (Tier.CRITICAL, Tier.EXTINCT):
         primary = f"{name} now survives mostly as inherited memory."
-        supporting = f"Current births: {current_count}."
+        supporting = f"Down {decline_pct}% from its {peak_year} peak."
         return primary, supporting
     primary = f"{name} is back in circulation after a long period of dormancy."
     supporting = f"Peak year: {peak_year}."
