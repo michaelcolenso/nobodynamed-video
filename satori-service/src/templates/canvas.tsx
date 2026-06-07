@@ -336,6 +336,9 @@ export default function Canvas(props: CanvasProps) {
             color: COLORS.fade,
             lineHeight: 1.5,
             marginTop: 18,
+            // Fade out as the chart collapses upward so the top axis label
+            // (e.g. "5K") doesn't collide with this subhead in the narrative/cta phase.
+            opacity: 1 - chart.layout_progress,
             display: "flex",
           }}
         >
@@ -627,7 +630,10 @@ export default function Canvas(props: CanvasProps) {
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-end",
-            opacity: chart.dot_alpha,
+            // Fade out during recompose: in the collapsed layout this floating
+            // readout would overlap the "2024" x-axis label and the stat cards,
+            // and the same count is already shown in the CURRENT stat card.
+            opacity: chart.dot_alpha * (1 - chart.layout_progress),
           }}
         >
           <span
