@@ -9,10 +9,10 @@ from ruamel.yaml import YAML
 
 from nobodynamed_video.data.d1_source import D1Source
 from nobodynamed_video.data.hooks import pillar_to_program
+from nobodynamed_video.data.narratives import select_narrative
 from nobodynamed_video.data.sqlite_source import SqliteSource
 from nobodynamed_video.models import (
     NameRecord,
-    ProgramType,
     ResolvedCulturalEvent,
     ResolvedHook,
     Tier,
@@ -144,39 +144,6 @@ def _resolve_event(
     )
 
 
-def build_narrative_text(
-    program: ProgramType,
-    tier: Tier,
-    name: str,
-    peak_year: int,
-    current_count: int,
-    event: ResolvedCulturalEvent | None,
-    decline_pct: int,
-    rise_pct: int,
-) -> tuple[str, str | None]:
-    if program == ProgramType.CULTURAL_EVENT and event is not None:
-        primary = f"{name} was already moving. {event.killing_event} accelerated the decline."
-        supporting = f"Down {decline_pct}% from its peak, with the break visible in the record."
-        return primary, supporting
-    if program == ProgramType.RETURN_NOTICE:
-        primary = f"{name} fell almost out of circulation and then returned."
-        supporting = f"Up {rise_pct}% over the last five years."
-        return primary, supporting
-    if tier == Tier.STABLE:
-        primary = f"{name} never disappeared. It just stopped being dominant."
-        supporting = f"Peak usage came in {peak_year}, but the name remained durable."
-        return primary, supporting
-    if tier == Tier.DECLINING:
-        primary = f"{name} is no longer reproducing at anything like its former scale."
-        supporting = f"It is down {decline_pct}% from peak."
-        return primary, supporting
-    if tier in (Tier.CRITICAL, Tier.EXTINCT):
-        primary = f"{name} now survives mostly as inherited memory."
-        supporting = f"Down {decline_pct}% from its {peak_year} peak."
-        return primary, supporting
-    primary = f"{name} is back in circulation after a long period of dormancy."
-    supporting = f"Peak year: {peak_year}."
-    return primary, supporting
 
 
 async def build_base_context(
@@ -249,18 +216,11 @@ async def build_base_context(
     )
 
 
-def finalize_video_context(base: VideoContext, hook: ResolvedHook) -> VideoContext:
+def finalize_video_context(
+    base: VideoContext, hook: ResolvedHook, seed: int = 0
+) -> VideoContext:
     program = pillar_to_program(hook.pillar)
-    narrative_text, supporting_text = build_narrative_text(
-        program,
-        base.tier,
-        base.name,
-        base.peak_year,
-        base.current_count,
-        base.cultural_event,
-        base.decline_pct,
-        base.rise_pct,
-    )
+    narrative_text, supporting_text = select_narrative(base, program, base.tier, seed)
     return base.model_copy(
         update={
             "program": program,

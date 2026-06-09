@@ -116,7 +116,7 @@ hooks:
     register: morbid
     compatible_tiers: [extinct, critical]
     headline: "{{ name }} is dying."
-    subhead:  "{{ current_count }} births in {{ current_year }}. The lowest on record."
+    subhead:  "{{ current_count }} births in {{ current_year }}. The curve only points down."
     pinned_comment: "Last {{ name }} you met. Go."
     caption: "{{ name }}. {{ current_count }}. {{ current_year }}. #namedata #endangered"
 

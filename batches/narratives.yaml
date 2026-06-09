@@ -1,0 +1,181 @@
+# narratives.yaml
+# nobodynamed.com — narrative scene copy library v1
+#
+# The narrative scene (9–15 s) is the editorial core of each video.
+# Previously every name of the same tier received identical copy.
+# This library provides variant diversity using the same template
+# engine and seeded selection as hooks.yaml.
+#
+# Selection: filtered by program + tier, then requires_var, then
+# deterministic pick via spec_seed XOR _NARRATIVE_SALT.
+#
+# Budget: primary ≤ 84 chars, supporting ≤ 120 chars (rendered).
+
+version: 1
+
+narratives:
+
+  # ---------------------------------------------------------------------------
+  # CULTURAL EVENT — program: cultural_event
+  # ---------------------------------------------------------------------------
+
+  - id: narr-cult-001
+    program: cultural_event
+    compatible_tiers: [declining, critical, extinct]
+    requires_var: killing_event
+    primary: "{{ name }} was already moving. {{ killing_event }} accelerated it."
+    supporting: "Down {{ decline_pct }}% from peak. The break is visible in the data."
+
+  - id: narr-cult-002
+    program: cultural_event
+    compatible_tiers: [declining, critical, extinct]
+    requires_var: killing_event
+    primary: "The data moved before the headline. {{ killing_event }} finished it."
+    supporting: "{{ name }} peaked at {{ peak_count | thousands }}. Now: {{ current_count }}."
+
+  - id: narr-cult-003
+    program: cultural_event
+    compatible_tiers: [declining, critical, extinct]
+    requires_var: killing_event
+    primary: "{{ killing_event }} didn't start the decline. It removed the floor."
+    supporting: "{{ name }}: {{ peak_year }} peak, {{ decline_pct }}% down."
+
+  # ---------------------------------------------------------------------------
+  # RETURN NOTICE — program: return_notice
+  # ---------------------------------------------------------------------------
+
+  - id: narr-ret-001
+    program: return_notice
+    compatible_tiers: [rising, resurrected]
+    primary: "{{ name }} fell out of circulation and then returned."
+    supporting: "Up {{ rise_pct }}% over the last five years."
+
+  - id: narr-ret-002
+    program: return_notice
+    compatible_tiers: [rising, resurrected]
+    primary: "The cycle brought {{ name }} back. The data confirms it."
+    supporting: "Trough: {{ trough_count }}. Now: {{ current_count | thousands }}."
+
+  - id: narr-ret-003
+    program: return_notice
+    compatible_tiers: [rising, resurrected]
+    primary: "Three generations later, {{ name }} is a new name again."
+    supporting: "{{ rise_pct }}% growth in five years. The curve is real."
+
+  # ---------------------------------------------------------------------------
+  # CASE FILE — program: case_file
+  # ---------------------------------------------------------------------------
+
+  # -- stable --
+  - id: narr-case-stable-001
+    program: case_file
+    compatible_tiers: [stable]
+    primary: "{{ name }} never disappeared. It stopped being dominant."
+    supporting: "Peak usage came in {{ peak_year }}. The name remained durable."
+
+  - id: narr-case-stable-002
+    program: case_file
+    compatible_tiers: [stable]
+    primary: "{{ name }} held the line while others collapsed around it."
+    supporting: "Steady since {{ peak_decade | decade_label }}. Still {{ current_count | thousands }} a year."
+
+  - id: narr-case-stable-003
+    program: case_file
+    compatible_tiers: [stable]
+    primary: "Stability is the rarest outcome. {{ name }} achieved it."
+    supporting: "{{ years_since_peak }} years from peak and still in circulation."
+
+  # -- declining --
+  - id: narr-case-declining-001
+    program: case_file
+    compatible_tiers: [declining]
+    primary: "{{ name }} is no longer reproducing at its former scale."
+    supporting: "Down {{ decline_pct }}% from peak."
+
+  - id: narr-case-declining-002
+    program: case_file
+    compatible_tiers: [declining]
+    primary: "The decline is slow, but the direction is clear."
+    supporting: "{{ name }}: {{ peak_count | thousands }} at peak. {{ current_count }} now."
+
+  - id: narr-case-declining-003
+    program: case_file
+    compatible_tiers: [declining]
+    primary: "{{ name }} peaked in {{ peak_year }}. Every year since, fewer."
+    supporting: "{{ decline_pct }}% decline. No reversal in the data."
+
+  # -- critical --
+  - id: narr-case-critical-001
+    program: case_file
+    compatible_tiers: [critical]
+    primary: "{{ name }} now survives mostly as inherited memory."
+    supporting: "Down {{ decline_pct }}% from its {{ peak_year }} peak."
+
+  - id: narr-case-critical-002
+    program: case_file
+    compatible_tiers: [critical]
+    primary: "{{ current_count }} births. The SSA floor is five."
+    supporting: "{{ name }} is closer to the floor than to the chart."
+
+  - id: narr-case-critical-003
+    program: case_file
+    compatible_tiers: [critical]
+    primary: "The last generation of {{ name }}s may already be born."
+    supporting: "{{ current_count }} in {{ current_year }}. Peak was {{ peak_count | thousands }}."
+
+  # -- extinct --
+  - id: narr-case-extinct-001
+    program: case_file
+    compatible_tiers: [extinct]
+    primary: "{{ name }} now survives mostly as inherited memory."
+    supporting: "Down {{ decline_pct }}% from its {{ peak_year }} peak."
+
+  - id: narr-case-extinct-002
+    program: case_file
+    compatible_tiers: [extinct]
+    primary: "The record ends quietly. {{ name }} reached the floor."
+    supporting: "{{ peak_count | thousands }} at peak. {{ current_count }} last year."
+
+  - id: narr-case-extinct-003
+    program: case_file
+    compatible_tiers: [extinct]
+    primary: "{{ name }} existed for {{ year_range }} years in the data."
+    supporting: "The final count: {{ current_count }}."
+
+  # -- rising --
+  - id: narr-case-rising-001
+    program: case_file
+    compatible_tiers: [rising]
+    primary: "{{ name }} is back in circulation after a long dormancy."
+    supporting: "Peak year: {{ peak_year }}."
+
+  - id: narr-case-rising-002
+    program: case_file
+    compatible_tiers: [rising]
+    primary: "The uptick is recent. The question is whether it holds."
+    supporting: "{{ name }}: {{ rise_pct }}% growth, five years running."
+
+  - id: narr-case-rising-003
+    program: case_file
+    compatible_tiers: [rising]
+    primary: "{{ name }} crossed from dormant to active in the data."
+    supporting: "{{ current_count | thousands }} births last year. Trend: up."
+
+  # -- resurrected --
+  - id: narr-case-resurrected-001
+    program: case_file
+    compatible_tiers: [resurrected]
+    primary: "{{ name }} is back in circulation after a long dormancy."
+    supporting: "Peak year: {{ peak_year }}."
+
+  - id: narr-case-resurrected-002
+    program: case_file
+    compatible_tiers: [resurrected]
+    primary: "Trough to trend. {{ name }} completed the full cycle."
+    supporting: "{{ trough_count }} at bottom. {{ current_count | thousands }} now."
+
+  - id: narr-case-resurrected-003
+    program: case_file
+    compatible_tiers: [resurrected]
+    primary: "The hundred-year return. {{ name }} is proof it happens."
+    supporting: "{{ trough_year }} low. {{ current_year }} comeback."

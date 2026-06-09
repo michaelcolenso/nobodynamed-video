@@ -223,6 +223,9 @@ caption_frames:
     - id: peak-frame-ranked
       template: "{{ name }} was the #{{ rank_at_peak }} name in {{ peak_year }}."
       requires_vars: [name, rank_at_peak, peak_year]
+    - id: peak-frame-one-year
+      template: "{{ peak_year }}. One year defined the entire {{ name }} cohort."
+      requires_vars: [name, peak_year]
 
   cultural-collapse:
     - id: cult-frame-killed
@@ -231,6 +234,9 @@ caption_frames:
     - id: cult-frame-before
       template: "{{ name }} was a real name before {{ killing_event }}."
       requires_vars: [name, killing_event]
+    - id: cult-frame-dated
+      template: "Before {{ event_year }}, {{ name }} was just a name."
+      requires_vars: [name, event_year]
 
   resurrection:
     - id: res-frame-comeback
@@ -239,6 +245,9 @@ caption_frames:
     - id: res-frame-cycle
       template: "Vintage names are returning. {{ name }} is leading."
       requires_vars: [name]
+    - id: res-frame-bottom
+      template: "{{ name }} hit {{ trough_count }} and reversed. The floor held."
+      requires_vars: [name, trough_count]
 
   generation-arc:
     - id: arc-frame-century
@@ -247,6 +256,9 @@ caption_frames:
     - id: arc-frame-curve
       template: "The {{ name }} trajectory: peak, collapse, what's next."
       requires_vars: [name]
+    - id: arc-frame-three-acts
+      template: "{{ name }} in three acts: rise, peak, {{ tier | tier_label }}."
+      requires_vars: [name, tier]
 
   comparison-surprise:
     - id: cmp-frame-guess
@@ -255,6 +267,9 @@ caption_frames:
     - id: cmp-frame-age
       template: "Most {{ name }}s are over {{ avg_age }}. The data is the surprise."
       requires_vars: [name, avg_age]
+    - id: cmp-frame-rarer
+      template: "{{ name }} is rarer than it sounds. {{ current_count }} last year."
+      requires_vars: [name, current_count]
 
 state_db:
   path: "state/used_combinations.db"

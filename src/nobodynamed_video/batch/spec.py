@@ -89,7 +89,7 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
             hook_id=explicit_hook_id,
             library=hooks_library,
         )
-        context = finalize_video_context(base_context, hook)
+        context = finalize_video_context(base_context, hook, seed)
         assert context.program is not None
 
         specs.append(
