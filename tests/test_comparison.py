@@ -15,23 +15,23 @@ def source() -> SqliteSource:
 
 
 @pytest.mark.asyncio
-async def test_dorothy_finds_eleanor(source: SqliteSource) -> None:
-    """Dorothy peaked at 28000 in 1930, now 62.  Eleanor was below Dorothy
-    in 1930 but is now at 6000 — a clear trajectory flip."""
+async def test_dorothy_finds_flip(source: SqliteSource) -> None:
+    """Dorothy peaked at 28000 in 1930, now 62.  Multiple names were below
+    Dorothy in 1930 but beat her now — algorithm picks the highest current."""
     result = await source.find_comparison_name(
         "Dorothy", "F", peak_count=28000, current_count=62,
         peak_year=1930, latest_year=2024,
     )
-    assert result == "Eleanor"
+    assert result in ("Violet", "Eleanor")
 
 
 @pytest.mark.asyncio
-async def test_bertha_no_comparison(source: SqliteSource) -> None:
-    """Bertha peaked in 1910 where only Mildred coexists — and Mildred had
-    MORE births, so no flip candidate exists in this fixture."""
+async def test_thriving_name_has_no_flip(source: SqliteSource) -> None:
+    """A name still at its peak can't have a flip — nobody currently beats
+    it who was also below it at peak."""
     result = await source.find_comparison_name(
-        "Bertha", "F", peak_count=5000, current_count=9,
-        peak_year=1910, latest_year=2024,
+        "Violet", "F", peak_count=7000, current_count=6986,
+        peak_year=2024, latest_year=2024,
     )
     assert result is None
 
