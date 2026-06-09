@@ -614,13 +614,13 @@ export default function Canvas(props: CanvasProps) {
             <div
               style={{
                 position: "absolute",
-                left: peakX - 4,
-                top: toY(chart.peak_count) - 4,
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: COLORS.fade,
-                opacity: (chart.peak_annotation_alpha ?? 0) * 0.7,
+                left: peakX - 5,
+                top: toY(chart.peak_count) - 5,
+                width: 10,
+                height: 10,
+                borderRadius: 5,
+                backgroundColor: COLORS.ink,
+                opacity: (chart.peak_annotation_alpha ?? 0) * 0.85,
                 display: "flex",
               }}
             />
@@ -628,20 +628,20 @@ export default function Canvas(props: CanvasProps) {
               style={{
                 position: "absolute",
                 left: peakX - 1,
-                top: toY(chart.peak_count) + 10,
-                width: 1,
-                height: 24,
-                backgroundColor: COLORS.fade,
-                opacity: (chart.peak_annotation_alpha ?? 0) * 0.35,
+                top: toY(chart.peak_count) + 12,
+                width: 2,
+                height: 32,
+                backgroundColor: COLORS.ink,
+                opacity: (chart.peak_annotation_alpha ?? 0) * 0.4,
                 display: "flex",
               }}
             />
             <div
               style={{
                 position: "absolute",
-                left: Math.max(0, Math.min(chartWidth - 110, peakX - 55)),
-                top: toY(chart.peak_count) + 38,
-                width: 110,
+                left: Math.max(0, Math.min(chartWidth - 140, peakX - 70)),
+                top: toY(chart.peak_count) + 50,
+                width: 140,
                 opacity: chart.peak_annotation_alpha ?? 0,
                 display: "flex",
                 justifyContent: "center",
@@ -649,9 +649,10 @@ export default function Canvas(props: CanvasProps) {
             >
               <span
                 style={{
-                  fontFamily: TYPE.body.family,
-                  fontSize: 16,
-                  color: COLORS.fade,
+                  fontFamily: TYPE.display.family,
+                  fontWeight: TYPE.display.weight,
+                  fontSize: RAMP.body[3],
+                  color: COLORS.ink,
                   letterSpacing: 2,
                   textTransform: "uppercase",
                   display: "flex",
