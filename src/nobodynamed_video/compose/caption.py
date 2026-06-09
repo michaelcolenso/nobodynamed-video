@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, field
+from typing import Any
 
 from nobodynamed_video.compose.lexicon import CaptionFrame, Lexicon, _render_simple
 from nobodynamed_video.compose.state import CombinationState
@@ -114,7 +115,7 @@ def _pick_hashtags(
     return tags
 
 
-def _pick_pinned(spec_id: str, pillar: str, ctx: dict, lexicon: Lexicon) -> str | None:
+def _pick_pinned(spec_id: str, pillar: str, ctx: dict[str, Any], lexicon: Lexicon) -> str | None:
     """Select a rendered pinned comment. Returns None if none are available."""
     patterns = lexicon.patterns_for(pillar, ctx)
     if not patterns:

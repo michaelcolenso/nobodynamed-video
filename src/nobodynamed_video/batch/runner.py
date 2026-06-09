@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import json
 import time
+from functools import lru_cache
 from pathlib import Path
 
 from rich.console import Console
@@ -29,6 +30,23 @@ console = Console()
 _BATCH_CONCURRENCY = 2
 _CAPTIONS_YAML = Path("fixtures/captions.yaml")
 _STATE_DB = Path("state/used_combinations.db")
+_RENDERER_SRC_DIR = Path("satori-service/src")
+
+
+@lru_cache(maxsize=1)
+def _renderer_digest() -> str:
+    """Digest of the Satori renderer sources.
+
+    Mixed into the frame cache key so template/renderer edits invalidate
+    cached frames — keying on template *name* + props alone silently serves
+    stale frames after a .tsx change.
+    """
+    digest = hashlib.sha256()
+    if _RENDERER_SRC_DIR.exists():
+        for path in sorted(_RENDERER_SRC_DIR.rglob("*.ts*")):
+            digest.update(path.as_posix().encode())
+            digest.update(path.read_bytes())
+    return digest.hexdigest()
 
 
 async def render_spec(
@@ -53,7 +71,9 @@ async def render_spec(
     for scene_kind, frame_idx, template, props in plan_frames(spec, spec.fps, debug_safe):
         png_path = frames_dir / f"{scene_kind}_{frame_idx:03d}.png"
 
-        cache_key = hashlib.sha256((template + str(sorted(props.items()))).encode()).hexdigest()
+        cache_key = hashlib.sha256(
+            (_renderer_digest() + template + str(sorted(props.items()))).encode()
+        ).hexdigest()
         cache_path = out_dir / ".cache" / f"{cache_key}.png"
 
         if cache_path.exists():

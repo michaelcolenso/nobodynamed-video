@@ -93,10 +93,10 @@ SatoriClient.render(template, props)  →  PNG bytes
 out/<id>/frames/<scene>_<NNN>.png
         │
         ▼
-ffmpeg concat + xfade + audio mux
+ffmpeg concat (BT.709 limited-range conversion) + audio mux
         │
         ▼
-out/<id>.mp4  (1080×1920, 30fps, H.264, AAC, faststart)
+out/<id>.mp4  (1080×1920, 30fps, 540-frame/18.0s stream, H.264, AAC, faststart)
         │
         ▼
 RenderManifest → out/<id>.json
@@ -113,15 +113,21 @@ RenderManifest → out/<id>.json
  │  hook.tsx │ reveal.tsx│narrative.tsx│ cta.tsx │
  │   90 fr   │  180 fr   │  180 fr   │  90 fr  │
  └───────────┴───────────┴───────────┴──────────┘
-       ↑ xfade 0.2s at offsets: 2.8s, 8.6s, 14.4s
+       ↑ straight concat — no transitions
 ```
 
-Total: 540 frames at 30fps = 18.00s
+Total: 540 frames at 30fps = 18.00s, carried 1:1 into the video stream.
 
-xfade offsets (transition starts, not scene starts):
-- hook → reveal: offset = 3.0 - 0.2 = 2.8
-- reveal → narrative: offset = (3 + 6) - 0.2 = 8.6
-- narrative → cta: offset = (3 + 6 + 6) - 0.2 = 14.4
+The four scenes are windows over one continuous shared-canvas program, so
+they are joined with a straight concat. (The original four-template design
+crossfaded scenes with 0.2s xfades; once the canvas became continuous, the
+xfades only ghosted the picture against itself and trimmed the video stream
+to 17.4s, leaving a frozen 0.6s tail in the 18.0s container.)
+
+Color: frames are full-range sRGB PNGs. Composition explicitly converts
+RGB→YUV with the BT.709 matrix and limited (tv) range, matching the stream
+tags — swscale's default BT.601 matrix visibly shifts the brand crimson
+toward orange when players decode with the tagged BT.709.
 
 ---
 

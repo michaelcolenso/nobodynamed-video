@@ -15,6 +15,12 @@ class FakeSource:
     async def count_years_in_top(self, name: str, sex: str, threshold: int) -> int:
         return 3
 
+    async def find_comparison_name(
+        self, name: str, sex: str, peak_count: int, current_count: int,
+        peak_year: int, latest_year: int,
+    ) -> str | None:
+        return "Eleanor" if name == "Dorothy" else None
+
 
 @pytest.mark.asyncio
 async def test_build_base_context_derives_core_stats() -> None:
@@ -38,6 +44,44 @@ async def test_build_base_context_derives_core_stats() -> None:
     assert ctx.current_rank == 9999
     assert ctx.rank_at_peak == 8
     assert ctx.decline_pct > 0
+
+
+@pytest.mark.asyncio
+async def test_build_base_context_sets_comparison_name() -> None:
+    record = NameRecord(
+        name="Dorothy",
+        sex="F",
+        series=[
+            YearCount(year=1880, count=100),
+            YearCount(year=1930, count=28000),
+            YearCount(year=2024, count=62),
+        ],
+        peak_year=1930,
+        peak_count=28000,
+        current_year=2024,
+        current_count=62,
+    )
+    ctx = await build_base_context(FakeSource(), record, Tier.DECLINING, 2024, {})
+    assert ctx.comparison_name == "Eleanor"
+
+
+@pytest.mark.asyncio
+async def test_build_base_context_no_comparison_when_none() -> None:
+    record = NameRecord(
+        name="Bertha",
+        sex="F",
+        series=[
+            YearCount(year=1880, count=39),
+            YearCount(year=1910, count=5000),
+            YearCount(year=2024, count=29),
+        ],
+        peak_year=1910,
+        peak_count=5000,
+        current_year=2024,
+        current_count=29,
+    )
+    ctx = await build_base_context(FakeSource(), record, Tier.CRITICAL, 2024, {})
+    assert ctx.comparison_name is None
 
 
 def test_finalize_video_context_sets_program_and_hook() -> None:

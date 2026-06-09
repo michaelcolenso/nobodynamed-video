@@ -22,10 +22,14 @@ DOT_LAND_T = 8.0
 RECOMPOSE_START_T = 9.2
 RECOMPOSE_END_T = 10.2
 
-HEADER_ALPHA = (Hyperframe(0.0, 0.0, ease_out_quart), Hyperframe(0.5, 1.0))
-DIAGNOSIS_ALPHA = (Hyperframe(0.35, 0.0, ease_out_quart), Hyperframe(1.0, 1.0))
-CHART_ALPHA = (Hyperframe(1.0, 0.0, ease_out_quart), Hyperframe(1.6, 1.0))
-CHART_DRAW = (Hyperframe(1.6, 0.0, ease_out_quart), Hyperframe(DOT_LAND_T, 1.0))
+# Frame 0 is the default TikTok cover and the loop-seam landing frame: the
+# header and hook headline must be fully readable on it, never faded up from a
+# black canvas. The chart fading in from t=0 keeps the opening frames animating
+# (distinct hashes, no FROZEN_FRAMES) while the type carries the cover.
+HEADER_ALPHA = (Hyperframe(0.0, 1.0),)
+DIAGNOSIS_ALPHA = (Hyperframe(0.0, 1.0),)
+CHART_ALPHA = (Hyperframe(0.0, 0.0, ease_out_quart), Hyperframe(0.8, 1.0))
+CHART_DRAW = (Hyperframe(1.2, 0.0, ease_out_quart), Hyperframe(DOT_LAND_T, 1.0))
 DOT_ALPHA = (Hyperframe(DOT_LAND_T, 0.0, ease_out_quart), Hyperframe(DOT_LAND_T + 0.45, 1.0))
 DOT_RADIUS = (Hyperframe(DOT_LAND_T, 18.0, ease_out_back), Hyperframe(DOT_LAND_T + 0.45, 12.0))
 DOT_RING_ALPHA = (Hyperframe(DOT_LAND_T, 0.7), Hyperframe(DOT_LAND_T + 0.6, 0.0))
@@ -55,7 +59,7 @@ EVENT_ALPHA = (
     Hyperframe(RECOMPOSE_END_T + 0.2, 0.0, ease_out_quart),
     Hyperframe(RECOMPOSE_END_T + 0.8, 1.0),
 )
-STAT_ALPHA = (Hyperframe(1.2, 0.0, ease_out_quart), Hyperframe(2.0, 1.0))
+STAT_ALPHA = (Hyperframe(0.8, 0.0, ease_out_quart), Hyperframe(1.6, 1.0))
 
 
 def _status_label(ctx: VideoContext) -> str:
@@ -92,6 +96,15 @@ def sample_program_frame(
     layout_progress = sample_scalar_track(LAYOUT_PROGRESS, t) if dot_visible else 0.0
     tracer_wave = triangle_wave(t, 0.7)
     chart_draw_progress = sample_scalar_track(CHART_DRAW, t)
+    # Once the landing flash fades, the dot keeps a slow breathing halo — the
+    # "barely alive" focal point reads as a faint vital sign, and the 8 px
+    # radius swing keeps every frame byte-distinct through the otherwise
+    # static narrative beats (no FROZEN_FRAMES).
+    halo_t = t - (DOT_LAND_T + 0.7)
+    halo_ramp = min(1.0, max(0.0, halo_t / 0.6))
+    halo_wave = ease_in_out_sine(triangle_wave(t, 1.6))
+    halo_alpha = halo_ramp * lerp(0.10, 0.22, halo_wave)
+    halo_radius = lerp(14.0, 22.0, halo_wave)
     count_progress = (
         # Count finishes as the collapse begins, so the hero number lands in the expanded chart.
         ease_out_quart(min(1.0, max(0.0, (t - DOT_LAND_T) / 1.2))) if dot_visible else 0.0
@@ -140,11 +153,23 @@ def sample_program_frame(
             "dot_alpha": round(sample_scalar_track(DOT_ALPHA, t) if dot_visible else 0.0, 6),
             "dot_radius": round(sample_scalar_track(DOT_RADIUS, t) if dot_visible else 0.0, 6),
             "dot_ring_alpha": round(
-                sample_scalar_track(DOT_RING_ALPHA, t) if dot_visible else 0.0,
+                (
+                    halo_alpha
+                    if halo_t >= 0.0
+                    else sample_scalar_track(DOT_RING_ALPHA, t)
+                )
+                if dot_visible
+                else 0.0,
                 6,
             ),
             "dot_ring_radius": round(
-                sample_scalar_track(DOT_RING_RADIUS, t) if dot_visible else 0.0,
+                (
+                    halo_radius
+                    if halo_t >= 0.0
+                    else sample_scalar_track(DOT_RING_RADIUS, t)
+                )
+                if dot_visible
+                else 0.0,
                 6,
             ),
             "layout_progress": round(layout_progress, 6),

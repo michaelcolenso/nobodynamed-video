@@ -2,100 +2,104 @@
 
 from pathlib import Path
 
-from nobodynamed_video.compose.ffmpeg import (
-    _xfade_offsets,
-    build_ffmpeg_cmd,
-)
+from nobodynamed_video.compose.ffmpeg import build_ffmpeg_cmd
+
+FRAMES = Path("out/bertha-2024/frames")
+OUT = Path("out/bertha-2024.mp4")
 
 
-def test_xfade_offsets_count() -> None:
-    offsets = _xfade_offsets()
-    # 4 scenes → 3 transitions.
-    assert len(offsets) == 3
+def _filter_complex(cmd: list[str]) -> str:
+    return cmd[cmd.index("-filter_complex") + 1]
 
 
-def test_xfade_offset_first() -> None:
-    # hook=3.0s → first transition starts at 3.0 - 0.2 = 2.8
-    offsets = _xfade_offsets()
-    assert abs(offsets[0] - 2.8) < 1e-6
-
-
-def test_xfade_offset_second() -> None:
-    # [v01] duration = 3+6-0.2 = 8.8; transition starts 0.2s before its end → 8.6
-    offsets = _xfade_offsets()
-    assert abs(offsets[1] - 8.6) < 1e-6
-
-
-def test_xfade_offset_third() -> None:
-    # [v12] duration = 8.8+6-0.2 = 14.6; transition starts 0.2s before its end → 14.4
-    offsets = _xfade_offsets()
-    assert abs(offsets[2] - 14.4) < 1e-6
-
-
-def test_build_ffmpeg_cmd_has_four_inputs() -> None:
-    cmd = build_ffmpeg_cmd(Path("out/bertha-2024/frames"), Path("out/bertha-2024.mp4"))
+def test_build_ffmpeg_cmd_has_five_inputs() -> None:
+    cmd = build_ffmpeg_cmd(FRAMES, OUT)
     # Four scene inputs + one audio input.
     assert cmd.count("-i") == 5
 
 
 def test_build_ffmpeg_cmd_starts_with_ffmpeg() -> None:
-    cmd = build_ffmpeg_cmd(Path("out/bertha-2024/frames"), Path("out/bertha-2024.mp4"))
+    cmd = build_ffmpeg_cmd(FRAMES, OUT)
     assert cmd[0] == "ffmpeg"
     assert cmd[1] == "-y"
 
 
+def test_filter_complex_concatenates_all_scenes() -> None:
+    fc = _filter_complex(build_ffmpeg_cmd(FRAMES, OUT))
+    assert "concat=n=4:v=1:a=0" in fc
+
+
+def test_filter_complex_has_no_xfade() -> None:
+    # The program is one continuous animation: crossfading it against itself
+    # ghosts the picture and trims 0.2 s per transition off the stream.
+    fc = _filter_complex(build_ffmpeg_cmd(FRAMES, OUT))
+    assert "xfade" not in fc
+
+
+def test_filter_complex_forces_bt709_limited_conversion() -> None:
+    # swscale defaults to a BT.601 matrix; the stream is tagged BT.709, so the
+    # conversion must be forced to match or colors shift on playback.
+    fc = _filter_complex(build_ffmpeg_cmd(FRAMES, OUT))
+    assert "out_color_matrix=bt709" in fc
+    assert "in_range=pc" in fc
+    assert "out_range=tv" in fc
+    assert "yuv420p" in fc
+
+
 def test_build_ffmpeg_cmd_contains_libx264() -> None:
-    cmd = build_ffmpeg_cmd(Path("out/bertha-2024/frames"), Path("out/bertha-2024.mp4"))
+    cmd = build_ffmpeg_cmd(FRAMES, OUT)
     assert "libx264" in cmd
 
 
+def test_build_ffmpeg_cmd_encode_quality() -> None:
+    cmd = build_ffmpeg_cmd(FRAMES, OUT)
+    assert cmd[cmd.index("-crf") + 1] == "17"
+    assert cmd[cmd.index("-preset") + 1] == "slow"
+    assert cmd[cmd.index("-tune") + 1] == "animation"
+    assert cmd[cmd.index("-profile:v") + 1] == "high"
+
+
 def test_build_ffmpeg_cmd_contains_yuv420p() -> None:
-    cmd = build_ffmpeg_cmd(Path("out/bertha-2024/frames"), Path("out/bertha-2024.mp4"))
+    cmd = build_ffmpeg_cmd(FRAMES, OUT)
     assert "yuv420p" in cmd
 
 
 def test_build_ffmpeg_cmd_contains_faststart() -> None:
-    cmd = build_ffmpeg_cmd(Path("out/bertha-2024/frames"), Path("out/bertha-2024.mp4"))
+    cmd = build_ffmpeg_cmd(FRAMES, OUT)
     assert "+faststart" in cmd
 
 
+def test_build_ffmpeg_cmd_color_metadata() -> None:
+    cmd = build_ffmpeg_cmd(FRAMES, OUT)
+    assert cmd[cmd.index("-colorspace") + 1] == "bt709"
+    assert cmd[cmd.index("-color_primaries") + 1] == "bt709"
+    assert cmd[cmd.index("-color_trc") + 1] == "bt709"
+    assert cmd[cmd.index("-color_range") + 1] == "tv"
+
+
 def test_build_ffmpeg_cmd_output_path() -> None:
-    out = Path("out/bertha-2024.mp4")
-    cmd = build_ffmpeg_cmd(Path("out/bertha-2024/frames"), out)
-    assert str(out) == cmd[-1]
+    cmd = build_ffmpeg_cmd(FRAMES, OUT)
+    assert str(OUT) == cmd[-1]
 
 
 def test_build_ffmpeg_cmd_total_duration() -> None:
-    cmd = build_ffmpeg_cmd(
-        Path("out/bertha-2024/frames"), Path("out/bertha-2024.mp4"), total_duration=18.0
-    )
-    # -t 18.0 should appear near the end.
+    cmd = build_ffmpeg_cmd(FRAMES, OUT, total_duration=18.0)
     t_idx = [i for i, v in enumerate(cmd) if v == "-t"]
     assert any(cmd[i + 1] == "18.0" for i in t_idx)
 
 
-def test_build_ffmpeg_cmd_silent_audio() -> None:
-    cmd = build_ffmpeg_cmd(Path("out/bertha-2024/frames"), Path("out/bertha-2024.mp4"))
-    assert "anullsrc" in " ".join(cmd)
+def test_build_ffmpeg_cmd_silent_audio_48k() -> None:
+    cmd = build_ffmpeg_cmd(FRAMES, OUT)
+    joined = " ".join(cmd)
+    assert "anullsrc" in joined
+    assert "sample_rate=48000" in joined
 
 
 def test_build_ffmpeg_cmd_with_audio_bed() -> None:
-    cmd = build_ffmpeg_cmd(
-        Path("out/bertha-2024/frames"),
-        Path("out/bertha-2024.mp4"),
-        audio_path=Path("fixtures/silence-pad.wav"),
-    )
-    assert "fixtures/silence-pad.wav" in cmd
-    assert "loudnorm" in " ".join(cmd)
-
-
-def test_build_ffmpeg_cmd_filter_complex_has_xfade() -> None:
-    cmd = build_ffmpeg_cmd(Path("out/bertha-2024/frames"), Path("out/bertha-2024.mp4"))
-    fc_idx = cmd.index("-filter_complex")
-    fc = cmd[fc_idx + 1]
-    assert fc.count("xfade") == 3
-
-
-def test_build_ffmpeg_cmd_bt709_colorspace() -> None:
-    cmd = build_ffmpeg_cmd(Path("out/bertha-2024/frames"), Path("out/bertha-2024.mp4"))
-    assert "bt709" in cmd
+    cmd = build_ffmpeg_cmd(FRAMES, OUT, audio_path=Path("fixtures/bed.wav"))
+    joined = " ".join(cmd)
+    assert "fixtures/bed.wav" in cmd
+    # TikTok normalizes to ≈ -14 LUFS; the bed should already sit there.
+    assert "loudnorm=I=-14.0" in joined
+    assert cmd[cmd.index("-b:a") + 1] == "192k"
+    assert cmd[cmd.index("-ar") + 1] == "48000"
