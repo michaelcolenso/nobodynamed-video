@@ -16,11 +16,11 @@ from nobodynamed_video.render.motion import (
 )
 
 TOTAL_DURATION_S = 18.0
-DOT_LAND_T = 7.4
+DOT_LAND_T = 8.0
 # Collapse starts a beat AFTER the dot lands (not simultaneously) so the landing and
 # count-up read clearly in the still-expanded chart before the layout recomposes.
-RECOMPOSE_START_T = 8.6
-RECOMPOSE_END_T = 9.6
+RECOMPOSE_START_T = 9.2
+RECOMPOSE_END_T = 10.2
 
 HEADER_ALPHA = (Hyperframe(0.0, 0.0, ease_out_quart), Hyperframe(0.5, 1.0))
 DIAGNOSIS_ALPHA = (Hyperframe(0.35, 0.0, ease_out_quart), Hyperframe(1.0, 1.0))
@@ -97,6 +97,16 @@ def sample_program_frame(
         ease_out_quart(min(1.0, max(0.0, (t - DOT_LAND_T) / 1.2))) if dot_visible else 0.0
     )
 
+    series = spec.record.series
+    if series:
+        s_min = series[0].year
+        s_max = series[-1].year
+        peak_frac = (ctx.peak_year - s_min) / max(s_max - s_min, 1)
+    else:
+        peak_frac = 0.5
+    peak_raw = max(0.0, (chart_draw_progress - peak_frac) / 0.04)
+    peak_annotation_alpha = ease_out_quart(min(1.0, peak_raw)) * (1.0 - layout_progress)
+
     chart_cards = _stats_cards(ctx)
     CARD_STAGGER_S = 0.15
     card_alphas = [
@@ -150,6 +160,7 @@ def sample_program_frame(
             "peak_year": ctx.peak_year,
             "peak_count": ctx.peak_count,
             "count_value": round(spec.record.current_count * count_progress),
+            "peak_annotation_alpha": round(peak_annotation_alpha, 6),
         },
         "stats": {
             "alpha": round(sample_scalar_track(STAT_ALPHA, t), 6),
