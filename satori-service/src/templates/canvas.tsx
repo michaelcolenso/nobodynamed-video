@@ -32,6 +32,7 @@ interface ChartState {
   peak_year: number;
   peak_count: number;
   count_value: number;
+  peak_annotation_alpha?: number;
 }
 
 interface StatsState {
@@ -607,6 +608,60 @@ export default function Canvas(props: CanvasProps) {
             strokeLinejoin="round"
           />
         </svg>
+
+        {(chart.peak_annotation_alpha ?? 0) > 0 && (
+          <>
+            <div
+              style={{
+                position: "absolute",
+                left: peakX - 4,
+                top: toY(chart.peak_count) - 4,
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: COLORS.fade,
+                opacity: (chart.peak_annotation_alpha ?? 0) * 0.7,
+                display: "flex",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                left: peakX - 1,
+                top: toY(chart.peak_count) + 10,
+                width: 1,
+                height: 24,
+                backgroundColor: COLORS.fade,
+                opacity: (chart.peak_annotation_alpha ?? 0) * 0.35,
+                display: "flex",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                left: Math.max(0, Math.min(chartWidth - 110, peakX - 55)),
+                top: toY(chart.peak_count) + 38,
+                width: 110,
+                opacity: chart.peak_annotation_alpha ?? 0,
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: TYPE.body.family,
+                  fontSize: 16,
+                  color: COLORS.fade,
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  display: "flex",
+                }}
+              >
+                PEAK · {chart.peak_year}
+              </span>
+            </div>
+          </>
+        )}
 
         {chart.draw_progress > 0 && chart.draw_progress < 1 && (
           <>
