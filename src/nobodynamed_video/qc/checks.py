@@ -13,8 +13,24 @@ _EXPECTED_FRAMES = 540
 _EXPECTED_WIDTH = 1080
 _EXPECTED_HEIGHT = 1920
 _MIN_DURATION_S = 17.9
+# With straight concat composition the video stream must carry every frame:
+# 540 frames / 30 fps = 18.0 s exactly (xfade used to silently trim 0.6 s).
+_EXPECTED_STREAM_DURATION_S = 18.0
+_STREAM_DURATION_TOLERANCE_S = 0.05
+_EXPECTED_FPS = "30/1"
+_EXPECTED_COLOR = {
+    "color_space": "bt709",
+    "color_primaries": "bt709",
+    "color_transfer": "bt709",
+    "color_range": "tv",
+}
 _SCENE_FRAME_COUNTS = {"hook": 90, "reveal": 180, "narrative": 180, "cta": 90}
 _FROZEN_CHECK_DEPTH = 10
+# Cover check: flag the first frame if ≥98% of pixels sit below luma 32
+# (limited range) — i.e. nothing but background. Frame 0 is the default
+# TikTok cover, so it must carry readable content.
+_COVER_BLACK_AMOUNT = 98
+_COVER_BLACK_THRESHOLD = 32
 
 KEYFRAME_NAMES = [
     "hook_000.png",
@@ -120,15 +136,94 @@ def _check_mp4(mp4_path: Path) -> list[QCIssue]:
     w, h = video.get("width"), video.get("height")
     if w != _EXPECTED_WIDTH or h != _EXPECTED_HEIGHT:
         issues.append(QCIssue("error", "MP4_INVALID", f"unexpected resolution: {w}x{h}"))
-    # Use the container (format) duration — the user-facing length. The video stream
-    # itself is ~0.6s shorter because the xfade compositor overlaps transitions.
+
+    fps = video.get("r_frame_rate")
+    if fps != _EXPECTED_FPS:
+        issues.append(QCIssue("error", "MP4_INVALID", f"unexpected frame rate: {fps}"))
+
+    # Container duration — the user-facing length.
     fmt = data.get("format", {})
     fmt_duration = fmt.get("duration") if isinstance(fmt, dict) else None
     duration = float(str(fmt_duration if fmt_duration is not None else video.get("duration", 0)))
     if duration < _MIN_DURATION_S:
         msg = f"duration {duration:.2f}s < {_MIN_DURATION_S}s"
         issues.append(QCIssue("error", "MP4_INVALID", msg))
+
+    # Video stream duration — concat composition must carry all 540 frames to
+    # exactly 18.0 s; a short stream means trimmed/overlapped frames and a
+    # frozen tail padded out by the audio track.
+    stream_duration = video.get("duration")
+    if stream_duration is not None:
+        drift = abs(float(str(stream_duration)) - _EXPECTED_STREAM_DURATION_S)
+        if drift > _STREAM_DURATION_TOLERANCE_S:
+            msg = (
+                f"video stream {float(str(stream_duration)):.2f}s != "
+                f"{_EXPECTED_STREAM_DURATION_S}s (frozen tail or dropped frames)"
+            )
+            issues.append(QCIssue("error", "MP4_INVALID", msg))
+    nb_frames = video.get("nb_frames")
+    if nb_frames is not None and str(nb_frames) != str(_EXPECTED_FRAMES):
+        msg = f"video stream has {nb_frames} frames, expected {_EXPECTED_FRAMES}"
+        issues.append(QCIssue("error", "MP4_INVALID", msg))
+
+    # Color metadata — untagged or mismatched tags shift the brand colors on
+    # players that assume defaults.
+    for key, expected in _EXPECTED_COLOR.items():
+        actual = video.get(key)
+        if actual != expected:
+            msg = f"{key} is {actual!r}, expected {expected!r}"
+            issues.append(QCIssue("warning", "COLOR_METADATA", msg))
+
+    audio = next(
+        (s for s in streams if isinstance(s, dict) and s.get("codec_type") == "audio"),
+        None,
+    )
+    if audio is None:
+        msg = "no audio stream — TikTok on Android rejects silent-track-less files"
+        issues.append(QCIssue("error", "MP4_INVALID", msg))
     return issues
+
+
+def _check_cover_frame(frames_dir: Path) -> list[QCIssue]:
+    """Frame 0 is the default TikTok cover — it must not be (near-)black."""
+    cover = frames_dir / "hook_000.png"
+    if not cover.exists():
+        return [QCIssue("error", "BLACK_COVER", "hook_000.png missing")]
+    try:
+        proc = subprocess.run(
+            [
+                "ffprobe",
+                "-v",
+                "quiet",
+                "-f",
+                "lavfi",
+                "-i",
+                f"movie={cover},"
+                f"blackframe=amount={_COVER_BLACK_AMOUNT}:threshold={_COVER_BLACK_THRESHOLD}",
+                "-show_entries",
+                "frame_tags=lavfi.blackframe.pblack",
+                "-print_format",
+                "json",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        data = json.loads(proc.stdout) if proc.stdout.strip() else {}
+    except Exception as exc:
+        return [QCIssue("warning", "BLACK_COVER", f"blackframe probe failed: {exc}")]
+
+    frames = data.get("frames", [])
+    assert isinstance(frames, list)
+    for frame in frames:
+        if not isinstance(frame, dict):
+            continue
+        tags = frame.get("tags", {})
+        if isinstance(tags, dict) and "lavfi.blackframe.pblack" in tags:
+            pblack = tags.get("lavfi.blackframe.pblack", "?")
+            msg = f"cover frame is {pblack}% black — default thumbnail would be empty"
+            return [QCIssue("error", "BLACK_COVER", msg)]
+    return []
 
 
 def _check_black_frames(mp4_path: Path) -> list[QCIssue]:
@@ -191,6 +286,7 @@ def run_all_checks(result: dict[str, object], out_dir: Path) -> QCResult:
     issues += _check_frame_count(frames_dir)
     issues += _check_frozen_frames(sha256_frames)
     issues += _check_dimensions(frames_dir)
+    issues += _check_cover_frame(frames_dir)
     issues += _check_mp4(mp4_path)
     issues += _check_black_frames(mp4_path)
 

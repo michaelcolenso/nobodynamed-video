@@ -1,4 +1,16 @@
-"""ffmpeg composition — builds the concat + crossfade filter graph and runs it."""
+"""ffmpeg composition — concatenates the frame sequence and encodes for upload.
+
+The 540 frames are one continuous shared-canvas program, so scenes are joined
+with a straight concat (no xfade): crossfading a continuous animation against
+itself only produces double-exposure ghosting, shortens the video stream by
+0.2 s per transition, and shifts every authored timing earlier in the output.
+Concat keeps the stream at exactly 540 frames / 18.000 s.
+
+Color: PNG frames are full-range sRGB. The RGB→YUV conversion is forced to
+BT.709 limited range to match the stream tags — swscale's default matrix is
+BT.601, which visibly shifts the brand crimson toward orange on every player
+that honors the BT.709 tag.
+"""
 
 from __future__ import annotations
 
@@ -6,28 +18,11 @@ import subprocess
 from pathlib import Path
 
 from nobodynamed_video.exceptions import FfmpegFailed
-from nobodynamed_video.render.frame_planner import SCENE_DURATIONS, SCENE_ORDER
+from nobodynamed_video.render.frame_planner import SCENE_ORDER
 
-XFADE_DURATION = 0.2  # seconds — crossfade between adjacent scenes
-
-
-def _xfade_offsets() -> list[float]:
-    """Compute xfade offset values (start-of-transition) between scenes.
-
-    Each xfade is applied to an already-blended stream whose length is
-    shortened by XFADE_DURATION for each prior transition.  The offset for
-    transition i must account for all i prior xfades:
-
-      offset_i = cumulative_scene_duration_through_i - XFADE_DURATION * (i + 1)
-
-    Results match ARCHITECTURE.md: 2.8, 8.6, 14.4.
-    """
-    offsets = []
-    cumulative = 0.0
-    for i, kind in enumerate(SCENE_ORDER[:-1]):
-        cumulative += SCENE_DURATIONS[kind]
-        offsets.append(round(cumulative - XFADE_DURATION * (i + 1), 6))
-    return offsets
+# TikTok normalizes to roughly -14 LUFS; matching it avoids the platform
+# re-gaining (and pumping) a quiet bed.
+AUDIO_TARGET_LUFS = -14.0
 
 
 def build_ffmpeg_cmd(
@@ -36,7 +31,7 @@ def build_ffmpeg_cmd(
     fps: int = 30,
     total_duration: float = 18.0,
     audio_path: Path | None = None,
-    audio_lufs: float = -22.0,
+    audio_lufs: float = AUDIO_TARGET_LUFS,
 ) -> list[str]:
     """Return the ffmpeg argument list (does not execute)."""
     cmd: list[str] = ["ffmpeg", "-y"]
@@ -57,40 +52,37 @@ def build_ffmpeg_cmd(
             "-t",
             str(total_duration),
             "-i",
-            "anullsrc=channel_layout=stereo:sample_rate=44100",
+            "anullsrc=channel_layout=stereo:sample_rate=48000",
         ]
         audio_input_index = len(SCENE_ORDER)
 
     # ── Video filter graph ────────────────────────────────────────────────────
-    offsets = _xfade_offsets()
-    # offset_0 = end_of_hook - xfade = 3.0 - 0.2 = 2.8
-    # offset_1 = end_of_reveal - xfade = 9.0 - 0.2 = 8.8  (cumulative: 3+6=9)
-    # offset_2 = end_of_narrative - xfade = 15.0 - 0.2 = 14.8
-
-    xfade_parts: list[str] = []
-    in_label = "[0:v]"
-    for i, offset in enumerate(offsets):
-        next_label = f"[v{i}{i + 1}]"
-        xfade_parts.append(
-            f"{in_label}[{i + 1}:v]xfade=transition=fade:duration={XFADE_DURATION}:offset={offset}{next_label}"
-        )
-        in_label = next_label
-
-    # Final: add format + color space metadata, emit as [v]
-    final_filter = f"{in_label}format=yuv420p[v]"
-    filter_complex = "; ".join([*xfade_parts, final_filter])
-
-    cmd += ["-filter_complex", filter_complex]
+    scene_labels = "".join(f"[{i}:v]" for i in range(len(SCENE_ORDER)))
+    concat = f"{scene_labels}concat=n={len(SCENE_ORDER)}:v=1:a=0[vcat]"
+    # Explicit full-range sRGB → limited-range BT.709 conversion; must agree
+    # with the color metadata tags below.
+    to_bt709 = "[vcat]scale=in_range=pc:out_range=tv:out_color_matrix=bt709,format=yuv420p[v]"
+    cmd += ["-filter_complex", "; ".join([concat, to_bt709])]
     cmd += ["-map", "[v]", "-map", f"{audio_input_index}:a"]
 
     # ── Video encode ──────────────────────────────────────────────────────────
+    # The platform re-encodes on upload, so the master should be visually
+    # transparent: CRF 17 + slow + tune animation (flat fills, hard edges).
     cmd += [
         "-c:v",
         "libx264",
         "-preset",
         "slow",
         "-crf",
-        "20",
+        "17",
+        "-tune",
+        "animation",
+        "-profile:v",
+        "high",
+        "-level",
+        "4.2",
+        "-g",
+        str(fps * 2),
         "-pix_fmt",
         "yuv420p",
         "-movflags",
@@ -102,6 +94,8 @@ def build_ffmpeg_cmd(
         "bt709",
         "-color_trc",
         "bt709",
+        "-color_range",
+        "tv",
     ]
 
     # ── Audio encode ──────────────────────────────────────────────────────────
@@ -110,12 +104,14 @@ def build_ffmpeg_cmd(
             "-c:a",
             "aac",
             "-b:a",
-            "128k",
+            "192k",
+            "-ar",
+            "48000",
             "-af",
-            f"loudnorm=I={audio_lufs}:LRA=11:TP=-1.5",
+            f"loudnorm=I={audio_lufs}:LRA=11:TP=-1.0",
         ]
     else:
-        cmd += ["-c:a", "aac", "-b:a", "128k"]
+        cmd += ["-c:a", "aac", "-b:a", "128k", "-ar", "48000"]
 
     cmd += ["-t", str(total_duration)]
     cmd += [str(out_path)]

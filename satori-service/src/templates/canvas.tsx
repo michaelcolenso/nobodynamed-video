@@ -636,12 +636,14 @@ export default function Canvas(props: CanvasProps) {
                 display: "flex",
               }}
             />
+            {/* Wide box + nowrap: the label must never wrap onto two lines
+                under the curve apex (it collides with its own stem). */}
             <div
               style={{
                 position: "absolute",
-                left: Math.max(0, Math.min(chartWidth - 140, peakX - 70)),
+                left: Math.max(0, Math.min(chartWidth - 320, peakX - 160)),
                 top: toY(chart.peak_count) + 50,
-                width: 140,
+                width: 320,
                 opacity: chart.peak_annotation_alpha ?? 0,
                 display: "flex",
                 justifyContent: "center",
@@ -655,6 +657,7 @@ export default function Canvas(props: CanvasProps) {
                   color: COLORS.ink,
                   letterSpacing: 2,
                   textTransform: "uppercase",
+                  whiteSpace: "nowrap",
                   display: "flex",
                 }}
               >

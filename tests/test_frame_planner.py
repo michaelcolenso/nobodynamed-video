@@ -167,3 +167,21 @@ def test_narrative_alpha_appears_in_second_half() -> None:
     first_half = frames[180]["narrative"]["alpha"]
     second_half = frames[330]["narrative"]["alpha"]
     assert first_half <= second_half
+
+
+def test_cover_frame_carries_header_and_hook() -> None:
+    # Frame 0 is the default TikTok cover and the loop-seam landing frame —
+    # the name header and hook headline must be fully visible, not faded out.
+    spec = make_bertha_spec()
+    first = next(props for _scene, _idx, _tpl, props in plan_frames(spec, fps=30))
+    assert first["header"]["alpha"] == 1.0
+    assert first["diagnosis"]["alpha"] == 1.0
+
+
+def test_opening_frames_are_not_frozen() -> None:
+    # Something must animate from the very first frame pair, or QC flags
+    # FROZEN_FRAMES and the cover sits static on loop restart.
+    spec = make_bertha_spec()
+    frames = [props for _scene, _idx, _tpl, props in plan_frames(spec, fps=30)]
+    assert frames[0] != frames[1]
+    assert frames[1] != frames[2]
