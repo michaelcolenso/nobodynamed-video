@@ -138,3 +138,33 @@ class D1Source:
         if not rows:
             return 0
         return int(str(rows[0]["count_years"]))
+
+    async def find_comparison_name(
+        self,
+        name: str,
+        sex: str,
+        peak_count: int,
+        current_count: int,
+        peak_year: int,
+        latest_year: int,
+    ) -> str | None:
+        """Find a name that the subject beat at peak but that now beats the subject."""
+        rows = await self.query_rows(
+            "SELECT n.name "
+            "FROM names AS n "
+            "JOIN name_years AS ny_then ON ny_then.name_id = n.id "
+            "  AND ny_then.year = ?1 "
+            "LEFT JOIN name_years AS ny_now ON ny_now.name_id = n.id "
+            "  AND ny_now.year = ?2 "
+            "WHERE n.sex = ?3 "
+            "  AND n.name_lower != lower(?4) "
+            "  AND ny_then.count > 0 "
+            "  AND ny_then.count < ?5 "
+            "  AND COALESCE(ny_now.count, 0) > ?6 "
+            "ORDER BY COALESCE(ny_now.count, 0) DESC "
+            "LIMIT 1",
+            [peak_year, latest_year, sex, name, peak_count, current_count],
+        )
+        if not rows:
+            return None
+        return str(rows[0]["name"])

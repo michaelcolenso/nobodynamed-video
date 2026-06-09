@@ -164,6 +164,10 @@ async def build_base_context(
     last_top_1000_year = await source.get_last_top_year(record.name, record.sex, 1000)
     last_top_10_year = await source.get_last_top_year(record.name, record.sex, 10)
     top10_years = await source.count_years_in_top(record.name, record.sex, 10)
+    comparison_name = await source.find_comparison_name(
+        record.name, record.sex, record.peak_count, record.current_count,
+        record.peak_year, current_year,
+    )
     event = _resolve_event(events or load_cultural_events(), record)
     collapse_year = (
         event.collapse_year
@@ -207,7 +211,7 @@ async def build_base_context(
         last_top_10_year=last_top_10_year,
         top10_years=top10_years,
         killing_event=event.killing_event if event else None,
-        comparison_name=None,
+        comparison_name=comparison_name,
         moment_length=moment_length,
         collapse_year=collapse_year,
         rise_year=rise_year,

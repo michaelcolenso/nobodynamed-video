@@ -113,3 +113,32 @@ class SqliteSource:
         if not rows:
             return 0
         return int(rows[0]["count_years"])
+
+    async def find_comparison_name(
+        self,
+        name: str,
+        sex: str,
+        peak_count: int,
+        current_count: int,
+        peak_year: int,
+        latest_year: int,
+    ) -> str | None:
+        """Find a name that the subject beat at peak but that now beats the subject."""
+        rows = self._query(
+            "SELECT at_peak.name "
+            "FROM names AS at_peak "
+            "LEFT JOIN names AS now ON now.name = at_peak.name "
+            "  AND now.sex = at_peak.sex AND now.year = ? "
+            "WHERE at_peak.sex = ? "
+            "  AND at_peak.year = ? "
+            "  AND at_peak.name != ? "
+            "  AND at_peak.count > 0 "
+            "  AND at_peak.count < ? "
+            "  AND COALESCE(now.count, 0) > ? "
+            "ORDER BY COALESCE(now.count, 0) DESC "
+            "LIMIT 1",
+            (latest_year, sex, peak_year, name, peak_count, current_count),
+        )
+        if not rows:
+            return None
+        return str(rows[0]["name"])
