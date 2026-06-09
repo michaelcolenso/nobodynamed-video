@@ -1,4 +1,4 @@
-.PHONY: setup smoke render batch test lint typecheck doctor clean
+.PHONY: setup smoke render batch test lint typecheck doctor clean regen
 
 setup:
 	uv sync
@@ -26,6 +26,10 @@ typecheck:
 
 doctor:
 	uv run nbn doctor
+
+regen:
+	rm -f fixtures/golden/**/*.sha256
+	@echo "→ golden hashes cleared — re-render to regenerate"
 
 clean:
 	rm -rf out/ .pytest_cache .mypy_cache .ruff_cache
