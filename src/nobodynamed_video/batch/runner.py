@@ -10,6 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from nobodynamed_video.compose.caption import CaptionExhausted, compose_caption
@@ -117,7 +118,11 @@ async def render_spec(
         fps=spec.fps,
         audio_path=audio_path,
     )
-    run_ffmpeg(cmd)
+    # ffmpeg encodes can run 10-60s; a blocking subprocess.run here freezes the
+    # event loop, starving the sibling render's in-flight HTTP awaits past their
+    # read timeout (the CI failure mode: every odd spec died with an empty
+    # ReadTimeout the instant its partner's encode finished).
+    await asyncio.to_thread(run_ffmpeg, cmd)
 
     total_time = time.monotonic() - total_start
     satori_version = await client.get_version()
@@ -189,7 +194,8 @@ async def run_batch(
                     console.print(f"[green]✓[/green] {spec.id}")
                 except Exception as exc:
                     errors.append((spec.id, exc))
-                    console.print(f"[red]✗[/red] {spec.id}: {exc}")
+                    detail = escape(f"{type(exc).__name__}: {exc}")
+                    console.print(f"[red]✗[/red] {spec.id}: {detail}")
 
         tasks = [asyncio.create_task(_render_one(s)) for s in specs]
         await asyncio.gather(*tasks)
@@ -201,7 +207,8 @@ async def run_batch(
     for r in results:
         table.add_row(str(r["id"]), "ok", f"{r.get('render_time_s', 0):.1f}")
     for spec_id, exc in errors:
-        table.add_row(spec_id, f"[red]FAILED: {exc}[/red]", "—")
+        detail = escape(f"{type(exc).__name__}: {exc}")
+        table.add_row(spec_id, f"[red]FAILED: {detail}[/red]", "—")
     console.print(table)
 
     qc_results = []
@@ -225,7 +232,7 @@ async def run_batch(
         "succeeded": len(results),
         "failed": len(errors),
         "results": results,
-        "errors": [{"id": sid, "error": str(exc)} for sid, exc in errors],
+        "errors": [{"id": sid, "error": f"{type(exc).__name__}: {exc}"} for sid, exc in errors],
     }
     out_dir.mkdir(parents=True, exist_ok=True)
     summary_json = json.dumps(summary, indent=2, default=str) + "\n"
