@@ -32,11 +32,11 @@ class D1Source:
         """Return a NameRecord for *name*/*sex* up to *year*, fetched from D1."""
         rows = await self.query_rows(
             (
-            "SELECT ny.year, ny.count "
-            "FROM names AS n "
-            "JOIN name_years AS ny ON ny.name_id = n.id "
-            "WHERE n.name_lower = lower(?1) AND n.sex = ?2 AND ny.year <= ?3 "
-            "ORDER BY ny.year ASC"
+                "SELECT ny.year, ny.count "
+                "FROM names AS n "
+                "JOIN name_years AS ny ON ny.name_id = n.id "
+                "WHERE n.name_lower = lower(?1) AND n.sex = ?2 AND ny.year <= ?3 "
+                "ORDER BY ny.year ASC"
             ),
             [name, sex, year],
         )

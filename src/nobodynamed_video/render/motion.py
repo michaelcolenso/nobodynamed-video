@@ -6,7 +6,6 @@ Overshooting easings (ease_out_back) may return values outside [0, 1].
 
 import math
 
-
 # ── Easing functions ──────────────────────────────────────────────────────────
 
 
@@ -36,7 +35,6 @@ def ease_out_back(t: float, overshoot: float = 0.6) -> float:
     Returns values >1.0 in the middle, settling at 1.0.
     """
     t = max(0.0, min(1.0, t))
-    c1 = 1.0 + overshoot
     c3 = 1.0 + overshoot * 1.5
     p = 1.0 - t
     return 1.0 - (p * p * p * c3 - overshoot * p * p)

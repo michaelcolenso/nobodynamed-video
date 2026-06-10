@@ -119,7 +119,8 @@ class Lexicon:
         }
 
         pinned_patterns_raw: dict[str, list[str]] = {
-            pillar: [str(p) for p in patterns] for pillar, patterns in raw.get("pinned_patterns", {}).items()
+            pillar: [str(p) for p in patterns]
+            for pillar, patterns in raw.get("pinned_patterns", {}).items()
         }
 
         caption_frames_raw: dict[str, list[CaptionFrame]] = {}
@@ -152,11 +153,13 @@ class Lexicon:
     def frames_for(self, pillar: str, ctx: dict[str, Any]) -> list[CaptionFrame]:
         """Caption frames for *pillar* whose requires_vars all resolve in ctx."""
         return [
-            frame for frame in self._frames.get(pillar, []) if all(ctx.get(v) is not None for v in frame.requires_vars)
+            frame
+            for frame in self._frames.get(pillar, [])
+            if all(ctx.get(v) is not None for v in frame.requires_vars)
         ]
 
     def patterns_for(self, pillar: str, ctx: dict[str, Any]) -> list[str]:
-        """Rendered pinned comment patterns for *pillar* with all vars resolved."""
+        """Return rendered pinned comment patterns for *pillar*."""
         result = []
         for tmpl in self._pinned_raw.get(pillar, []):
             rendered = _render_simple(tmpl, ctx)

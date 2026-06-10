@@ -178,5 +178,6 @@ def compose_caption(
         return ComposedCaption(caption=caption, pinned_comment=pinned, hashtag_set=tags)
 
     raise CaptionExhausted(
-        f"Could not satisfy caption constraints for spec_id={spec_id!r} after {cfg.regeneration_attempts} attempts."
+        f"Could not satisfy caption constraints for spec_id={spec_id!r}"
+        f" after {cfg.regeneration_attempts} attempts."
     )

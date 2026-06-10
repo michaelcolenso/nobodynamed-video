@@ -121,9 +121,9 @@ def sample_program_frame(
     peak_annotation_alpha = ease_out_quart(min(1.0, peak_raw)) * (1.0 - layout_progress)
 
     chart_cards = _stats_cards(ctx)
-    CARD_STAGGER_S = 0.15
+    card_stagger_s = 0.15
     card_alphas = [
-        round(sample_scalar_track(STAT_ALPHA, t - CARD_STAGGER_S * i), 6)
+        round(sample_scalar_track(STAT_ALPHA, t - card_stagger_s * i), 6)
         for i in range(len(chart_cards))
     ]
     return {
@@ -153,21 +153,13 @@ def sample_program_frame(
             "dot_alpha": round(sample_scalar_track(DOT_ALPHA, t) if dot_visible else 0.0, 6),
             "dot_radius": round(sample_scalar_track(DOT_RADIUS, t) if dot_visible else 0.0, 6),
             "dot_ring_alpha": round(
-                (
-                    halo_alpha
-                    if halo_t >= 0.0
-                    else sample_scalar_track(DOT_RING_ALPHA, t)
-                )
+                (halo_alpha if halo_t >= 0.0 else sample_scalar_track(DOT_RING_ALPHA, t))
                 if dot_visible
                 else 0.0,
                 6,
             ),
             "dot_ring_radius": round(
-                (
-                    halo_radius
-                    if halo_t >= 0.0
-                    else sample_scalar_track(DOT_RING_RADIUS, t)
-                )
+                (halo_radius if halo_t >= 0.0 else sample_scalar_track(DOT_RING_RADIUS, t))
                 if dot_visible
                 else 0.0,
                 6,
@@ -178,9 +170,7 @@ def sample_program_frame(
             else 0.0,
             "event_year": ctx.event_year,
             "event_label": ctx.killing_event,
-            "series": [
-                {"year": point.year, "count": point.count} for point in spec.record.series
-            ],
+            "series": [{"year": point.year, "count": point.count} for point in spec.record.series],
             "current_year": ctx.current_year,
             "peak_year": ctx.peak_year,
             "peak_count": ctx.peak_count,
