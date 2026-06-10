@@ -102,6 +102,11 @@ class SatoriClient:
         ) from last_exc
 
     async def get_version(self) -> str:
-        resp = await self._http.get("/health")
-        resp.raise_for_status()
-        return str(resp.json().get("satori", "unknown"))
+        """Best-effort satori version for the manifest — never fails a render."""
+        try:
+            resp = await self._http.get("/health")
+            resp.raise_for_status()
+            return str(resp.json().get("satori", "unknown"))
+        except httpx.HTTPError as exc:
+            log.warning("Could not fetch satori version for manifest: %r", exc)
+            return "unknown"
