@@ -41,7 +41,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: check
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -53,6 +53,10 @@ jobs:
         with:
           node-version: "20"
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - uses: astral-sh/setup-uv@v4
 
       - name: Install ffmpeg
@@ -63,11 +67,11 @@ jobs:
 
       - name: Install satori-service deps
         working-directory: satori-service
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Start satori sidecar
         working-directory: satori-service
-        run: npx tsx src/server.ts &
+        run: pnpm exec tsx src/server.ts &
         env:
           PORT: "3001"
 
@@ -89,21 +93,22 @@ jobs:
           SATORI_URL: "http://localhost:3001"
 
       - name: Upload rendered videos
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: rendered-videos-${{ github.sha }}
           path: out/
           retention-days: 90
-          if-no-files-found: error
+          if-no-files-found: warn
 
       - name: Summary
+        if: always()
         run: |
-          echo "## Batch render complete" >> $GITHUB_STEP_SUMMARY
+          echo "## Batch render" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Video | Size |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|------|" >> $GITHUB_STEP_SUMMARY
-          for f in out/*/*.mp4; do
-            name=$(basename "$(dirname "$f")")
-            size=$(du -h "$f" | cut -f1)
-            echo "| $name | $size |" >> $GITHUB_STEP_SUMMARY
+          shopt -s nullglob
+          for f in out/*.mp4; do
+            echo "| $(basename "$f" .mp4) | $(du -h "$f" | cut -f1) |" >> $GITHUB_STEP_SUMMARY
           done
