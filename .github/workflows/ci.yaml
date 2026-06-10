@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint / Type / Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v4
+
+      - run: uv sync
+
+      - name: Lint
+        run: |
+          uv run ruff check src tests
+          uv run ruff format --check src tests
+
+      - name: Typecheck
+        run: uv run mypy --strict src
+
+      - name: Test
+        run: uv run pytest -x -q
+
+  batch:
+    name: Render batches
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install Python deps
+        run: uv sync
+
+      - name: Install satori-service deps
+        working-directory: satori-service
+        run: npm install
+
+      - name: Start satori sidecar
+        working-directory: satori-service
+        run: npx tsx src/server.ts &
+        env:
+          PORT: "3001"
+
+      - name: Wait for satori
+        run: |
+          for i in $(seq 1 30); do
+            curl -s http://localhost:3001/health > /dev/null 2>&1 && break
+            sleep 1
+          done
+
+      - name: Discover and render batches
+        run: |
+          for batch in batches/week-*.yaml; do
+            echo "::group::Rendering $batch"
+            uv run nbn batch "$batch"
+            echo "::endgroup::"
+          done
+        env:
+          SATORI_URL: "http://localhost:3001"
+
+      - name: Upload rendered videos
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-videos-${{ github.sha }}
+          path: out/
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Summary
+        run: |
+          echo "## Batch render complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Video | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|------|" >> $GITHUB_STEP_SUMMARY
+          for f in out/*/*.mp4; do
+            name=$(basename "$(dirname "$f")")
+            size=$(du -h "$f" | cut -f1)
+            echo "| $name | $size |" >> $GITHUB_STEP_SUMMARY
+          done
