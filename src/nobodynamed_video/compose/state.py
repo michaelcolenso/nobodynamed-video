@@ -85,7 +85,8 @@ class CombinationState:
         conn = self._connect()
         try:
             row = conn.execute(
-                "SELECT COUNT(*) AS combos, COALESCE(SUM(use_count), 0) AS uses FROM used_combinations"
+                "SELECT COUNT(*) AS combos, COALESCE(SUM(use_count), 0) AS uses "
+                "FROM used_combinations"
             ).fetchone()
             return {"combos": int(row["combos"]), "uses": int(row["uses"])}
         finally:

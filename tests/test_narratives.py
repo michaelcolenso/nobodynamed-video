@@ -57,8 +57,7 @@ def test_select_narrative_deterministic() -> None:
 def test_select_narrative_variety() -> None:
     ctx = _make_ctx()
     results = {
-        select_narrative(ctx, ProgramType.CASE_FILE, Tier.EXTINCT, seed=s)[0]
-        for s in range(50)
+        select_narrative(ctx, ProgramType.CASE_FILE, Tier.EXTINCT, seed=s)[0] for s in range(50)
     }
     assert len(results) >= 2, "Expected multiple distinct narratives across seeds"
 
@@ -66,18 +65,14 @@ def test_select_narrative_variety() -> None:
 def test_select_narrative_cultural_event() -> None:
     from nobodynamed_video.models import ResolvedCulturalEvent
 
-    event = ResolvedCulturalEvent(
-        name="Karen", sex="F", killing_event="the meme", event_year=2018
-    )
+    event = ResolvedCulturalEvent(name="Karen", sex="F", killing_event="the meme", event_year=2018)
     ctx = _make_ctx(
         name="Karen",
         tier=Tier.DECLINING,
         killing_event="the meme",
         cultural_event=event,
     )
-    primary, supporting = select_narrative(
-        ctx, ProgramType.CULTURAL_EVENT, Tier.DECLINING, seed=1
-    )
+    primary, supporting = select_narrative(ctx, ProgramType.CULTURAL_EVENT, Tier.DECLINING, seed=1)
     assert primary
     assert supporting
 
@@ -109,9 +104,7 @@ def test_requires_var_filtering() -> None:
 def test_primary_under_budget() -> None:
     ctx = _make_ctx()
     for seed in range(30):
-        primary, _ = select_narrative(
-            ctx, ProgramType.CASE_FILE, Tier.EXTINCT, seed=seed
-        )
+        primary, _ = select_narrative(ctx, ProgramType.CASE_FILE, Tier.EXTINCT, seed=seed)
         assert len(primary) <= 84, f"Primary too long ({len(primary)}): {primary!r}"
 
 

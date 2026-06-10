@@ -134,16 +134,10 @@ def _resolve_event(
         sex=record.sex,
         killing_event=killing_event,
         event_year=int(raw["event_year"]),
-        collapse_year=(
-            int(raw["collapse_year"]) if raw.get("collapse_year") is not None else None
-        ),
-        moment_length=(
-            int(raw["moment_length"]) if raw.get("moment_length") is not None else None
-        ),
+        collapse_year=(int(raw["collapse_year"]) if raw.get("collapse_year") is not None else None),
+        moment_length=(int(raw["moment_length"]) if raw.get("moment_length") is not None else None),
         confidence=str(raw.get("confidence", "unknown")),
     )
-
-
 
 
 async def build_base_context(
@@ -165,8 +159,12 @@ async def build_base_context(
     last_top_10_year = await source.get_last_top_year(record.name, record.sex, 10)
     top10_years = await source.count_years_in_top(record.name, record.sex, 10)
     comparison_name = await source.find_comparison_name(
-        record.name, record.sex, record.peak_count, record.current_count,
-        record.peak_year, current_year,
+        record.name,
+        record.sex,
+        record.peak_count,
+        record.current_count,
+        record.peak_year,
+        current_year,
     )
     event = _resolve_event(events or load_cultural_events(), record)
     collapse_year = (
@@ -220,9 +218,7 @@ async def build_base_context(
     )
 
 
-def finalize_video_context(
-    base: VideoContext, hook: ResolvedHook, seed: int = 0
-) -> VideoContext:
+def finalize_video_context(base: VideoContext, hook: ResolvedHook, seed: int = 0) -> VideoContext:
     program = pillar_to_program(hook.pillar)
     narrative_text, supporting_text = select_narrative(base, program, base.tier, seed)
     return base.model_copy(

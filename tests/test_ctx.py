@@ -16,8 +16,13 @@ class FakeSource:
         return 3
 
     async def find_comparison_name(
-        self, name: str, sex: str, peak_count: int, current_count: int,
-        peak_year: int, latest_year: int,
+        self,
+        name: str,
+        sex: str,
+        peak_count: int,
+        current_count: int,
+        peak_year: int,
+        latest_year: int,
     ) -> str | None:
         return "Eleanor" if name == "Dorothy" else None
 
