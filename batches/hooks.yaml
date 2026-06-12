@@ -190,7 +190,7 @@ hooks:
     headline: "{{ name }} survived the {{ peak_decade }}s and the internet."
     subhead:  "It might not survive the {{ current_decade }}s."
     pinned_comment: "What kills a name faster: a meme or a movie?"
-    caption: "{{ name }} outlived two world wars. #endangerednames"
+    caption: "{{ name }} survived the {{ peak_decade }}s and the internet. The {{ current_decade }}s are another story. #endangerednames"
 
   - id: ext-011-names-die-quietly
     pillar: extinction-watch

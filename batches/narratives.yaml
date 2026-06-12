@@ -23,7 +23,7 @@ narratives:
     program: cultural_event
     compatible_tiers: [declining, critical, extinct]
     requires_var: killing_event
-    primary: "{{ name }} was already moving. {{ killing_event }} accelerated it."
+    primary: "{{ name }} was already fading. {{ killing_event }} sealed it."
     supporting: "Down {{ decline_pct }}% from peak. The break is visible in the data."
 
   - id: narr-cult-002
@@ -47,13 +47,13 @@ narratives:
   - id: narr-ret-001
     program: return_notice
     compatible_tiers: [rising, resurrected]
-    primary: "{{ name }} fell out of circulation and then returned."
+    primary: "{{ name }} all but vanished. Then the cycle turned."
     supporting: "Up {{ rise_pct }}% over the last five years."
 
   - id: narr-ret-002
     program: return_notice
     compatible_tiers: [rising, resurrected]
-    primary: "The cycle brought {{ name }} back. The data confirms it."
+    primary: "{{ name }} waited out two generations and came back."
     supporting: "Trough: {{ trough_count }}. Now: {{ current_count | thousands }}."
 
   - id: narr-ret-003
@@ -89,7 +89,7 @@ narratives:
   - id: narr-case-declining-001
     program: case_file
     compatible_tiers: [declining]
-    primary: "{{ name }} is no longer reproducing at its former scale."
+    primary: "Parents haven't stopped choosing {{ name }}. Most have."
     supporting: "Down {{ decline_pct }}% from peak."
 
   - id: narr-case-declining-002
