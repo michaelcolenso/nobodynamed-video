@@ -49,6 +49,10 @@ async def test_build_base_context_derives_core_stats() -> None:
     assert ctx.current_rank == 9999
     assert ctx.rank_at_peak == 8
     assert ctx.decline_pct > 0
+    # Empty events mapping falls back to the real fixture, which curates
+    # Bertha's WWI event (1918, eight years after her 1910 peak here).
+    assert ctx.peak_to_event_years == 8
+    assert ctx.event_decline_pct is not None
 
 
 @pytest.mark.asyncio
@@ -68,6 +72,9 @@ async def test_build_base_context_sets_comparison_name() -> None:
     )
     ctx = await build_base_context(FakeSource(), record, Tier.DECLINING, 2024, {})
     assert ctx.comparison_name == "Eleanor"
+    # No curated cultural event for Dorothy → event timing stays None.
+    assert ctx.peak_to_event_years is None
+    assert ctx.event_decline_pct is None
 
 
 @pytest.mark.asyncio
@@ -87,6 +94,55 @@ async def test_build_base_context_no_comparison_when_none() -> None:
     )
     ctx = await build_base_context(FakeSource(), record, Tier.CRITICAL, 2024, {})
     assert ctx.comparison_name is None
+
+
+@pytest.mark.asyncio
+async def test_build_base_context_derives_event_timing_for_fading_name() -> None:
+    # Karen-shaped: peaked 53 years before the event and was 99% off peak by
+    # the event year — "was already fading" copy is provable.
+    record = NameRecord(
+        name="Karen",
+        sex="F",
+        series=[
+            YearCount(year=1940, count=5000),
+            YearCount(year=1965, count=32873),
+            YearCount(year=2018, count=469),
+            YearCount(year=2024, count=186),
+        ],
+        peak_year=1965,
+        peak_count=32873,
+        current_year=2024,
+        current_count=186,
+    )
+    events = {("karen", "F"): {"killing_event": "the meme", "event_year": 2018}}
+    ctx = await build_base_context(FakeSource(), record, Tier.DECLINING, 2024, events)
+    assert ctx.peak_to_event_years == 53
+    assert ctx.event_decline_pct == 99
+
+
+@pytest.mark.asyncio
+async def test_build_base_context_derives_event_timing_for_at_peak_name() -> None:
+    # Alexa-shaped: the event landed a year before the all-time peak — the
+    # name was NOT fading when it hit, and the context must show that.
+    record = NameRecord(
+        name="Alexa",
+        sex="F",
+        series=[
+            YearCount(year=2010, count=4000),
+            YearCount(year=2014, count=5900),
+            YearCount(year=2015, count=6052),
+            YearCount(year=2024, count=500),
+        ],
+        peak_year=2015,
+        peak_count=6052,
+        current_year=2024,
+        current_count=500,
+    )
+    events = {("alexa", "F"): {"killing_event": "Amazon Echo", "event_year": 2014}}
+    ctx = await build_base_context(FakeSource(), record, Tier.CRITICAL, 2024, events)
+    assert ctx.peak_to_event_years == -1
+    assert ctx.event_decline_pct is not None
+    assert ctx.event_decline_pct <= 10
 
 
 def test_finalize_video_context_sets_program_and_hook() -> None:

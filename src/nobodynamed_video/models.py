@@ -97,6 +97,8 @@ class VideoContext(BaseModel):
     collapse_year: int | None = None
     rise_year: int | None = None
     event_year: int | None = None
+    peak_to_event_years: int | None = None
+    event_decline_pct: int | None = None
     program: ProgramType | None = None
     hook: ResolvedHook | None = None
     narrative_text: str = ""

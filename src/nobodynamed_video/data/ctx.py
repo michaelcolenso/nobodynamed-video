@@ -79,6 +79,25 @@ def _find_trough(record: NameRecord) -> tuple[int, int]:
     return trough.year, trough.count
 
 
+def _count_in_year(record: NameRecord, year: int) -> int:
+    for point in record.series:
+        if point.year == year:
+            return point.count
+    return 0
+
+
+def _event_decline_pct(record: NameRecord, event: ResolvedCulturalEvent | None) -> int | None:
+    """How far below peak the name already was in the event year (0–100).
+
+    Lets copy distinguish "was already fading when the event hit" (large value)
+    from "was at its peak when the event hit" (near zero). None without an event.
+    """
+    if event is None or record.peak_count <= 0:
+        return None
+    count_at_event = _count_in_year(record, event.event_year)
+    return _round_pct(((record.peak_count - count_at_event) / record.peak_count) * 100)
+
+
 def _find_last_top_year(rows: list[tuple[int, int]], threshold: int) -> int | None:
     eligible = [year for year, rank in rows if rank <= threshold]
     return max(eligible) if eligible else None
@@ -214,6 +233,8 @@ async def build_base_context(
         collapse_year=collapse_year,
         rise_year=rise_year,
         event_year=event.event_year if event else None,
+        peak_to_event_years=(event.event_year - record.peak_year) if event else None,
+        event_decline_pct=_event_decline_pct(record, event),
         cultural_event=event,
     )
 
