@@ -29,7 +29,12 @@ RECOMPOSE_END_T = 10.2
 HEADER_ALPHA = (Hyperframe(0.0, 1.0),)
 DIAGNOSIS_ALPHA = (Hyperframe(0.0, 1.0),)
 CHART_ALPHA = (Hyperframe(0.0, 0.0, ease_out_quart), Hyperframe(0.8, 1.0))
-CHART_DRAW = (Hyperframe(1.2, 0.0, ease_out_quart), Hyperframe(DOT_LAND_T, 1.0))
+# Sine in-out, not quart-out: with the year readout riding the tracer, the
+# draw must spend its time where the story is. Quart-out raced through 70% of
+# history before the reveal scene began, then crawled along the flat modern
+# tail; sine paces the rise through the hook, lands the collapse mid-reveal,
+# and decelerates into the present.
+CHART_DRAW = (Hyperframe(1.2, 0.0, ease_in_out_sine), Hyperframe(DOT_LAND_T, 1.0))
 DOT_ALPHA = (Hyperframe(DOT_LAND_T, 0.0, ease_out_quart), Hyperframe(DOT_LAND_T + 0.45, 1.0))
 DOT_RADIUS = (Hyperframe(DOT_LAND_T, 18.0, ease_out_back), Hyperframe(DOT_LAND_T + 0.45, 12.0))
 DOT_RING_ALPHA = (Hyperframe(DOT_LAND_T, 0.7), Hyperframe(DOT_LAND_T + 0.6, 0.0))
@@ -126,6 +131,13 @@ def sample_program_frame(
         round(sample_scalar_track(STAT_ALPHA, t - card_stagger_s * i), 6)
         for i in range(len(chart_cards))
     ]
+    # Entrances rise as they fade in. Deriving the offset from the (already
+    # eased) alpha keeps the two perfectly in sync: fully transparent sits
+    # low, fully opaque has settled into place.
+    card_offsets = [round((1.0 - alpha) * 18.0, 6) for alpha in card_alphas]
+    narrative_alpha = sample_scalar_track(NARRATIVE_ALPHA, t)
+    support_alpha = sample_scalar_track(SUPPORT_ALPHA, t)
+    footer_wave = ease_in_out_sine(triangle_wave(t, 1.2))
     return {
         "program": spec.program.value,
         "register": spec.hook.voice_register,
@@ -137,7 +149,12 @@ def sample_program_frame(
             "status": ctx.tier.value.upper(),
         },
         "diagnosis": {
-            "alpha": round(sample_scalar_track(DIAGNOSIS_ALPHA, t), 6),
+            # After the recompose the narrative takes over as the editorial
+            # focus; dimming the hook block hands attention down the canvas
+            # without losing the headline (it stays legible at 0.62).
+            "alpha": round(
+                sample_scalar_track(DIAGNOSIS_ALPHA, t) * (1.0 - 0.38 * layout_progress), 6
+            ),
             "headline": spec.hook.headline,
             "subhead": spec.hook.subhead,
         },
@@ -181,15 +198,19 @@ def sample_program_frame(
             "alpha": round(sample_scalar_track(STAT_ALPHA, t), 6),
             "cards": chart_cards,
             "card_alphas": card_alphas,
+            "card_offsets": card_offsets,
         },
         "narrative": {
-            "alpha": round(sample_scalar_track(NARRATIVE_ALPHA, t), 6),
-            "support_alpha": round(sample_scalar_track(SUPPORT_ALPHA, t), 6),
+            "alpha": round(narrative_alpha, 6),
+            "support_alpha": round(support_alpha, 6),
+            "offset_y": round((1.0 - narrative_alpha) * 28.0, 6),
+            "support_offset_y": round((1.0 - support_alpha) * 20.0, 6),
             "text": ctx.narrative_text,
             "supporting_text": ctx.supporting_text,
         },
         "comparison": {
-            "alpha": round(sample_scalar_track(SUPPORT_ALPHA, t), 6),
+            "alpha": round(support_alpha, 6),
+            "offset_y": round((1.0 - support_alpha) * 20.0, 6),
             "label": "Reference",
             "name": ctx.comparison_name,
         },
@@ -199,7 +220,9 @@ def sample_program_frame(
             "cta": "Run your name",
             # Breathing pulse on the CTA dot gives the otherwise-static 15–18s tail motion
             # (so frames stay distinct) and makes the CTA beat read as its own moment.
-            "dot_alpha": round(lerp(0.5, 1.0, ease_in_out_sine(triangle_wave(t, 1.2))), 6),
+            # Size and alpha ride the same wave — an echo of the chart dot's vital sign.
+            "dot_alpha": round(lerp(0.5, 1.0, footer_wave), 6),
+            "dot_radius": round(lerp(9.0, 11.5, footer_wave), 6),
         },
         "debug_safe": debug_safe,
     }

@@ -39,17 +39,21 @@ interface StatsState {
   alpha: number;
   cards: Array<{ label: string; value: string; tone: string }>;
   card_alphas: number[];
+  card_offsets?: number[];
 }
 
 interface NarrativeState {
   alpha: number;
   support_alpha: number;
+  offset_y?: number;
+  support_offset_y?: number;
   text: string;
   supporting_text?: string | null;
 }
 
 interface ComparisonState {
   alpha: number;
+  offset_y?: number;
   label: string;
   name?: string | null;
 }
@@ -59,6 +63,7 @@ interface FooterState {
   site: string;
   cta: string;
   dot_alpha?: number;
+  dot_radius?: number;
 }
 
 export interface CanvasProps {
@@ -284,11 +289,19 @@ export default function Canvas(props: CanvasProps) {
   const dotY = toY(currentPoint?.count ?? 0);
   const eventX = chart.event_year != null ? toX(Math.max(minYear, Math.min(maxYear, chart.event_year))) : 0;
 
-  const narrativeTop = mix(1250, 1340, chart.layout_progress);
-  const comparisonTop = mix(1640, 1420, chart.layout_progress);
+  const narrativeTop = mix(1250, 1340, chart.layout_progress) + (narrative.offset_y ?? 0);
+  // The comparison row lives in the gap between the stat cards (~1230) and
+  // the narrative rule (1340) — at 1420 it sat on top of the narrative's
+  // supporting line. It is only visible post-recompose (alpha follows
+  // SUPPORT_ALPHA), so the expanded-layout value never renders.
+  const comparisonTop = mix(1640, 1262, chart.layout_progress) + (comparison.offset_y ?? 0);
   const dotColor =
     tier === "rising" || tier === "resurrected" ? COLORS.emerald : COLORS.crimson;
   const peakX = toX(chart.peak_year);
+  // Year the tracer is currently passing through — toX is linear in year, so
+  // the inverse mapping from tracerX recovers it exactly.
+  const tracerYear = Math.round(minYear + (tracerX / Math.max(chartWidth, 1)) * (maxYear - minYear));
+  const tracerYearAlpha = 0.85 * Math.min(1, chart.draw_progress / 0.05);
 
   return (
     <div
@@ -694,6 +707,27 @@ export default function Canvas(props: CanvasProps) {
                 display: "flex",
               }}
             />
+            {/* Year readout riding above the tracer — the draw reads as time
+                passing, not just a line appearing. Clamped inside the chart so
+                it never clips at either edge. */}
+            <div
+              style={{
+                position: "absolute",
+                left: Math.max(0, Math.min(chartWidth - 96, tracerX - 48)),
+                top: Math.max(-20, tracerY - 64),
+                width: 96,
+                justifyContent: "center",
+                fontFamily: TYPE.body.family,
+                fontSize: RAMP.body[4],
+                color: COLORS.fade,
+                letterSpacing: 2,
+                fontVariantNumeric: "tabular-nums",
+                opacity: tracerYearAlpha,
+                display: "flex",
+              }}
+            >
+              {String(tracerYear)}
+            </div>
           </>
         )}
 
@@ -742,7 +776,14 @@ export default function Canvas(props: CanvasProps) {
         }}
       >
         {stats.cards.slice(0, 3).map((card, index) => (
-          <div key={index} style={{ opacity: stats.card_alphas?.[index] ?? stats.alpha, display: "flex" }}>
+          <div
+            key={index}
+            style={{
+              opacity: stats.card_alphas?.[index] ?? stats.alpha,
+              marginTop: stats.card_offsets?.[index] ?? 0,
+              display: "flex",
+            }}
+          >
             <StatCard label={card.label} value={card.value} tone={card.tone} />
           </div>
         ))}
@@ -830,7 +871,7 @@ export default function Canvas(props: CanvasProps) {
               fontSize: RAMP.body[3],
               color: COLORS.fade,
               lineHeight: 1.45,
-              marginTop: 24,
+              marginTop: 24 + (narrative.support_offset_y ?? 0),
               opacity: narrative.support_alpha,
               maxWidth: 820,
               display: "flex",
@@ -926,16 +967,28 @@ export default function Canvas(props: CanvasProps) {
             {footer.cta}
           </span>
         </div>
+        {/* Fixed 24×24 box so the breathing dot grows from its centre without
+            shifting the footer row's layout. */}
         <div
           style={{
-            width: 20,
-            height: 20,
-            borderRadius: 10,
-            backgroundColor: COLORS.crimson,
-            opacity: footer.dot_alpha ?? 1.0,
+            width: 24,
+            height: 24,
+            alignItems: "center",
+            justifyContent: "center",
             display: "flex",
           }}
-        />
+        >
+          <div
+            style={{
+              width: (footer.dot_radius ?? 10) * 2,
+              height: (footer.dot_radius ?? 10) * 2,
+              borderRadius: footer.dot_radius ?? 10,
+              backgroundColor: COLORS.crimson,
+              opacity: footer.dot_alpha ?? 1.0,
+              display: "flex",
+            }}
+          />
+        </div>
       </div>
     </div>
   );
