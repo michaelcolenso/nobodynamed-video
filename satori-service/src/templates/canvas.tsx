@@ -301,7 +301,7 @@ export default function Canvas(props: CanvasProps) {
   // Year the tracer is currently passing through — toX is linear in year, so
   // the inverse mapping from tracerX recovers it exactly.
   const tracerYear = Math.round(minYear + (tracerX / Math.max(chartWidth, 1)) * (maxYear - minYear));
-  const tracerYearAlpha = 0.85 * Math.min(1, chart.draw_progress / 0.05);
+  const tracerYearAlpha = 0.95 * Math.min(1, chart.draw_progress / 0.05);
 
   return (
     <div
@@ -666,7 +666,7 @@ export default function Canvas(props: CanvasProps) {
                 style={{
                   fontFamily: TYPE.display.family,
                   fontWeight: TYPE.display.weight,
-                  fontSize: RAMP.body[3],
+                  fontSize: RAMP.body[2],
                   color: COLORS.ink,
                   letterSpacing: 2,
                   textTransform: "uppercase",
@@ -708,18 +708,20 @@ export default function Canvas(props: CanvasProps) {
               }}
             />
             {/* Year readout riding above the tracer — the draw reads as time
-                passing, not just a line appearing. Clamped inside the chart so
-                it never clips at either edge. */}
+                passing, not just a line appearing. Display-black ink at body[2],
+                matching the peak annotation, so it survives phone-scale viewing.
+                Clamped inside the chart so it never clips at either edge. */}
             <div
               style={{
                 position: "absolute",
-                left: Math.max(0, Math.min(chartWidth - 96, tracerX - 48)),
-                top: Math.max(-20, tracerY - 64),
-                width: 96,
+                left: Math.max(0, Math.min(chartWidth - 140, tracerX - 70)),
+                top: Math.max(-24, tracerY - 76),
+                width: 140,
                 justifyContent: "center",
-                fontFamily: TYPE.body.family,
-                fontSize: RAMP.body[4],
-                color: COLORS.fade,
+                fontFamily: TYPE.display.family,
+                fontWeight: TYPE.display.weight,
+                fontSize: RAMP.body[2],
+                color: COLORS.ink,
                 letterSpacing: 2,
                 fontVariantNumeric: "tabular-nums",
                 opacity: tracerYearAlpha,
