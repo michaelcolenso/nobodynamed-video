@@ -1,8 +1,4 @@
-"""Golden frame hashing — SHA-256 of PNG bytes for regression detection.
-
-On first run (no golden file): writes the hash and passes.
-On subsequent runs: compares against stored hash; fails loudly on mismatch.
-"""
+"""Golden frame hashing with explicit update semantics."""
 
 from __future__ import annotations
 
@@ -28,19 +24,27 @@ def golden_path(spec_id: str, label: str) -> Path:
     return GOLDEN_DIR / spec_id / f"{label}.sha256"
 
 
-def check_or_write_golden(spec_id: str, label: str, png_bytes: bytes) -> None:
-    """Compare PNG hash to the stored golden, or write it if missing.
-
-    Raises AssertionError if the hash does not match the stored golden.
-    """
+def check_or_write_golden(
+    spec_id: str,
+    label: str,
+    png_bytes: bytes,
+    *,
+    update: bool = False,
+) -> None:
+    """Compare a hash, writing only during an explicit golden update."""
     actual = sha256_bytes(png_bytes)
     gp = golden_path(spec_id, label)
 
-    if not gp.exists():
+    if update:
         gp.parent.mkdir(parents=True, exist_ok=True)
         gp.write_text(actual + "\n")
         log.info("Golden written: %s  (%s)", gp, actual[:12])
         return
+    if not gp.exists():
+        raise AssertionError(
+            f"Missing golden for {spec_id}/{label}: {gp}. "
+            "Run the explicit `nbn goldens update` workflow after reviewing frames."
+        )
 
     expected = gp.read_text().strip()
     if actual != expected:

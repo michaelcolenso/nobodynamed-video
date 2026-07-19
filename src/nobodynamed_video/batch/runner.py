@@ -13,17 +13,18 @@ from rich.console import Console
 from rich.markup import escape
 from rich.table import Table
 
-from nobodynamed_video.compose.caption import CaptionExhausted, compose_caption
+from nobodynamed_video.compose.caption import compose_caption
 from nobodynamed_video.compose.ffmpeg import build_ffmpeg_cmd, get_ffmpeg_version, run_ffmpeg
 from nobodynamed_video.compose.lexicon import Lexicon
 from nobodynamed_video.compose.manifest import build_manifest, write_manifest
 from nobodynamed_video.compose.state import CombinationState
+from nobodynamed_video.compose.transcript import write_srt
 from nobodynamed_video.models import VideoSpec
 from nobodynamed_video.qc.checks import run_all_checks
 from nobodynamed_video.qc.report import build_qc_report
-from nobodynamed_video.render.frame_planner import plan_frames
+from nobodynamed_video.release.package import package_release, source_note
+from nobodynamed_video.render.frame_planner import plan_frames, spec_duration
 from nobodynamed_video.render.golden import check_or_write_golden, sha256_bytes
-from nobodynamed_video.render.programs import TOTAL_DURATION_S
 from nobodynamed_video.render.satori_client import SatoriClient
 
 console = Console()
@@ -59,8 +60,10 @@ async def render_spec(
     no_compose: bool = False,
     debug_safe: bool = False,
     audio_path: Path | None = None,
+    update_goldens: bool = False,
+    burn_captions: bool = False,
 ) -> dict[str, object]:
-    """Render one VideoSpec: frames → caption → ffmpeg → manifest."""
+    """Render one VideoSpec: frames → reserved caption → ffmpeg → manifest."""
     spec_out = out_dir / spec.id
     frames_dir = spec_out / "frames"
     frames_dir.mkdir(parents=True, exist_ok=True)
@@ -93,7 +96,12 @@ async def render_spec(
     for scene_kind in ["hook", "reveal"]:
         first_file = frames_dir / f"{scene_kind}_000.png"
         if first_file.exists():
-            check_or_write_golden(spec.id, f"{scene_kind}_f00", first_file.read_bytes())
+            check_or_write_golden(
+                spec.id,
+                f"{scene_kind}_f00",
+                first_file.read_bytes(),
+                update=update_goldens,
+            )
 
     if no_compose:
         return {"id": spec.id, "frames": len(sha256_frames), "composed": False}
@@ -101,28 +109,38 @@ async def render_spec(
     caption: str | None = None
     pinned_comment: str | None = None
     hashtag_set: list[str] = []
+    reservation_hash: str | None = None
     if spec.hook and spec.context:
-        try:
-            composed = compose_caption(spec.id, spec.hook, spec.context, lexicon, state)
-            caption = composed.caption
-            pinned_comment = composed.pinned_comment
-            hashtag_set = composed.hashtag_set
-        except CaptionExhausted as exc:
-            console.print(f"[yellow]⚠[/yellow]  {spec.id}: caption exhausted — {exc}")
+        composed = compose_caption(
+            spec.id, spec.hook, spec.context, lexicon, state, reserve_only=True
+        )
+        caption = composed.caption
+        pinned_comment = composed.pinned_comment
+        hashtag_set = composed.hashtag_set
+        reservation_hash = composed.combo_hash
 
     out_dir.mkdir(parents=True, exist_ok=True)
     mp4_path = out_dir / f"{spec.id}.mp4"
+    duration = spec_duration(spec)
+    subtitle_path = write_srt(spec, spec_out / "captions.srt") if burn_captions else None
     cmd = build_ffmpeg_cmd(
         frames_dir=frames_dir,
         out_path=mp4_path,
         fps=spec.fps,
+        total_duration=duration,
         audio_path=audio_path,
+        subtitle_path=subtitle_path,
     )
     # ffmpeg encodes can run 10-60s; a blocking subprocess.run here freezes the
     # event loop, starving the sibling render's in-flight HTTP awaits past their
     # read timeout (the CI failure mode: every odd spec died with an empty
     # ReadTimeout the instant its partner's encode finished).
-    await asyncio.to_thread(run_ffmpeg, cmd)
+    try:
+        await asyncio.to_thread(run_ffmpeg, cmd)
+    except Exception:
+        if reservation_hash:
+            state.release_reservation(reservation_hash)
+        raise
 
     total_time = time.monotonic() - total_start
     satori_version = await client.get_version()
@@ -131,7 +149,7 @@ async def render_spec(
     manifest = build_manifest(
         spec_id=spec.id,
         frame_count=len(sha256_frames),
-        duration_s=TOTAL_DURATION_S,
+        duration_s=duration,
         output_path=str(mp4_path),
         sha256_frames=sha256_frames,
         satori_version=satori_version,
@@ -144,6 +162,12 @@ async def render_spec(
         caption=caption,
         pinned_comment=pinned_comment,
         hashtag_set=hashtag_set,
+        data_mode=spec.context.data_mode.value if spec.context else "test",
+        provenance=spec.record.provenance,
+        classification=spec.context.classification if spec.context else None,
+        claims=spec.context.claims if spec.context else [],
+        source_note=source_note(spec),
+        video_format=spec.format.value,
     )
     write_manifest(manifest, out_dir)
 
@@ -152,9 +176,14 @@ async def render_spec(
         "frames": len(sha256_frames),
         "composed": True,
         "mp4": str(mp4_path),
-        "duration_s": TOTAL_DURATION_S,
+        "duration_s": duration,
+        "fps": spec.fps,
+        "scene_frame_counts": {
+            scene.kind: round(scene.duration_s * spec.fps) for scene in spec.scenes
+        },
         "render_time_s": total_time,
         "caption": caption,
+        "caption_combo_hash": reservation_hash,
     }
 
 
@@ -166,6 +195,9 @@ async def run_batch(
     no_compose: bool = False,
     debug_safe: bool = False,
     audio_path: Path | None = None,
+    release_dir: Path | None = None,
+    update_goldens: bool = False,
+    burn_captions: bool = False,
 ) -> None:
     """Run all specs concurrently, write summary JSON."""
     lexicon = Lexicon.from_yaml(_CAPTIONS_YAML)
@@ -189,6 +221,8 @@ async def run_batch(
                         no_compose,
                         debug_safe,
                         audio_path,
+                        update_goldens,
+                        burn_captions,
                     )
                     results.append(result)
                     console.print(f"[green]✓[/green] {spec.id}")
@@ -212,6 +246,8 @@ async def run_batch(
     console.print(table)
 
     qc_results = []
+    qc_failures: list[str] = []
+    spec_by_id = {spec.id: spec for spec in specs}
     for r in results:
         if r.get("composed"):
             qc = run_all_checks(r, out_dir)
@@ -221,6 +257,27 @@ async def run_batch(
                 sev, code, msg = issue.severity, issue.code, issue.message
                 qc_issues.append({"severity": sev, "code": code, "message": msg})
             r["qc"] = {"passed": qc.passed, "issues": qc_issues}
+            combo = r.get("caption_combo_hash")
+            if qc.passed:
+                if combo:
+                    state.commit_reservation(str(combo))
+                manifest_path = out_dir / f"{r['id']}.json"
+                manifest_data = json.loads(manifest_path.read_text())
+                manifest_data["qc_passed"] = True
+                manifest_path.write_text(json.dumps(manifest_data, indent=2) + "\n")
+                from nobodynamed_video.models import RenderManifest
+
+                manifest = RenderManifest.model_validate(manifest_data)
+                package_release(
+                    spec_by_id[str(r["id"])],
+                    manifest,
+                    out_dir,
+                    release_dir or (out_dir / "releases"),
+                )
+            else:
+                if combo:
+                    state.release_reservation(str(combo))
+                qc_failures.append(str(r["id"]))
 
     if qc_results:
         report_path = build_qc_report(batch_name, qc_results, out_dir)
@@ -230,13 +287,17 @@ async def run_batch(
         "batch": batch_name,
         "total": len(specs),
         "succeeded": len(results),
-        "failed": len(errors),
+        "failed": len(errors) + len(qc_failures),
         "results": results,
         "errors": [{"id": sid, "error": f"{type(exc).__name__}: {exc}"} for sid, exc in errors],
+        "qc_failures": qc_failures,
     }
     out_dir.mkdir(parents=True, exist_ok=True)
     summary_json = json.dumps(summary, indent=2, default=str) + "\n"
     (out_dir / f"{batch_name}.summary.json").write_text(summary_json)
 
-    if errors:
-        raise SystemExit(f"{len(errors)} video(s) failed in batch '{batch_name}'")
+    if errors or qc_failures:
+        raise SystemExit(
+            f"{len(errors)} render error(s), {len(qc_failures)} QC failure(s) "
+            f"in batch '{batch_name}'"
+        )

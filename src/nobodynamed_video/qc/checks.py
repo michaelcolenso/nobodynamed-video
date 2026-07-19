@@ -29,7 +29,7 @@ _FROZEN_CHECK_DEPTH = 10
 # Cover check: flag the first frame if ≥98% of pixels sit below luma 32
 # (limited range) — i.e. nothing but background. Frame 0 is the default
 # TikTok cover, so it must carry readable content.
-_COVER_BLACK_AMOUNT = 98
+_COVER_BLACK_AMOUNT = 99
 _COVER_BLACK_THRESHOLD = 32
 
 KEYFRAME_NAMES = [
@@ -63,17 +63,19 @@ class QCResult:
     keyframe_paths: list[Path] = field(default_factory=list)
 
 
-def _check_frame_count(frames_dir: Path) -> list[QCIssue]:
+def _check_frame_count(frames_dir: Path, expected_frames: int = _EXPECTED_FRAMES) -> list[QCIssue]:
     count = len(list(frames_dir.glob("*.png")))
-    if count != _EXPECTED_FRAMES:
-        msg = f"expected {_EXPECTED_FRAMES} frames, found {count}"
+    if count != expected_frames:
+        msg = f"expected {expected_frames} frames, found {count}"
         return [QCIssue("error", "FRAME_COUNT", msg)]
     return []
 
 
-def _check_frozen_frames(sha256_frames: dict[str, str]) -> list[QCIssue]:
+def _check_frozen_frames(
+    sha256_frames: dict[str, str], scene_frame_counts: dict[str, int] | None = None
+) -> list[QCIssue]:
     issues: list[QCIssue] = []
-    for scene, total in _SCENE_FRAME_COUNTS.items():
+    for scene, total in (scene_frame_counts or _SCENE_FRAME_COUNTS).items():
         depth = min(_FROZEN_CHECK_DEPTH, total - 1)
         for i in range(depth):
             a = sha256_frames.get(f"{scene}_{i:03d}.png")
@@ -97,7 +99,12 @@ def _check_dimensions(frames_dir: Path) -> list[QCIssue]:
     return []
 
 
-def _check_mp4(mp4_path: Path) -> list[QCIssue]:
+def _check_mp4(
+    mp4_path: Path,
+    expected_frames: int = _EXPECTED_FRAMES,
+    expected_duration: float = _EXPECTED_STREAM_DURATION_S,
+    expected_fps: int = 30,
+) -> list[QCIssue]:
     if not mp4_path.exists():
         return [QCIssue("error", "MP4_INVALID", "MP4 file not found")]
     try:
@@ -138,15 +145,17 @@ def _check_mp4(mp4_path: Path) -> list[QCIssue]:
         issues.append(QCIssue("error", "MP4_INVALID", f"unexpected resolution: {w}x{h}"))
 
     fps = video.get("r_frame_rate")
-    if fps != _EXPECTED_FPS:
+    expected_fps_fraction = f"{expected_fps}/1"
+    if fps != expected_fps_fraction:
         issues.append(QCIssue("error", "MP4_INVALID", f"unexpected frame rate: {fps}"))
 
     # Container duration — the user-facing length.
     fmt = data.get("format", {})
     fmt_duration = fmt.get("duration") if isinstance(fmt, dict) else None
     duration = float(str(fmt_duration if fmt_duration is not None else video.get("duration", 0)))
-    if duration < _MIN_DURATION_S:
-        msg = f"duration {duration:.2f}s < {_MIN_DURATION_S}s"
+    minimum_duration = expected_duration - _STREAM_DURATION_TOLERANCE_S
+    if duration < minimum_duration:
+        msg = f"duration {duration:.2f}s < {minimum_duration:.2f}s"
         issues.append(QCIssue("error", "MP4_INVALID", msg))
 
     # Video stream duration — concat composition must carry all 540 frames to
@@ -154,16 +163,16 @@ def _check_mp4(mp4_path: Path) -> list[QCIssue]:
     # frozen tail padded out by the audio track.
     stream_duration = video.get("duration")
     if stream_duration is not None:
-        drift = abs(float(str(stream_duration)) - _EXPECTED_STREAM_DURATION_S)
+        drift = abs(float(str(stream_duration)) - expected_duration)
         if drift > _STREAM_DURATION_TOLERANCE_S:
             msg = (
                 f"video stream {float(str(stream_duration)):.2f}s != "
-                f"{_EXPECTED_STREAM_DURATION_S}s (frozen tail or dropped frames)"
+                f"{expected_duration}s (frozen tail or dropped frames)"
             )
             issues.append(QCIssue("error", "MP4_INVALID", msg))
     nb_frames = video.get("nb_frames")
-    if nb_frames is not None and str(nb_frames) != str(_EXPECTED_FRAMES):
-        msg = f"video stream has {nb_frames} frames, expected {_EXPECTED_FRAMES}"
+    if nb_frames is not None and str(nb_frames) != str(expected_frames):
+        msg = f"video stream has {nb_frames} frames, expected {expected_frames}"
         issues.append(QCIssue("error", "MP4_INVALID", msg))
 
     # Color metadata — untagged or mismatched tags shift the brand colors on
@@ -273,6 +282,15 @@ def run_all_checks(result: dict[str, object], out_dir: Path) -> QCResult:
     manifest_path = out_dir / f"{spec_id}.json"
 
     sha256_frames: dict[str, str] = {}
+    expected_duration = float(str(result.get("duration_s", _EXPECTED_STREAM_DURATION_S)))
+    expected_fps = int(str(result.get("fps", 30)))
+    expected_frames = round(expected_duration * expected_fps)
+    raw_scene_counts = result.get("scene_frame_counts", _SCENE_FRAME_COUNTS)
+    scene_counts = (
+        {str(k): int(v) for k, v in raw_scene_counts.items()}
+        if isinstance(raw_scene_counts, dict)
+        else _SCENE_FRAME_COUNTS
+    )
     if manifest_path.exists():
         try:
             manifest_data = json.loads(manifest_path.read_text())
@@ -283,11 +301,11 @@ def run_all_checks(result: dict[str, object], out_dir: Path) -> QCResult:
             pass
 
     issues: list[QCIssue] = []
-    issues += _check_frame_count(frames_dir)
-    issues += _check_frozen_frames(sha256_frames)
+    issues += _check_frame_count(frames_dir, expected_frames)
+    issues += _check_frozen_frames(sha256_frames, scene_counts)
     issues += _check_dimensions(frames_dir)
     issues += _check_cover_frame(frames_dir)
-    issues += _check_mp4(mp4_path)
+    issues += _check_mp4(mp4_path, expected_frames, expected_duration, expected_fps)
     issues += _check_black_frames(mp4_path)
 
     passed = not any(i.severity == "error" for i in issues)

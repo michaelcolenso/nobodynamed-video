@@ -7,7 +7,7 @@ from nobodynamed_video.data.classifier import (
     RESURRECTION_LOOKBACK_YEARS,
     classify,
 )
-from nobodynamed_video.models import NameRecord, Tier, YearCount
+from nobodynamed_video.models import NameRecord, ObservationStatus, Tier, YearCount
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -66,12 +66,18 @@ def rising_series(base: int = 100, current: int = 1000) -> list[tuple[int, int]]
 
 def test_extinct_zero_current() -> None:
     record = make_record(series=[(1920, 5000), (2020, 500), (2024, 0)])
-    assert classify(record) == Tier.EXTINCT
+    record = record.model_copy(
+        update={"current_status": ObservationStatus.BELOW_REPORTING_THRESHOLD}
+    )
+    assert classify(record) != Tier.EXTINCT
 
 
 def test_extinct_never_popular() -> None:
     record = make_record(series=[(1990, 10), (2010, 5), (2024, 0)])
-    assert classify(record) == Tier.EXTINCT
+    record = record.model_copy(
+        update={"current_status": ObservationStatus.BELOW_REPORTING_THRESHOLD}
+    )
+    assert classify(record) != Tier.EXTINCT
 
 
 # ── CRITICAL ──────────────────────────────────────────────────────────────────
@@ -123,7 +129,7 @@ def test_resurrected_from_extinct() -> None:
     record = make_record(
         series=[
             (1930, 8000),
-            (near_year, 0),  # was extinct recently
+            (near_year, 5),  # was at the SSA reporting floor recently
             (2024, 300),
         ]
     )

@@ -8,7 +8,6 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-import click
 import typer
 from rich.console import Console
 
@@ -29,6 +28,8 @@ def render(
     debug_safe: bool = typer.Option(False, help="Overlay TikTok safe-area guides"),
     audio: Optional[Path] = typer.Option(None, help="Optional audio bed (.wav/.mp3/.aac)"),
     force: bool = typer.Option(False, help="Override blocklist"),
+    update_goldens: bool = typer.Option(False, hidden=True),
+    burn_captions: bool = typer.Option(False, help="Burn approved copy into the MP4"),
 ) -> None:
     """Render all videos defined in the YAML spec."""
     settings = get_settings()
@@ -43,6 +44,9 @@ def render(
             no_compose=no_compose,
             debug_safe=debug_safe,
             audio_path=audio,
+            release_dir=settings.release_dir,
+            update_goldens=update_goldens,
+            burn_captions=burn_captions,
         )
 
     asyncio.run(_run())
@@ -53,6 +57,7 @@ def batch(
     spec: Path = typer.Argument(..., help="Path to batch YAML spec"),
     force: bool = typer.Option(False, help="Override blocklist"),
     audio: Optional[Path] = typer.Option(None, help="Optional audio bed"),
+    burn_captions: bool = typer.Option(False, help="Burn approved copy into the MP4"),
 ) -> None:
     """Render a full batch from YAML."""
     settings = get_settings()
@@ -65,6 +70,8 @@ def batch(
             out_dir=settings.out_dir,
             batch_name=spec.stem,
             audio_path=audio,
+            release_dir=settings.release_dir,
+            burn_captions=burn_captions,
         )
 
     asyncio.run(_run())
@@ -130,8 +137,130 @@ def doctor() -> None:
 def smoke() -> None:
     """Render the Bertha smoke test video."""
     typer.echo("Running smoke test: batches/smoke.yaml")
-    ctx = click.get_current_context()
-    ctx.invoke(render, spec=Path("batches/smoke.yaml"))
+    render(
+        spec=Path("batches/smoke.yaml"),
+        no_compose=False,
+        debug_safe=False,
+        audio=None,
+        force=False,
+        update_goldens=False,
+        burn_captions=False,
+    )
+
+
+data_app = typer.Typer(name="data", help="Import and validate SSA data.")
+app.add_typer(data_app)
+
+
+@data_app.command("doctor")
+def data_doctor() -> None:
+    """Validate source provenance and readiness for the active data mode."""
+    from nobodynamed_video.data.d1_source import D1Source
+    from nobodynamed_video.data.doctor import inspect_data
+    from nobodynamed_video.data.sqlite_source import SqliteSource
+
+    settings = get_settings()
+
+    async def _run() -> None:
+        source: SqliteSource | D1Source
+        if settings.use_sqlite:
+            source = SqliteSource(settings.sqlite_fixture)
+        else:
+            source = D1Source(settings.d1_url, settings.get_d1_token())
+        result = await inspect_data(source, settings.data_mode)
+        console.print(f"Mode: {settings.data_mode.value}")
+        console.print(f"Latest dataset year: {result.latest_year or 'unknown'}")
+        if result.provenance:
+            console.print(f"Source: {result.provenance.source}")
+            console.print(f"Synthetic: {result.provenance.synthetic}")
+        for warning in result.warnings:
+            console.print(f"[yellow]WARNING[/yellow] {warning}")
+        for error in result.errors:
+            console.print(f"[red]ERROR[/red] {error}")
+        if not result.passed:
+            raise typer.Exit(1)
+
+    asyncio.run(_run())
+
+
+goldens_app = typer.Typer(name="goldens", help="Review and explicitly update golden frames.")
+app.add_typer(goldens_app)
+
+
+@goldens_app.command("update")
+def goldens_update(
+    spec: Path = typer.Option(Path("batches/smoke.yaml"), help="Reviewed spec to render"),
+) -> None:
+    """Render and replace goldens; never called by CI."""
+    render(
+        spec=spec,
+        no_compose=False,
+        debug_safe=False,
+        audio=None,
+        force=False,
+        update_goldens=True,
+        burn_captions=False,
+    )
+
+
+ops_app = typer.Typer(name="ops", help="Publishing ledger, queue, and analytics.")
+app.add_typer(ops_app)
+
+
+def _ledger() -> object:
+    from nobodynamed_video.operations.ledger import PublishingLedger
+
+    return PublishingLedger(Path("state/publishing.db"))
+
+
+@ops_app.command("record-publish")
+def record_publish(
+    spec_id: str,
+    platform: str,
+    external_id: str,
+    video_format: str = "fast",
+    url: Optional[str] = None,
+    hook_id: Optional[str] = None,
+    experiment: Optional[str] = None,
+) -> None:
+    """Record a completed manual or API publication."""
+    from nobodynamed_video.operations.ledger import PublishingLedger
+
+    ledger = _ledger()
+    assert isinstance(ledger, PublishingLedger)
+    ledger.record_publication(
+        spec_id, platform, external_id, url, video_format, hook_id, experiment
+    )
+    console.print(f"[green]Recorded[/green] {platform}/{external_id}")
+
+
+@ops_app.command("import-metrics")
+def import_metrics(path: Path) -> None:
+    """Import a portable CSV export of post-performance metrics."""
+    from nobodynamed_video.operations.ledger import PublishingLedger
+
+    ledger = _ledger()
+    assert isinstance(ledger, PublishingLedger)
+    count = ledger.import_metrics_csv(path)
+    console.print(f"[green]Imported[/green] {count} metric row(s)")
+
+
+@ops_app.command("enqueue")
+def enqueue(
+    name: str,
+    sex: str,
+    video_format: str = "fast",
+    hook_style: Optional[str] = None,
+    experiment: Optional[str] = None,
+    source: str = "manual",
+) -> None:
+    """Add an item to the source-agnostic content queue."""
+    from nobodynamed_video.operations.ledger import PublishingLedger
+
+    ledger = _ledger()
+    assert isinstance(ledger, PublishingLedger)
+    queue_id = ledger.enqueue(name, sex, video_format, hook_style, experiment, source)
+    console.print(f"[green]Queued[/green] item {queue_id}: {name}/{sex}")
 
 
 captions_app = typer.Typer(name="captions", help="Manage caption combination state.")

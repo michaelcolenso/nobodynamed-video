@@ -14,7 +14,12 @@ from typing import cast
 import httpx
 
 from nobodynamed_video.exceptions import DataSourceError
-from nobodynamed_video.models import NameRecord, YearCount
+from nobodynamed_video.models import (
+    DataProvenance,
+    NameRecord,
+    ObservationStatus,
+    YearCount,
+)
 
 
 class D1Source:
@@ -27,6 +32,21 @@ class D1Source:
             "Content-Type": "application/json",
         }
         self._timeout = timeout
+
+    async def latest_year(self) -> int:
+        rows = await self.query_rows("SELECT MAX(year) AS year FROM name_years", [])
+        if not rows or rows[0].get("year") is None:
+            raise DataSourceError("D1 contains no name-year rows")
+        return int(str(rows[0]["year"]))
+
+    async def provenance(self) -> DataProvenance:
+        year = await self.latest_year()
+        return DataProvenance(
+            source="US Social Security Administration",
+            source_url="https://www.ssa.gov/oact/babynames/limits.html",
+            dataset_year=year,
+            synthetic=False,
+        )
 
     async def get_record(self, name: str, sex: str, year: int) -> NameRecord:
         """Return a NameRecord for *name*/*sex* up to *year*, fetched from D1."""
@@ -47,6 +67,7 @@ class D1Source:
             YearCount(
                 year=int(cast(int | str, r["year"])),
                 count=int(cast(int | str, r["count"])),
+                status=ObservationStatus.OBSERVED,
             )
             for r in rows
         ]
@@ -55,7 +76,17 @@ class D1Source:
             raise DataSourceError(f"All counts zero in D1 for name={name!r} sex={sex!r}")
 
         peak = max(nonzero, key=lambda yc: yc.count)
-        current = series[-1]
+        source_year = await self.latest_year()
+        exact = next((point for point in reversed(series) if point.year == year), None)
+        if exact is not None:
+            current_count = exact.count
+            current_status = ObservationStatus.OBSERVED
+        elif year <= source_year:
+            current_count = 0
+            current_status = ObservationStatus.BELOW_REPORTING_THRESHOLD
+        else:
+            current_count = 0
+            current_status = ObservationStatus.MISSING_DATA
 
         return NameRecord(
             name=name,
@@ -63,8 +94,10 @@ class D1Source:
             series=series,
             peak_year=peak.year,
             peak_count=peak.count,
-            current_year=current.year,
-            current_count=current.count,
+            current_year=year,
+            current_count=current_count,
+            current_status=current_status,
+            provenance=await self.provenance(),
         )
 
     async def query_rows(self, sql: str, params: list[object]) -> list[dict[str, object]]:
@@ -89,12 +122,15 @@ class D1Source:
                 "SELECT 1 + COUNT(*) AS rank "
                 "FROM names AS n2 "
                 "JOIN name_years AS ny2 ON ny2.name_id = n2.id "
-                "WHERE n2.sex = ?1 AND ny2.year = ?2 AND ny2.count > ("
+                "WHERE n2.sex = ?1 AND ny2.year = ?2 AND (ny2.count > ("
                 "  SELECT ny.count "
                 "  FROM names AS n "
                 "  JOIN name_years AS ny ON ny.name_id = n.id "
                 "  WHERE n.name_lower = lower(?3) AND n.sex = ?1 AND ny.year = ?2"
-                ")"
+                ") OR (ny2.count = (SELECT ny.count FROM names AS n "
+                "JOIN name_years AS ny ON ny.name_id = n.id "
+                "WHERE n.name_lower = lower(?3) AND n.sex = ?1 AND ny.year = ?2) "
+                "AND n2.name_lower < lower(?3)))"
             ),
             [sex, year, name],
         )
@@ -112,7 +148,9 @@ class D1Source:
                 "(SELECT 1 + COUNT(*) "
                 " FROM name_years AS ny2 "
                 " JOIN names AS n2 ON n2.id = ny2.name_id "
-                " WHERE n2.sex = ?2 AND ny2.year = ny.year AND ny2.count > ny.count) <= ?3 "
+                " WHERE n2.sex = ?2 AND ny2.year = ny.year AND "
+                " (ny2.count > ny.count OR "
+                " (ny2.count = ny.count AND n2.name_lower < n.name_lower))) <= ?3 "
                 "ORDER BY ny.year DESC LIMIT 1"
             ),
             [name, sex, threshold],
@@ -131,7 +169,9 @@ class D1Source:
                 "(SELECT 1 + COUNT(*) "
                 " FROM name_years AS ny2 "
                 " JOIN names AS n2 ON n2.id = ny2.name_id "
-                " WHERE n2.sex = ?2 AND ny2.year = ny.year AND ny2.count > ny.count) <= ?3"
+                " WHERE n2.sex = ?2 AND ny2.year = ny.year AND "
+                " (ny2.count > ny.count OR "
+                " (ny2.count = ny.count AND n2.name_lower < n.name_lower))) <= ?3"
             ),
             [name, sex, threshold],
         )

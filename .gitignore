@@ -1,4 +1,6 @@
 out/
+releases/
+data/*.sqlite
 .venv/
 node_modules/
 *.mp4

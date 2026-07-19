@@ -28,8 +28,7 @@ doctor:
 	uv run nbn doctor
 
 regen:
-	rm -f fixtures/golden/**/*.sha256
-	@echo "→ golden hashes cleared — re-render to regenerate"
+	uv run nbn goldens update
 
 clean:
 	rm -rf out/ .pytest_cache .mypy_cache .ruff_cache

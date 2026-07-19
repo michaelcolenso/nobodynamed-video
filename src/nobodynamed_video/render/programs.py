@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from nobodynamed_video.models import ProgramType, VideoContext, VideoSpec
+from nobodynamed_video.models import ObservationStatus, ProgramType, VideoContext, VideoSpec
 from nobodynamed_video.render.hyperframes import Hyperframe, sample_scalar_track
 from nobodynamed_video.render.motion import (
     ease_in_out_cubic,
@@ -68,24 +68,44 @@ STAT_ALPHA = (Hyperframe(0.8, 0.0, ease_out_quart), Hyperframe(1.6, 1.0))
 
 
 def _status_label(ctx: VideoContext) -> str:
+    prefix = "TEST DATA · " if ctx.data_mode.value != "publish" else ""
     if ctx.program == ProgramType.RETURN_NOTICE:
-        return "RETURN NOTICE"
+        return prefix + "RETURN NOTICE"
     if ctx.program == ProgramType.CULTURAL_EVENT:
-        return "CULTURAL EVENT"
-    return "CASE FILE"
+        return prefix + "CULTURAL EVENT"
+    return prefix + "CASE FILE"
 
 
 def _stats_cards(ctx: VideoContext) -> list[dict[str, str]]:
+    if ctx.current_status == ObservationStatus.OBSERVED:
+        current_card = {
+            "label": "Current",
+            "value": f"{ctx.current_count:,}",
+            "tone": "crimson",
+        }
+    elif ctx.current_status == ObservationStatus.BELOW_REPORTING_THRESHOLD:
+        current_card = {"label": "SSA row", "value": "<5", "tone": "crimson"}
+    else:
+        current_card = {"label": "Current", "value": "—", "tone": "fade"}
     cards = [
         {"label": "Peak year", "value": str(ctx.peak_year), "tone": "fade"},
         {"label": "Peak births", "value": f"{ctx.peak_count:,}", "tone": "ink"},
-        {"label": "Current", "value": f"{ctx.current_count:,}", "tone": "crimson"},
+        current_card,
     ]
     if ctx.program == ProgramType.RETURN_NOTICE:
         cards[2] = {"label": "5y growth", "value": f"{ctx.rise_pct}%", "tone": "emerald"}
     elif ctx.program == ProgramType.CULTURAL_EVENT and ctx.killing_event:
         cards[2] = {"label": "Trigger", "value": ctx.killing_event, "tone": "crimson"}
     return cards
+
+
+def _current_count_copy(ctx: VideoContext) -> tuple[str | None, str]:
+    """Return truthful callout copy for the latest requested year."""
+    if ctx.current_status == ObservationStatus.OBSERVED:
+        return None, f"births in {ctx.current_year}"
+    if ctx.current_status == ObservationStatus.BELOW_REPORTING_THRESHOLD:
+        return "<5", f"SSA reporting threshold in {ctx.current_year}"
+    return "—", f"data unavailable for {ctx.current_year}"
 
 
 def sample_program_frame(
@@ -138,6 +158,7 @@ def sample_program_frame(
     narrative_alpha = sample_scalar_track(NARRATIVE_ALPHA, t)
     support_alpha = sample_scalar_track(SUPPORT_ALPHA, t)
     footer_wave = ease_in_out_sine(triangle_wave(t, 1.2))
+    count_label, count_caption = _current_count_copy(ctx)
     return {
         "program": spec.program.value,
         "register": spec.hook.voice_register,
@@ -192,6 +213,8 @@ def sample_program_frame(
             "peak_year": ctx.peak_year,
             "peak_count": ctx.peak_count,
             "count_value": round(spec.record.current_count * count_progress),
+            "count_label": count_label,
+            "count_caption": count_caption,
             "peak_annotation_alpha": round(peak_annotation_alpha, 6),
         },
         "stats": {

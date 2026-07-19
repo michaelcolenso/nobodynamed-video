@@ -61,7 +61,7 @@ export async function renderFrame(
     fitTo: { mode: "width", value: CANVAS.w },
   });
   const pngData = resvg.render();
-  return Buffer.from(pngData.asPng());
+  return pngData.asPng();
 }
 
 export { TemplateName };

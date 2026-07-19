@@ -32,6 +32,8 @@ interface ChartState {
   peak_year: number;
   peak_count: number;
   count_value: number;
+  count_label?: string | null;
+  count_caption?: string;
   peak_annotation_alpha?: number;
 }
 
@@ -816,7 +818,7 @@ export default function Canvas(props: CanvasProps) {
               display: "flex",
             }}
           >
-            {chart.count_value.toLocaleString("en-US")}
+            {chart.count_label ?? chart.count_value.toLocaleString("en-US")}
           </span>
           <span
             style={{
@@ -828,7 +830,7 @@ export default function Canvas(props: CanvasProps) {
               display: "flex",
             }}
           >
-            births in {chart.current_year}
+            {chart.count_caption ?? `births in ${chart.current_year}`}
           </span>
         </div>
       )}

@@ -10,6 +10,7 @@ from typing import TypedDict, cast
 
 from ruamel.yaml import YAML
 
+from nobodynamed_video.data.claim_safety import copy_is_supported
 from nobodynamed_video.exceptions import HookResolutionError
 from nobodynamed_video.models import ProgramType, ResolvedHook, Tier, VideoContext
 
@@ -29,6 +30,7 @@ class HookDef(TypedDict):
     caption: str
     compatible_tiers: list[str]
     requires_var: str | None
+    requires_data: dict[str, dict[str, float]] | None
 
 
 def _thousands(value: TemplateValue) -> str:
@@ -67,11 +69,74 @@ FILTERS: dict[str, Callable[[TemplateValue], str]] = {
 }
 
 
+def passes_data_guards(requires_data: object, ctx: Mapping[str, TemplateValue]) -> bool:
+    """Evaluate numeric guard bounds like ``{decline_pct: {max: 30}}`` against ctx.
+
+    Tier membership alone guarantees very little about a name's history (STABLE
+    is the classifier's default bucket), so copy that makes a quantitative claim
+    declares the bounds under which the claim is true. A guard passes only when
+    the context value is a real number inside every declared bound; None fails
+    closed so copy never attaches to a name whose data cannot prove its claim.
+    """
+    if requires_data is None:
+        return True
+    if not isinstance(requires_data, Mapping):
+        raise HookResolutionError(f"requires_data must be a mapping: {requires_data!r}")
+    for var_name, bounds in requires_data.items():
+        if not isinstance(bounds, Mapping):
+            raise HookResolutionError(
+                f"requires_data[{var_name!r}] must be a mapping of min/max bounds"
+            )
+        value = ctx.get(str(var_name))
+        if isinstance(value, bool) or not isinstance(value, int | float):
+            return False
+        for bound_name, bound in bounds.items():
+            if isinstance(bound, bool) or not isinstance(bound, int | float):
+                raise HookResolutionError(
+                    f"requires_data[{var_name!r}].{bound_name} must be a number"
+                )
+            if bound_name == "min":
+                if value < bound:
+                    return False
+            elif bound_name == "max":
+                if value > bound:
+                    return False
+            else:
+                raise HookResolutionError(
+                    f"Unknown bound {bound_name!r} in requires_data[{var_name!r}]" " (use min/max)"
+                )
+    return True
+
+
 def load_hook_library(path: Path = HOOKS_PATH) -> dict[str, object]:
     yaml = YAML(typ="safe")
     raw = yaml.load(path.read_text())
     if not isinstance(raw, dict):
         raise HookResolutionError(f"Invalid hooks library at {path}")
+    hooks = raw.get("hooks")
+    if not isinstance(hooks, list):
+        raise HookResolutionError("Hooks library must contain a list under 'hooks'")
+    required = {
+        "id",
+        "pillar",
+        "register",
+        "compatible_tiers",
+        "headline",
+        "subhead",
+        "pinned_comment",
+        "caption",
+    }
+    seen: set[str] = set()
+    for hook in hooks:
+        if not isinstance(hook, dict):
+            raise HookResolutionError(f"Hook must be a mapping: {hook!r}")
+        missing = required - set(hook)
+        if missing:
+            raise HookResolutionError(f"Hook missing {sorted(missing)}: {hook!r}")
+        hook_id = str(hook["id"])
+        if hook_id in seen:
+            raise HookResolutionError(f"Duplicate hook id: {hook_id}")
+        seen.add(hook_id)
     return raw
 
 
@@ -157,6 +222,14 @@ def resolve_hook(
     for hook in candidates:
         required = hook.get("requires_var")
         if required and ctx_dict.get(required) is None:
+            continue
+        if not passes_data_guards(hook.get("requires_data"), ctx_dict):
+            continue
+        copy = " ".join(
+            str(hook.get(field, ""))
+            for field in ("headline", "subhead", "pinned_comment", "caption")
+        )
+        if not copy_is_supported(copy, ctx_dict):
             continue
         viable.append(hook)
 

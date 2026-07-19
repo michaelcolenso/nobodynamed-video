@@ -7,12 +7,16 @@ from typing import Any
 
 from ruamel.yaml import YAML
 
+from nobodynamed_video.data.classifier import classify_dimensions
 from nobodynamed_video.data.d1_source import D1Source
 from nobodynamed_video.data.hooks import pillar_to_program
 from nobodynamed_video.data.narratives import select_narrative
 from nobodynamed_video.data.sqlite_source import SqliteSource
 from nobodynamed_video.models import (
+    ClaimEvidence,
+    DataMode,
     NameRecord,
+    ObservationStatus,
     ResolvedCulturalEvent,
     ResolvedHook,
     Tier,
@@ -58,14 +62,6 @@ def _compute_decline_pct(record: NameRecord) -> int:
     return pct
 
 
-def _weighted_mean_year(record: NameRecord) -> float:
-    total = sum(point.count for point in record.series if point.count > 0)
-    if total <= 0:
-        return float(record.current_year)
-    weighted = sum(point.year * point.count for point in record.series if point.count > 0)
-    return weighted / total
-
-
 def _generation_for_year(year: int) -> str:
     for start, end, label in _GENERATION_LABELS:
         if start <= year <= end:
@@ -74,9 +70,40 @@ def _generation_for_year(year: int) -> str:
 
 
 def _find_trough(record: NameRecord) -> tuple[int, int]:
-    nonzero = [point for point in record.series if point.count > 0]
+    # A comeback trough must occur at or after the historical peak. Using the
+    # global minimum can put the "trough" before the rise being described.
+    nonzero = [
+        point
+        for point in record.series
+        if point.year >= record.peak_year
+        and point.status == ObservationStatus.OBSERVED
+        and point.count > 0
+    ]
+    if not nonzero:
+        return record.peak_year, record.peak_count
     trough = min(nonzero, key=lambda point: (point.count, point.year))
     return trough.year, trough.count
+
+
+def _count_in_year(record: NameRecord, year: int) -> int | None:
+    for point in record.series:
+        if point.year == year and point.status == ObservationStatus.OBSERVED:
+            return point.count
+    return None
+
+
+def _event_decline_pct(record: NameRecord, event: ResolvedCulturalEvent | None) -> int | None:
+    """How far below peak the name already was in the event year (0–100).
+
+    Lets copy distinguish "was already fading when the event hit" (large value)
+    from "was at its peak when the event hit" (near zero). None without an event.
+    """
+    if event is None or record.peak_count <= 0:
+        return None
+    count_at_event = _count_in_year(record, event.event_year)
+    if count_at_event is None:
+        return None
+    return _round_pct(((record.peak_count - count_at_event) / record.peak_count) * 100)
 
 
 def _find_last_top_year(rows: list[tuple[int, int]], threshold: int) -> int | None:
@@ -90,7 +117,12 @@ def _find_top10_years(rows: list[tuple[int, int]]) -> int:
 
 def _find_rise_year(record: NameRecord) -> int | None:
     for prev, current in zip(record.series, record.series[1:], strict=False):
-        if prev.count <= 0:
+        if (
+            current.year - prev.year != 1
+            or prev.status != ObservationStatus.OBSERVED
+            or current.status != ObservationStatus.OBSERVED
+            or prev.count <= 0
+        ):
             continue
         change = (current.count - prev.count) / prev.count
         if change > 0.30:
@@ -100,7 +132,12 @@ def _find_rise_year(record: NameRecord) -> int | None:
 
 def _find_collapse_year(record: NameRecord) -> int | None:
     for prev, current in zip(record.series, record.series[1:], strict=False):
-        if prev.count <= 0:
+        if (
+            current.year - prev.year != 1
+            or prev.status != ObservationStatus.OBSERVED
+            or current.status != ObservationStatus.OBSERVED
+            or prev.count <= 0
+        ):
             continue
         change = (current.count - prev.count) / prev.count
         if change <= -0.30:
@@ -114,8 +151,22 @@ def load_cultural_events(
     yaml = YAML(typ="safe")
     raw = yaml.load(path.read_text())
     result: dict[tuple[str, str], dict[str, Any]] = {}
+    allowed_confidence = {"high", "medium", "low"}
     for entry in raw.get("events", []):
+        missing = [
+            key
+            for key in ("name", "sex", "killing_event", "event_year", "confidence", "evidence")
+            if not entry.get(key)
+        ]
+        if missing:
+            raise ValueError(f"Cultural event missing required fields {missing}: {entry!r}")
+        if entry["confidence"] not in allowed_confidence:
+            raise ValueError(f"Invalid cultural-event confidence: {entry['confidence']!r}")
+        if len(str(entry["killing_event"])) > 30:
+            raise ValueError(f"Cultural-event label exceeds 30 characters: {entry['name']}")
         key = (str(entry["name"]).lower(), str(entry["sex"]))
+        if key in result:
+            raise ValueError(f"Duplicate cultural event: {key}")
         result[key] = dict(entry)
     return result
 
@@ -129,6 +180,23 @@ def _resolve_event(
     killing_event = str(raw.get("killing_event", "")).strip()
     if not killing_event:
         return None
+    confidence = str(raw.get("confidence", "unknown"))
+    if confidence == "low":
+        return None
+    start = _count_in_year(record, int(raw["event_year"]))
+    window = 5 if confidence == "high" else 10
+    after = [
+        point.count
+        for point in record.series
+        if int(raw["event_year"]) < point.year <= int(raw["event_year"]) + window
+        and point.status == ObservationStatus.OBSERVED
+    ]
+    if start is None or not after or start <= 0:
+        return None
+    decline = _round_pct(((start - min(after)) / start) * 100)
+    minimum = 30 if confidence == "high" else 15
+    if decline < minimum:
+        return None
     return ResolvedCulturalEvent(
         name=record.name,
         sex=record.sex,
@@ -136,8 +204,87 @@ def _resolve_event(
         event_year=int(raw["event_year"]),
         collapse_year=(int(raw["collapse_year"]) if raw.get("collapse_year") is not None else None),
         moment_length=(int(raw["moment_length"]) if raw.get("moment_length") is not None else None),
-        confidence=str(raw.get("confidence", "unknown")),
+        confidence=confidence,
+        evidence=str(raw["evidence"]),
+        validated=True,
+        observed_decline_pct=decline,
     )
+
+
+def _build_claims(
+    record: NameRecord, tier: Tier, event: ResolvedCulturalEvent | None
+) -> list[ClaimEvidence]:
+    provenance = record.provenance
+    source = provenance.source if provenance else "unknown"
+    source_url = provenance.source_url if provenance else None
+    claims = [
+        ClaimEvidence(
+            claim_id="historical-peak",
+            text=(
+                f"{record.name} peaked at {record.peak_count:,} recorded births "
+                f"in {record.peak_year}."
+            ),
+            kind="ssa_observation",
+            source=source,
+            source_url=source_url,
+            fields={"peak_year": record.peak_year, "peak_count": record.peak_count},
+        )
+    ]
+    if record.current_status == ObservationStatus.OBSERVED:
+        claims.append(
+            ClaimEvidence(
+                claim_id="current-count",
+                text=(
+                    f"SSA recorded {record.current_count:,} births named {record.name} "
+                    f"in {record.current_year}."
+                ),
+                kind="ssa_observation",
+                source=source,
+                source_url=source_url,
+                fields={"year": record.current_year, "count": record.current_count},
+            )
+        )
+    else:
+        claims.append(
+            ClaimEvidence(
+                claim_id="current-suppression",
+                text=(
+                    f"{record.name} has no published SSA row in {record.current_year}; "
+                    "SSA suppresses counts below five."
+                ),
+                kind="suppression_limit",
+                source=source,
+                source_url=source_url,
+                fields={"year": record.current_year, "status": record.current_status.value},
+            )
+        )
+    claims.append(
+        ClaimEvidence(
+            claim_id="classification",
+            text=f"The renderer's conservative legacy label is {tier.value}.",
+            kind="derived",
+            source="nobodynamed-video classifier",
+            fields={"tier": tier.value},
+        )
+    )
+    if event:
+        claims.append(
+            ClaimEvidence(
+                claim_id="cultural-event",
+                text=(
+                    f"The curated event '{event.killing_event}' is associated with a "
+                    f"{event.observed_decline_pct}% observed decline window."
+                ),
+                kind="curated_association",
+                source="fixtures/cultural_events.yaml",
+                fields={
+                    "event_year": event.event_year,
+                    "confidence": event.confidence,
+                    "observed_decline_pct": event.observed_decline_pct,
+                },
+            )
+        )
+    return claims
 
 
 async def build_base_context(
@@ -146,14 +293,18 @@ async def build_base_context(
     tier: Tier,
     current_year: int,
     events: dict[tuple[str, str], dict[str, Any]] | None = None,
+    data_mode: DataMode = DataMode.TEST,
 ) -> VideoContext:
     peak_decade = record.peak_year // 10 * 10
     current_decade = current_year // 10 * 10
     trough_year, trough_count = _find_trough(record)
-    avg_age = round(current_year - _weighted_mean_year(record))
     decline_pct = _compute_decline_pct(record)
     rise_pct = _compute_rise_pct(record)
-    current_rank = await source.get_rank(record.name, record.sex, record.current_year)
+    current_rank = (
+        await source.get_rank(record.name, record.sex, record.current_year)
+        if record.current_status == ObservationStatus.OBSERVED
+        else 9999
+    )
     rank_at_peak = await source.get_rank(record.name, record.sex, record.peak_year)
     last_top_1000_year = await source.get_last_top_year(record.name, record.sex, 1000)
     last_top_10_year = await source.get_last_top_year(record.name, record.sex, 10)
@@ -166,7 +317,8 @@ async def build_base_context(
         record.peak_year,
         current_year,
     )
-    event = _resolve_event(events or load_cultural_events(), record)
+    event = _resolve_event(events if events is not None else load_cultural_events(), record)
+    classification = classify_dimensions(record)
     collapse_year = (
         event.collapse_year
         if event and event.collapse_year is not None
@@ -187,6 +339,9 @@ async def build_base_context(
         sex=record.sex,
         first_letter=record.name[0].upper(),
         tier=tier,
+        classification=classification,
+        data_mode=data_mode,
+        current_status=record.current_status,
         current_year=current_year,
         current_count=record.current_count,
         current_rank=current_rank,
@@ -203,17 +358,26 @@ async def build_base_context(
         rise_pct=rise_pct,
         year_range=record.series[-1].year - record.series[0].year,
         start_year=record.series[0].year,
-        avg_age=avg_age,
+        avg_age=None,
         generation_at_peak=_generation_for_year(record.peak_year),
         last_top_1000_year=last_top_1000_year,
         last_top_10_year=last_top_10_year,
         top10_years=top10_years,
         killing_event=event.killing_event if event else None,
         comparison_name=comparison_name,
+        comparison_reason=(
+            f"At {record.name}'s {record.peak_year} peak it had more recorded births than "
+            f"{comparison_name}; in {current_year}, {comparison_name} had more."
+            if comparison_name
+            else None
+        ),
         moment_length=moment_length,
         collapse_year=collapse_year,
         rise_year=rise_year,
         event_year=event.event_year if event else None,
+        peak_to_event_years=(event.event_year - record.peak_year) if event else None,
+        event_decline_pct=_event_decline_pct(record, event),
+        claims=_build_claims(record, tier, event),
         cultural_event=event,
     )
 

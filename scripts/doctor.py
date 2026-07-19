@@ -32,9 +32,7 @@ def check_python() -> bool:
 
 def check_node() -> bool:
     try:
-        result = subprocess.run(
-            ["node", "--version"], capture_output=True, text=True, timeout=5
-        )
+        result = subprocess.run(["node", "--version"], capture_output=True, text=True, timeout=5)
         version = result.stdout.strip()
         major = int(version.lstrip("v").split(".")[0])
         ok = major >= 20
@@ -44,14 +42,14 @@ def check_node() -> bool:
             "Install Node 20+ via nvm: nvm install 20 && nvm use 20",
         )
     except Exception:
-        return _check("Node >= 20", False, "Install Node 20+ via nvm: https://github.com/nvm-sh/nvm")
+        return _check(
+            "Node >= 20", False, "Install Node 20+ via nvm: https://github.com/nvm-sh/nvm"
+        )
 
 
 def check_ffmpeg() -> bool:
     try:
-        result = subprocess.run(
-            ["ffmpeg", "-version"], capture_output=True, text=True, timeout=5
-        )
+        result = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True, timeout=5)
         line = result.stdout.splitlines()[0] if result.stdout else ""
         parts = line.split()
         if len(parts) >= 3:
@@ -113,6 +111,7 @@ def check_d1() -> bool:
             "Run: python scripts/build_fixture.py",
         )
     import httpx
+
     try:
         resp = httpx.post(
             settings.d1_url,
@@ -149,7 +148,9 @@ def run_doctor() -> None:
         console.print("[green bold]All checks passed. You're good to render.[/green bold]")
     else:
         failed = checks.count(False)
-        console.print(f"[red bold]{failed} check(s) failed. Fix the issues above and re-run.[/red bold]")
+        console.print(
+            f"[red bold]{failed} check(s) failed. Fix the issues above and re-run.[/red bold]"
+        )
         raise SystemExit(1)
 
 

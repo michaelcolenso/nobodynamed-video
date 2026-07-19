@@ -8,7 +8,8 @@ from typing import Any, TypedDict, cast
 
 from ruamel.yaml import YAML
 
-from nobodynamed_video.data.hooks import render_hook_template
+from nobodynamed_video.data.claim_safety import copy_is_supported
+from nobodynamed_video.data.hooks import passes_data_guards, render_hook_template
 from nobodynamed_video.exceptions import HookResolutionError
 from nobodynamed_video.models import ProgramType, Tier, VideoContext
 
@@ -27,6 +28,7 @@ class NarrativeDef(TypedDict):
     program: str
     compatible_tiers: list[str]
     requires_var: str | None
+    requires_data: dict[str, dict[str, float]] | None
     primary: str
     supporting: str
 
@@ -70,6 +72,12 @@ def select_narrative(
     for narr in candidates:
         required = narr.get("requires_var")
         if required and ctx_dict.get(required) is None:
+            continue
+        if not passes_data_guards(narr.get("requires_data"), ctx_dict):
+            continue
+        if not copy_is_supported(
+            f"{narr.get('primary', '')} {narr.get('supporting', '')}", ctx_dict
+        ):
             continue
         viable.append(narr)
 
