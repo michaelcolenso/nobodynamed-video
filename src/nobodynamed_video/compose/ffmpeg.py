@@ -32,6 +32,7 @@ def build_ffmpeg_cmd(
     total_duration: float = 18.0,
     audio_path: Path | None = None,
     audio_lufs: float = AUDIO_TARGET_LUFS,
+    subtitle_path: Path | None = None,
 ) -> list[str]:
     """Return the ffmpeg argument list (does not execute)."""
     cmd: list[str] = ["ffmpeg", "-y"]
@@ -61,7 +62,12 @@ def build_ffmpeg_cmd(
     concat = f"{scene_labels}concat=n={len(SCENE_ORDER)}:v=1:a=0[vcat]"
     # Explicit full-range sRGB → limited-range BT.709 conversion; must agree
     # with the color metadata tags below.
-    to_bt709 = "[vcat]scale=in_range=pc:out_range=tv:out_color_matrix=bt709,format=yuv420p[v]"
+    filters = "scale=in_range=pc:out_range=tv:out_color_matrix=bt709,format=yuv420p"
+    if subtitle_path:
+        escaped = str(subtitle_path.resolve()).replace("\\", "\\\\").replace(":", "\\:")
+        escaped = escaped.replace("'", "\\'")
+        filters += f",subtitles=filename='{escaped}'"
+    to_bt709 = f"[vcat]{filters}[v]"
     cmd += ["-filter_complex", "; ".join([concat, to_bt709])]
     cmd += ["-map", "[v]", "-map", f"{audio_input_index}:a"]
 

@@ -12,86 +12,86 @@ defaults:
 
 videos:
   # Alexa: 6,052 → 574 in seven years. Amazon Echo, 2014. High confidence.
-  - id: alexa-2024
+  - id: alexa-2025
     name: Alexa
     sex: F
     style: cultural-collapse
 
   # Gary: 85,000 at peak (1954). ~150 now. The quintessential dad's-coworker name.
-  - id: gary-2024
+  - id: gary-2025
     name: Gary
     sex: M
     style: extinction-watch
 
   # Violet: vintage comeback, currently top 40. From ~300 in 1990 to ~6,000.
-  - id: violet-2024
+  - id: violet-2025
     name: Violet
     sex: F
     style: rising
 
   # Michael: biggest male name in American history. 92,000 at peak (1957).
-  - id: michael-2024
+  - id: michael-2025
     name: Michael
     sex: M
     style: peak-year
 
   # Katrina: Hurricane Katrina, 2005. Fell off the top 1,000. High confidence.
-  - id: katrina-2024
+  - id: katrina-2025
     name: Katrina
     sex: F
     style: cultural-collapse
 
   # Arthur: classic comeback. Rising fast after decades in the wilderness.
-  - id: arthur-2024
+  - id: arthur-2025
     name: Arthur
     sex: M
     style: rising
 
   # Jessica: dominated the 1980s (~57,000 at peak in 1987). Now ~1,000.
-  - id: jessica-2024
+  - id: jessica-2025
     name: Jessica
     sex: F
     style: peak-year
 
   # Ethel: peak ~22,000 in 1900s. Nearly extinct. Pure grandma-era name.
-  - id: ethel-2024
+  - id: ethel-2025
     name: Ethel
     sex: F
     style: extinction-watch
 
   # Henry: durable across generations, currently top 10. The rare stable name.
-  - id: henry-2024
+  - id: henry-2025
     name: Henry
     sex: M
     style: stable
 
   # Jason: 1970s explosion. Great comparison shape — who beat him?
-  - id: jason-2024
+  - id: jason-2025
     name: Jason
     sex: M
     style: comparison-surprise
 
   # Stella: vintage comeback. From near-zero to top 50.
-  - id: stella-2024
+  - id: stella-2025
     name: Stella
     sex: F
     style: rising
 
   # Clarence: once top 30. Now barely in the data. Slow quiet decline.
-  - id: clarence-2024
+  - id: clarence-2025
     name: Clarence
     sex: M
     style: declining
 
   # Mary: the biggest female name in American history. #1 for 60+ years.
   # The generation-arc of all generation-arcs.
-  - id: mary-2024
+  - id: mary-2025
     name: Mary
     sex: F
     style: generation-arc
 
   # Richard: top 5 for four decades. The full century story.
-  - id: richard-2024
+  - id: richard-2025
     name: Richard
     sex: M
     style: generation-arc

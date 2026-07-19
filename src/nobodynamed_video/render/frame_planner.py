@@ -26,14 +26,28 @@ def total_frame_count(fps: int = 30) -> int:
     return sum(frame_count(kind, fps) for kind in SCENE_ORDER)
 
 
-def _scene_for_global_time(t: float) -> tuple[str, float]:
+def _durations(spec: VideoSpec) -> dict[str, float]:
+    configured = {scene.kind: scene.duration_s for scene in spec.scenes}
+    return {kind: configured.get(kind, SCENE_DURATIONS[kind]) for kind in SCENE_ORDER}
+
+
+def spec_duration(spec: VideoSpec) -> float:
+    return sum(_durations(spec).values())
+
+
+def spec_frame_count(spec: VideoSpec, fps: int | None = None) -> int:
+    rate = fps or spec.fps
+    return sum(round(duration * rate) for duration in _durations(spec).values())
+
+
+def _scene_for_global_time(t: float, durations: dict[str, float]) -> tuple[str, float]:
     elapsed = 0.0
     for kind in SCENE_ORDER:
-        duration = SCENE_DURATIONS[kind]
+        duration = durations[kind]
         if t < elapsed + duration:
             return kind, t - elapsed
         elapsed += duration
-    return SCENE_ORDER[-1], SCENE_DURATIONS[SCENE_ORDER[-1]]
+    return SCENE_ORDER[-1], durations[SCENE_ORDER[-1]]
 
 
 def plan_frames(
@@ -46,11 +60,16 @@ def plan_frames(
     The video is rendered as one shared-canvas hyperframe program, but scene
     buckets are preserved for frame naming and ffmpeg composition.
     """
+    durations = _durations(spec)
+    duration = sum(durations.values())
     bucket_indices = {kind: 0 for kind in SCENE_ORDER}
-    for global_idx in range(total_frame_count(fps)):
+    for global_idx in range(spec_frame_count(spec, fps)):
         t = global_idx / fps
-        scene_kind, _scene_t = _scene_for_global_time(t)
+        scene_kind, _scene_t = _scene_for_global_time(t, durations)
         frame_idx = bucket_indices[scene_kind]
         bucket_indices[scene_kind] += 1
-        props = sample_program_frame(spec, t, debug_safe)
+        # Reuse the polished 18-second motion design as an authored timeline;
+        # longer formats slow it proportionally while retaining continuous motion.
+        authored_t = t * TOTAL_DURATION_S / duration
+        props = sample_program_frame(spec, authored_t, debug_safe)
         yield scene_kind, frame_idx, "canvas", props

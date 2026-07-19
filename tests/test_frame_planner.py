@@ -3,6 +3,7 @@
 from nobodynamed_video.data.classifier import classify
 from nobodynamed_video.models import (
     NameRecord,
+    ObservationStatus,
     ProgramType,
     ResolvedHook,
     Scene,
@@ -16,6 +17,7 @@ from nobodynamed_video.render.frame_planner import (
     plan_frames,
     total_frame_count,
 )
+from nobodynamed_video.render.programs import sample_program_frame
 from nobodynamed_video.seed import spec_seed
 
 
@@ -151,6 +153,19 @@ def test_canvas_props_have_required_blocks() -> None:
     assert "stats" in props
     assert "narrative" in props
     assert "footer" in props
+
+
+def test_suppressed_current_count_uses_threshold_copy() -> None:
+    spec = make_bertha_spec()
+    spec.record.current_status = ObservationStatus.BELOW_REPORTING_THRESHOLD
+    spec.record.current_count = 0
+    assert spec.context is not None
+    spec.context.current_status = ObservationStatus.BELOW_REPORTING_THRESHOLD
+    spec.context.current_count = 0
+    props = sample_program_frame(spec, 9.0)
+    assert props["chart"]["count_label"] == "<5"
+    assert props["chart"]["count_caption"] == "SSA reporting threshold in 2024"
+    assert props["stats"]["cards"][2]["value"] == "<5"
 
 
 def test_recompose_progress_increases_after_dot_lands() -> None:

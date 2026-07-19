@@ -7,6 +7,8 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from nobodynamed_video.models import DataMode
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -20,11 +22,14 @@ class Settings(BaseSettings):
     d1_token: str = Field(default="")
     out_dir: Path = Field(default=Path("./out"))
     font_dir: Path = Field(default=Path("./satori-service/fonts"))
-    latest_year: int = Field(default=2024)
+    # 0 means derive the newest complete year from the selected data source.
+    latest_year: int = Field(default=0)
+    data_mode: DataMode = Field(default=DataMode.TEST)
     log_level: str = Field(default="INFO")
 
     # SQLite fixture path used in dev/test when d1_url is empty.
     sqlite_fixture: Path = Field(default=Path("./fixtures/ssa.sqlite"))
+    release_dir: Path = Field(default=Path("./releases"))
     _resolved_d1_token: str | None = None
 
     @property

@@ -12,103 +12,82 @@ concurrency:
 
 jobs:
   check:
-    name: Lint / Type / Test
+    name: Lint / Type / Test / Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - uses: astral-sh/setup-uv@v4
-
-      - run: uv sync
-
-      - name: Lint
-        run: |
-          uv run ruff check src tests
-          uv run ruff format --check src tests
-
-      - name: Typecheck
-        run: uv run mypy --strict src
-
-      - name: Test
-        run: uv run pytest -x -q
-
-  batch:
-    name: Render batches
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: check
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11.7.0
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - name: Python checks
+        run: |
+          uv run ruff check src tests scripts
+          uv run ruff format --check src tests scripts
+          uv run mypy --strict src
+          uv run pytest -q
+      - name: Python dependency audit
+        run: uvx pip-audit
+      - name: Renderer checks
+        working-directory: satori-service
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm audit --audit-level high
 
-      - uses: astral-sh/setup-uv@v4
-
+  smoke:
+    name: Truth-safe smoke render
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: astral-sh/setup-uv@v6
       - name: Install ffmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
-
-      - name: Install Python deps
-        run: uv sync
-
-      - name: Install satori-service deps
-        working-directory: satori-service
+      - run: uv sync --locked
+      - working-directory: satori-service
         run: pnpm install --frozen-lockfile
-
-      - name: Start satori sidecar
+      - name: Start renderer
         working-directory: satori-service
         run: pnpm exec tsx src/server.ts &
-        env:
-          PORT: "3001"
-
-      - name: Wait for satori
+      - name: Wait for renderer
         run: |
           for i in $(seq 1 30); do
-            curl -s http://localhost:3001/health > /dev/null 2>&1 && break
+            curl --fail --silent http://127.0.0.1:3001/health && exit 0
             sleep 1
           done
-
-      - name: Discover and render batches
-        run: |
-          for batch in batches/week-*.yaml; do
-            echo "::group::Rendering $batch"
-            uv run nbn batch "$batch"
-            echo "::endgroup::"
-          done
+          exit 1
+      - name: Validate test data and render smoke
         env:
-          SATORI_URL: "http://localhost:3001"
-
-      - name: Upload rendered videos
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: rendered-videos-${{ github.sha }}
-          path: out/
-          retention-days: 90
-          if-no-files-found: warn
-
-      - name: Summary
-        if: always()
+          DATA_MODE: test
+          SATORI_URL: http://127.0.0.1:3001
         run: |
-          echo "## Batch render" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Video | Size |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|------|" >> $GITHUB_STEP_SUMMARY
-          shopt -s nullglob
-          for f in out/*.mp4; do
-            echo "| $(basename "$f" .mp4) | $(du -h "$f" | cut -f1) |" >> $GITHUB_STEP_SUMMARY
-          done
+          uv run nbn data doctor
+          uv run nbn smoke
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-${{ github.sha }}
+          path: |
+            out/*.summary.json
+            out/*.qc.html
+            releases/bertha-2025/**
+          retention-days: 14
+          if-no-files-found: warn

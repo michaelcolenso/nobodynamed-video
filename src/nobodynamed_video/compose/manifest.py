@@ -5,7 +5,12 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from nobodynamed_video.models import RenderManifest
+from nobodynamed_video.models import (
+    ClaimEvidence,
+    Classification,
+    DataProvenance,
+    RenderManifest,
+)
 
 
 def write_manifest(manifest: RenderManifest, out_dir: Path) -> Path:
@@ -31,6 +36,12 @@ def build_manifest(
     caption: str | None = None,
     pinned_comment: str | None = None,
     hashtag_set: list[str] | None = None,
+    data_mode: str = "test",
+    provenance: DataProvenance | None = None,
+    classification: Classification | None = None,
+    claims: list[ClaimEvidence] | None = None,
+    source_note: str | None = None,
+    video_format: str = "fast",
 ) -> RenderManifest:
     """Build a RenderManifest from render outputs."""
     return RenderManifest(
@@ -50,4 +61,10 @@ def build_manifest(
         caption=caption,
         pinned_comment=pinned_comment,
         hashtag_set=hashtag_set or [],
+        data_mode=data_mode,
+        provenance=provenance,
+        classification=classification,
+        claims=claims or [],
+        source_note=source_note,
+        format=video_format,
     )

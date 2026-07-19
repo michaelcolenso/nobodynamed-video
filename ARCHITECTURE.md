@@ -69,9 +69,9 @@ SSA D1 database (or local SQLite fixture)
 DataSource.fetch(name, sex)  →  list[YearCount]
         │
         ▼
-classifier.classify(counts)  →  Tier
-  (extinction-watch / cultural-collapse / declining /
-   stable / rising / resurrected)
+classifier.classify_dimensions(counts)
+  → prevalence + trajectory + historical shape
+  → conservative legacy Tier adapter for presentation
         │
         ▼
 VideoSpec(id, name, sex, tier, counts, fps=30)
@@ -100,7 +100,11 @@ out/<id>.mp4  (1080×1920, 30fps, 540-frame/18.0s stream, H.264, AAC, faststart)
         │
         ▼
 RenderManifest → out/<id>.json
-  (frame hashes, render times, satori version, ffmpeg version)
+  (provenance, claim ledger, classifications, hashes, versions, timing)
+        │
+        ▼ after fatal QC
+releases/<id>/
+  (MP4, cover, manifest, claims, copy, transcript, source note, alt text)
 ```
 
 ---
@@ -160,7 +164,11 @@ Returns 200 `{"status": "ok", "satori_version": "0.10.13"}` when fonts are loade
 
 ## Frame caching
 
-Frames are cached at `out/.cache/<sha256>.png` where the hash covers the serialized `(template, props)` pair. On a batch run, identical CTA scenes across all videos are rendered once and reused. This cuts batch render time by 30–50%.
+Frames are cached at `out/.cache/<sha256>.png` where the hash covers renderer source, template, and props. On a batch run, identical frames are reused. Release artifacts exclude the frame/cache tree.
+
+## Trust boundary
+
+Test, preview, and publish are explicit data modes. Publish mode requires non-synthetic provenance and the newest year exposed by the selected source. SSA-suppressed and missing observations remain distinct from observed counts. Cultural-event copy requires an evidence record plus an observed decline threshold; all executable copy is filtered through typed/numeric guards before rendering.
 
 ---
 

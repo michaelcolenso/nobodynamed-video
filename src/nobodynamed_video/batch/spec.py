@@ -15,11 +15,12 @@ from nobodynamed_video.data.ctx import (
     load_cultural_events,
 )
 from nobodynamed_video.data.d1_source import D1Source
+from nobodynamed_video.data.doctor import require_publishable
 from nobodynamed_video.data.hooks import load_hook_library, resolve_hook
 from nobodynamed_video.data.sqlite_source import SqliteSource
 from nobodynamed_video.exceptions import BlocklistedName
-from nobodynamed_video.models import Scene, VideoSpec
-from nobodynamed_video.render.frame_planner import SCENE_DURATIONS, SCENE_ORDER
+from nobodynamed_video.models import DataMode, Scene, VideoFormat, VideoSpec
+from nobodynamed_video.render.frame_planner import SCENE_ORDER
 from nobodynamed_video.seed import spec_seed
 
 _BLOCKLIST_PATH = Path("fixtures/blocklist.txt")
@@ -31,11 +32,19 @@ def _load_blocklist() -> set[str]:
     return {line.strip() for line in _BLOCKLIST_PATH.read_text().splitlines() if line.strip()}
 
 
-def _make_scenes() -> list[Scene]:
+_FORMAT_DURATIONS: dict[VideoFormat, dict[str, float]] = {
+    VideoFormat.FAST: {"hook": 3.0, "reveal": 6.0, "narrative": 6.0, "cta": 3.0},
+    VideoFormat.EXPLAINER: {"hook": 5.0, "reveal": 12.0, "narrative": 18.0, "cta": 5.0},
+    VideoFormat.DEEP_STORY: {"hook": 8.0, "reveal": 20.0, "narrative": 50.0, "cta": 10.0},
+}
+
+
+def _make_scenes(video_format: VideoFormat = VideoFormat.FAST) -> list[Scene]:
+    durations = _FORMAT_DURATIONS[video_format]
     return [
         Scene(
             kind=k,
-            duration_s=SCENE_DURATIONS[k],
+            duration_s=durations[k],
             template=k,
             static_props={},
         )
@@ -61,7 +70,12 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
         source = D1Source(settings.d1_url, settings.get_d1_token())
 
     specs: list[VideoSpec] = []
-    latest_year = settings.latest_year
+    source_year, _provenance = await require_publishable(source, settings.data_mode)
+    latest_year = settings.latest_year or source_year
+    if settings.data_mode == DataMode.PUBLISH and latest_year != source_year:
+        raise RuntimeError(
+            f"Publish mode requires newest dataset year {source_year}; requested {latest_year}"
+        )
     hooks_library = load_hook_library()
     cultural_events = load_cultural_events()
 
@@ -71,6 +85,7 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
         vid_id: str = entry.get("id", f"{name.lower()}-{latest_year}")
         style: str | None = entry.get("style")
         explicit_hook_id: str | None = entry.get("hook_id")
+        video_format = VideoFormat(entry.get("format", defaults.get("format", "fast")))
 
         if name in blocklist and not force:
             raise BlocklistedName(
@@ -81,7 +96,14 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
         record = await source.get_record(name, sex, latest_year)
         tier = classify(record)
         seed = spec_seed(vid_id)
-        base_context = await build_base_context(source, record, tier, latest_year, cultural_events)
+        base_context = await build_base_context(
+            source,
+            record,
+            tier,
+            latest_year,
+            cultural_events,
+            data_mode=settings.data_mode,
+        )
         hook = resolve_hook(
             base_context,
             style=style,
@@ -97,12 +119,13 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
                 id=vid_id,
                 record=record,
                 tier=tier,
-                scenes=_make_scenes(),
+                scenes=_make_scenes(video_format),
                 fps=fps,
                 seed=seed,
                 program=context.program,
                 hook=hook,
                 context=context,
+                format=video_format,
             )
         )
 

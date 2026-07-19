@@ -1,97 +1,138 @@
-"""Six-tier name classifier with explicit, unit-tested thresholds.
+"""Truth-safe, explainable name classification.
 
-Tier resolution order (first match wins):
-  EXTINCT → RESURRECTED → CRITICAL → RISING → DECLINING → STABLE
-
-Note on SSA data quality: counts under 5 are suppressed in the raw data.
-A value of 5 in the series may mean "5 to 9". The classifier treats 5 as a
-hard floor and never classifies a name as CRITICAL solely on that value when
-peak_count is borderline.
+SSA only publishes rows with at least five births. A missing row is therefore
+not evidence of zero births. Classification separates three independent
+questions—current prevalence, recent trajectory, and historical shape—while
+retaining a conservative legacy tier for the existing renderer.
 """
 
-from nobodynamed_video.models import NameRecord, Tier
+from nobodynamed_video.models import (
+    Classification,
+    HistoricalShape,
+    NameRecord,
+    ObservationStatus,
+    Prevalence,
+    Tier,
+    Trajectory,
+)
 
-# ── Canonical thresholds ─────────────────────────────────────────────────────
-LATEST_YEAR: int = 2024  # Update annually when SSA releases new data.
-CRITICAL_THRESHOLD: int = 25
-CRITICAL_PEAK_FLOOR: int = 1000
-DECLINING_SLOPE_5Y: float = -0.10
-DECLINING_PEAK_RATIO: float = 0.50
-STABLE_BAND: float = 0.10
-RISING_SLOPE_5Y: float = 0.20
-RISING_AVG_RATIO: float = 1.50
-RESURRECTION_LOOKBACK_YEARS: int = 30
+CRITICAL_THRESHOLD = 25
+CRITICAL_PEAK_FLOOR = 1000
+DECLINING_ANNUAL_RATE = -0.10
+RISING_ANNUAL_RATE = 0.10
+RESURRECTION_LOOKBACK_YEARS = 30
+# Retained only for downstream test/data compatibility. Runtime selection is
+# always derived from ``DataSource.latest_year()``.
+LATEST_YEAR = 2024
 
 
-def _slope_5y(record: NameRecord) -> float:
-    """Fractional change per year over the last 5 data years.
+def _recent_window(record: NameRecord, years: int = 5) -> list[tuple[int, int]]:
+    cutoff = record.current_year - years
+    return [
+        (p.year, p.count)
+        for p in record.series
+        if p.status == ObservationStatus.OBSERVED and p.count >= 5 and p.year >= cutoff
+    ]
 
-    Returns the average year-over-year fractional change:
-        (count_now - count_5yr_ago) / (count_5yr_ago * 5)
-    Returns 0.0 when there are fewer than 2 data points or the base is 0.
-    """
-    years_with_counts = [(yc.year, yc.count) for yc in record.series if yc.count > 0]
-    if len(years_with_counts) < 2:
-        return 0.0
-    # Take up to 5 most-recent years.
-    recent = years_with_counts[-min(6, len(years_with_counts)) :]
+
+def _annual_rate(record: NameRecord) -> float | None:
+    recent = _recent_window(record)
     if len(recent) < 2:
-        return 0.0
-    base_count = recent[0][1]
-    end_count = recent[-1][1]
-    span = recent[-1][0] - recent[0][0]
-    if base_count == 0 or span == 0:
-        return 0.0
-    return (end_count - base_count) / (base_count * span)
+        return None
+    start_year, start_count = recent[0]
+    end_year, end_count = recent[-1]
+    span = end_year - start_year
+    # Two isolated observations across a large gap do not establish a trend.
+    if start_count <= 0 or span <= 0 or span > 6:
+        return None
+    return (end_count - start_count) / (start_count * span)
 
 
-def _avg_10y(record: NameRecord) -> float:
-    """Average count over the last 10 data years (years with count > 0)."""
-    years_with_counts = [yc.count for yc in record.series if yc.count > 0]
-    if not years_with_counts:
-        return 0.0
-    recent = years_with_counts[-min(10, len(years_with_counts)) :]
-    return sum(recent) / len(recent)
+def _prevalence(record: NameRecord) -> Prevalence:
+    if record.current_status == ObservationStatus.MISSING_DATA:
+        return Prevalence.UNOBSERVED
+    if record.current_status == ObservationStatus.BELOW_REPORTING_THRESHOLD:
+        return Prevalence.BELOW_REPORTING_THRESHOLD
+    if record.current_count >= 1000:
+        return Prevalence.HIGH
+    if record.current_count >= 100:
+        return Prevalence.MODERATE
+    return Prevalence.LOW
 
 
-def _was_low_recently(record: NameRecord, threshold: int, lookback: int) -> bool:
-    """Return True if any year within *lookback* years had count <= *threshold*."""
-    cutoff = record.current_year - lookback
-    return any(yc.year >= cutoff and yc.count <= threshold for yc in record.series)
+def _trajectory(record: NameRecord) -> Trajectory:
+    if record.current_status != ObservationStatus.OBSERVED:
+        return Trajectory.INSUFFICIENT_DATA
+    rate = _annual_rate(record)
+    if rate is None:
+        return Trajectory.INSUFFICIENT_DATA
+    if rate >= RISING_ANNUAL_RATE:
+        return Trajectory.RISING
+    if rate <= DECLINING_ANNUAL_RATE:
+        return Trajectory.DECLINING
+    return Trajectory.STABLE
+
+
+def _historical_shape(record: NameRecord, trajectory: Trajectory) -> HistoricalShape:
+    observed = [p for p in record.series if p.status == ObservationStatus.OBSERVED and p.count >= 5]
+    if len(observed) < 3:
+        return HistoricalShape.INSUFFICIENT_DATA
+    if observed[0].year >= record.current_year - 20:
+        return HistoricalShape.NEW_OR_RECENT
+
+    post_peak = [p for p in observed if p.year >= record.peak_year]
+    trough = min(post_peak, key=lambda p: (p.count, p.year))
+    if (
+        trough.year < record.current_year
+        and trough.count <= CRITICAL_THRESHOLD
+        and record.current_count > CRITICAL_THRESHOLD
+        and record.current_count > trough.count
+        and trough.year >= record.current_year - RESURRECTION_LOOKBACK_YEARS
+    ):
+        return HistoricalShape.COMEBACK
+    if (
+        record.peak_year < record.current_year - 10
+        and record.current_count < record.peak_count * 0.5
+    ):
+        return HistoricalShape.PEAKED
+    return HistoricalShape.LONG_RUNNING
+
+
+def classify_dimensions(record: NameRecord) -> Classification:
+    prevalence = _prevalence(record)
+    trajectory = _trajectory(record)
+    shape = _historical_shape(record, trajectory)
+
+    if shape == HistoricalShape.COMEBACK:
+        legacy = Tier.RESURRECTED
+    elif trajectory == Trajectory.RISING:
+        legacy = Tier.RISING
+    elif trajectory == Trajectory.DECLINING:
+        legacy = Tier.DECLINING
+    elif (
+        prevalence in (Prevalence.LOW, Prevalence.BELOW_REPORTING_THRESHOLD)
+        and record.current_count <= CRITICAL_THRESHOLD
+        and record.peak_count >= CRITICAL_PEAK_FLOOR
+    ):
+        legacy = Tier.CRITICAL
+    else:
+        legacy = Tier.STABLE
+
+    rationale = [
+        f"current observation: {record.current_status.value}",
+        f"prevalence: {prevalence.value}",
+        f"trajectory: {trajectory.value}",
+        f"historical shape: {shape.value}",
+    ]
+    return Classification(
+        prevalence=prevalence,
+        trajectory=trajectory,
+        historical_shape=shape,
+        legacy_tier=legacy,
+        rationale=rationale,
+    )
 
 
 def classify(record: NameRecord) -> Tier:
-    """Classify a NameRecord into one of the six tiers.
-
-    Resolution order: EXTINCT → RESURRECTED → CRITICAL → RISING → DECLINING → STABLE
-    """
-    current = record.current_count
-    peak = record.peak_count
-
-    # 1. EXTINCT — zero in the current year.
-    if current == 0:
-        return Tier.EXTINCT
-
-    # 2. RESURRECTED — was EXTINCT or CRITICAL within last 30 years, now STABLE+
-    #    "STABLE+" means current count > CRITICAL_THRESHOLD.
-    if current > CRITICAL_THRESHOLD and _was_low_recently(
-        record, CRITICAL_THRESHOLD, RESURRECTION_LOOKBACK_YEARS
-    ):
-        return Tier.RESURRECTED
-
-    # 3. CRITICAL — currently very low AND once had significant popularity.
-    if current <= CRITICAL_THRESHOLD and peak >= CRITICAL_PEAK_FLOOR:
-        return Tier.CRITICAL
-
-    # 4. RISING — strong positive slope AND well above long-run average.
-    slope = _slope_5y(record)
-    avg10 = _avg_10y(record)
-    if slope > RISING_SLOPE_5Y and (avg10 == 0 or current > RISING_AVG_RATIO * avg10):
-        return Tier.RISING
-
-    # 5. DECLINING — negative slope AND well below peak.
-    if slope < DECLINING_SLOPE_5Y and current < DECLINING_PEAK_RATIO * peak:
-        return Tier.DECLINING
-
-    # 6. STABLE — default.
-    return Tier.STABLE
+    """Compatibility adapter for renderer code that still expects ``Tier``."""
+    return classify_dimensions(record).legacy_tier

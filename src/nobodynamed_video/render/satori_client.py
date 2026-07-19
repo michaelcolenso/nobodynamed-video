@@ -34,7 +34,13 @@ class SatoriClient:
 
     async def __aenter__(self) -> SatoriClient:
         timeout = httpx.Timeout(connect=_CONNECT_TIMEOUT, read=_READ_TIMEOUT, write=5.0, pool=None)
-        self._client = httpx.AsyncClient(base_url=self._base_url, timeout=timeout)
+        # This is a loopback-only service; inheriting corporate/SOCKS proxy
+        # variables breaks localhost and can route render payloads off-host.
+        self._client = httpx.AsyncClient(
+            base_url=self._base_url,
+            timeout=timeout,
+            trust_env=False,
+        )
         await self._health_check()
         return self
 

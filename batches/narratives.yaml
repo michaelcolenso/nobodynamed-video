@@ -7,9 +7,17 @@
 # engine and seeded selection as hooks.yaml.
 #
 # Selection: filtered by program + tier, then requires_var, then
-# deterministic pick via spec_seed XOR _NARRATIVE_SALT.
+# requires_data, then deterministic pick via spec_seed XOR _NARRATIVE_SALT.
 #
 # Budget: primary ≤ 84 chars, supporting ≤ 120 chars (rendered).
+#
+# TRUTH CONTRACT — every line must be provable from the context vars for
+# every name it can attach to. Tier alone proves very little: STABLE is the
+# classifier's default bucket and only means the *recent* trend is not
+# rising/declining — a name can sit at 1% of its peak and still be STABLE
+# (Walter: 18,000 in 1920 → 180 now). Copy that claims more than the tier
+# guarantees declares `requires_data` bounds (min/max per context var, None
+# fails closed) so it is only selectable when the numbers back the words.
 
 version: 1
 
@@ -17,75 +25,182 @@ narratives:
 
   # ---------------------------------------------------------------------------
   # CULTURAL EVENT — program: cultural_event
+  #
+  # killing_event curation guarantees a defensible association, but not the
+  # *shape* of the story: Karen was 98% off-peak before the meme, while Alexa
+  # was AT peak when the Echo shipped. event_decline_pct (how far below peak
+  # the name was in the event year) + peak_to_event_years pick the right arc.
   # ---------------------------------------------------------------------------
 
   - id: narr-cult-001
     program: cultural_event
     compatible_tiers: [declining, critical, extinct]
     requires_var: killing_event
-    primary: "{{ name }} was already fading. {{ killing_event }} sealed it."
+    requires_data:
+      peak_to_event_years: { min: 3 }
+      event_decline_pct: { min: 25 }
+    primary: "{{ name }} was already fading. The decline accelerated after {{ killing_event }}."
     supporting: "Down {{ decline_pct }}% from peak. The break is visible in the data."
 
   - id: narr-cult-002
     program: cultural_event
     compatible_tiers: [declining, critical, extinct]
     requires_var: killing_event
-    primary: "The data moved before the headline. {{ killing_event }} finished it."
+    requires_data:
+      peak_to_event_years: { min: 3 }
+      event_decline_pct: { min: 25 }
+    primary: "The data moved before the headline, then kept falling after {{ killing_event }}."
     supporting: "{{ name }} peaked at {{ peak_count | thousands }}. Now: {{ current_count }}."
 
   - id: narr-cult-003
     program: cultural_event
     compatible_tiers: [declining, critical, extinct]
     requires_var: killing_event
-    primary: "{{ killing_event }} didn't start the decline. It removed the floor."
+    requires_data:
+      peak_to_event_years: { min: 3 }
+      event_decline_pct: { min: 25 }
+    primary: "{{ killing_event }} didn't start the decline. Another break followed."
     supporting: "{{ name }}: {{ peak_year }} peak, {{ decline_pct }}% down."
+
+  # Names that were at (or within 10% of) their peak when the event hit —
+  # the Alexa/Isis arc. The mirror image of the three above.
+  - id: narr-cult-004
+    program: cultural_event
+    compatible_tiers: [declining, critical, extinct]
+    requires_var: killing_event
+    requires_data:
+      event_decline_pct: { max: 10 }
+    primary: "{{ name }} was at its peak when {{ killing_event }} arrived."
+    supporting: "Published counts then fell. Down {{ decline_pct }}% since."
+
+  # Universal safety net: no causal claim, just the curated association and
+  # the two numbers. Always true for any curated name in these tiers.
+  - id: narr-cult-005
+    program: cultural_event
+    compatible_tiers: [declining, critical, extinct]
+    requires_var: killing_event
+    primary: "Before {{ killing_event }}, {{ name }} was just a name."
+    supporting: "{{ peak_count | thousands }} at peak. {{ current_count }} in {{ current_year }}."
 
   # ---------------------------------------------------------------------------
   # RETURN NOTICE — program: return_notice
+  #
+  # RESURRECTED guarantees a recent near-zero (≤25 within 30 years) and a
+  # comeback, but NOT current growth — a name can return and plateau.
+  # RISING guarantees recent growth, but NOT a dormant past.
   # ---------------------------------------------------------------------------
 
   - id: narr-ret-001
     program: return_notice
     compatible_tiers: [rising, resurrected]
+    requires_data:
+      trough_count: { max: 25 }
+      rise_pct: { min: 20 }
     primary: "{{ name }} all but vanished. Then the cycle turned."
     supporting: "Up {{ rise_pct }}% over the last five years."
 
   - id: narr-ret-002
     program: return_notice
     compatible_tiers: [rising, resurrected]
+    requires_data:
+      years_since_peak: { min: 40 }
     primary: "{{ name }} waited out two generations and came back."
     supporting: "Trough: {{ trough_count }}. Now: {{ current_count | thousands }}."
 
   - id: narr-ret-003
     program: return_notice
     compatible_tiers: [rising, resurrected]
+    requires_data:
+      years_since_peak: { min: 60 }
+      rise_pct: { min: 20 }
     primary: "Three generations later, {{ name }} is a new name again."
     supporting: "{{ rise_pct }}% growth in five years. The curve is real."
+
+  # Safety net for resurrected names that came back and flattened — the
+  # comeback itself is the only claim, both halves guaranteed by the tier.
+  - id: narr-ret-004
+    program: return_notice
+    compatible_tiers: [resurrected]
+    primary: "{{ name }} went quiet. The data says it's back."
+    supporting: "Low of {{ trough_count }}. {{ current_count | thousands }} in {{ current_year }}."
+
+  # Safety net for rising names with no dormant past — growth is the only
+  # claim. Always viable for RISING (tier guarantees the slope).
+  - id: narr-ret-005
+    program: return_notice
+    compatible_tiers: [rising, resurrected]
+    requires_data:
+      rise_pct: { min: 20 }
+    primary: "{{ name }} is rising, and the curve is steep."
+    supporting: "Up {{ rise_pct }}% over the last five years."
 
   # ---------------------------------------------------------------------------
   # CASE FILE — program: case_file
   # ---------------------------------------------------------------------------
 
   # -- stable --
+  # STABLE only certifies the recent trend. The variants split the tier by
+  # what the whole arc actually shows: held near peak (002/003), collapsed
+  # then flattened (004), still a big name (006), or merely persisting (005).
+
   - id: narr-case-stable-001
     program: case_file
     compatible_tiers: [stable]
+    requires_data:
+      rank_at_peak: { max: 50 }
+      current_rank: { min: 200 }
     primary: "{{ name }} never disappeared. It stopped being dominant."
     supporting: "Peak usage came in {{ peak_year }}. The name remained durable."
 
   - id: narr-case-stable-002
     program: case_file
     compatible_tiers: [stable]
+    requires_data:
+      decline_pct: { max: 30 }
     primary: "{{ name }} held the line while others collapsed around it."
-    supporting: "Steady since {{ peak_decade | decade_label }}. Still {{ current_count | thousands }} a year."
+    supporting: "Still {{ current_count | thousands }} a year, close to its {{ peak_year }} peak."
 
   - id: narr-case-stable-003
     program: case_file
     compatible_tiers: [stable]
+    requires_data:
+      decline_pct: { max: 30 }
+      years_since_peak: { min: 10 }
     primary: "Stability is the rarest outcome. {{ name }} achieved it."
     supporting: "{{ years_since_peak }} years from peak and still in circulation."
 
+  # The Walter arc: a collapse that ended in a plateau. STABLE plus a deep
+  # decline proves the freefall stopped (or it would classify DECLINING).
+  - id: narr-case-stable-004
+    program: case_file
+    compatible_tiers: [stable]
+    requires_data:
+      decline_pct: { min: 50 }
+    primary: "The collapse is over. {{ name }} found its floor."
+    supporting: "Down {{ decline_pct }}% from peak, but holding at {{ current_count | thousands }} a year."
+
+  - id: narr-case-stable-005
+    program: case_file
+    compatible_tiers: [stable]
+    requires_data:
+      current_count: { max: 2000 }
+    primary: "{{ name }} is still being chosen. Quietly."
+    supporting: "{{ current_count | thousands }} births in {{ current_year }}. The record continues."
+
+  - id: narr-case-stable-006
+    program: case_file
+    compatible_tiers: [stable]
+    requires_data:
+      current_rank: { max: 300 }
+      years_since_peak: { min: 5 }
+    primary: "{{ name }} is past its peak and still common."
+    supporting: "Ranked #{{ current_rank }} in {{ current_year }}. {{ current_count | thousands }} babies."
+
   # -- declining --
+  # DECLINING guarantees: recent slope < -10%/yr (still falling) and current
+  # below half of peak. It does NOT guarantee a monotonic slide or that no
+  # revival bump ever happened — so no "every year fewer" / "no reversal".
+
   - id: narr-case-declining-001
     program: case_file
     compatible_tiers: [declining]
@@ -95,16 +210,18 @@ narratives:
   - id: narr-case-declining-002
     program: case_file
     compatible_tiers: [declining]
-    primary: "The decline is slow, but the direction is clear."
-    supporting: "{{ name }}: {{ peak_count | thousands }} at peak. {{ current_count }} now."
+    primary: "{{ name }} is still falling. The data shows no floor yet."
+    supporting: "{{ peak_count | thousands }} at peak. {{ current_count }} now."
 
   - id: narr-case-declining-003
     program: case_file
     compatible_tiers: [declining]
-    primary: "{{ name }} peaked in {{ peak_year }}. Every year since, fewer."
-    supporting: "{{ decline_pct }}% decline. No reversal in the data."
+    primary: "{{ name }} peaked in {{ peak_year }}. The slide hasn't stopped."
+    supporting: "Down {{ decline_pct }}% from peak, with no recovery in sight."
 
   # -- critical --
+  # CRITICAL guarantees current ≤ 25 with peak ≥ 1,000 → at least 97% down.
+
   - id: narr-case-critical-001
     program: case_file
     compatible_tiers: [critical]
@@ -124,6 +241,7 @@ narratives:
     supporting: "{{ current_count }} in {{ current_year }}. Peak was {{ peak_count | thousands }}."
 
   # -- extinct --
+
   - id: narr-case-extinct-001
     program: case_file
     compatible_tiers: [extinct]
@@ -143,9 +261,15 @@ narratives:
     supporting: "The final count: {{ current_count }}."
 
   # -- rising --
+  # RISING guarantees recent growth and being above the decade average.
+  # It does NOT guarantee a dormant past (new names classify RISING too).
+
   - id: narr-case-rising-001
     program: case_file
     compatible_tiers: [rising]
+    requires_data:
+      trough_count: { max: 50 }
+      years_since_peak: { min: 40 }
     primary: "{{ name }} is back in circulation after a long dormancy."
     supporting: "Peak year: {{ peak_year }}."
 
@@ -153,15 +277,20 @@ narratives:
     program: case_file
     compatible_tiers: [rising]
     primary: "The uptick is recent. The question is whether it holds."
-    supporting: "{{ name }}: {{ rise_pct }}% growth, five years running."
+    supporting: "{{ name }}: up {{ rise_pct }}% over five years."
 
   - id: narr-case-rising-003
     program: case_file
     compatible_tiers: [rising]
+    requires_data:
+      trough_count: { max: 50 }
     primary: "{{ name }} crossed from dormant to active in the data."
     supporting: "{{ current_count | thousands }} births last year. Trend: up."
 
   # -- resurrected --
+  # RESURRECTED guarantees a recent near-zero (≤25 within 30 years) and a
+  # comeback above it — dormancy claims are safe, growth claims are not.
+
   - id: narr-case-resurrected-001
     program: case_file
     compatible_tiers: [resurrected]
@@ -177,5 +306,7 @@ narratives:
   - id: narr-case-resurrected-003
     program: case_file
     compatible_tiers: [resurrected]
+    requires_data:
+      years_since_peak: { min: 80 }
     primary: "The hundred-year return. {{ name }} is proof it happens."
     supporting: "{{ trough_year }} low. {{ current_year }} comeback."

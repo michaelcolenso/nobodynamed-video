@@ -1,5 +1,7 @@
 # FEEDBACK.md — `nobodynamed-feedback` Comment Mining Schema
 
+> **Implementation status (2026-07).** The video repository now contains the source-agnostic queue, publishing ledger, experiment field, and manual analytics importer under `nbn ops`. Platform-specific comment ingestion remains optional and must feed this stable boundary; the core renderer does not depend on an unofficial scraper.
+
 > **Mission.** Mine the comments on @nobodynamed's TikTok posts nightly. Extract name requests. Score by engagement. Output a ranked queue that feeds directly into `nbn batch`. Close the loop between audience and content.
 
 > **Sits alongside** `nobodynamed-video` in the same monorepo, under `feedback/`. Shares the SSA D1 connection. Outputs `batches/queue-<date>.yaml`.

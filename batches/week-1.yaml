@@ -2,59 +2,59 @@ batch: week-1
 defaults:
   fps: 30
 videos:
-  - id: bertha-2024
+  - id: bertha-2025
     name: Bertha
     sex: F
     style: extinction-watch
-  - id: mildred-2024
+  - id: mildred-2025
     name: Mildred
     sex: F
     style: extinction-watch
-  - id: karen-2024
+  - id: karen-2025
     name: Karen
     sex: F
     style: cultural-collapse
-  - id: hazel-2024
+  - id: hazel-2025
     name: Hazel
     sex: F
     style: rising
-  - id: theodore-2024
+  - id: theodore-2025
     name: Theodore
     sex: M
     style: rising
-  - id: linda-2024
+  - id: linda-2025
     name: Linda
     sex: F
     style: declining
-  - id: jennifer-2024
+  - id: jennifer-2025
     name: Jennifer
     sex: F
     style: declining
-  - id: emma-2024
+  - id: emma-2025
     name: Emma
     sex: F
     style: stable
-  - id: liam-2024
+  - id: liam-2025
     name: Liam
     sex: M
     style: stable
-  - id: eleanor-2024
+  - id: eleanor-2025
     name: Eleanor
     sex: F
     style: resurrected
-  - id: walter-2024
+  - id: walter-2025
     name: Walter
     sex: M
     style: declining
-  - id: dorothy-2024
+  - id: dorothy-2025
     name: Dorothy
     sex: F
     style: declining
-  - id: oliver-2024
+  - id: oliver-2025
     name: Oliver
     sex: M
     style: rising
-  - id: charlotte-2024
+  - id: charlotte-2025
     name: Charlotte
     sex: F
     style: rising

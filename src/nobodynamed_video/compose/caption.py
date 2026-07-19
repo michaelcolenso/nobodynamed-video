@@ -22,6 +22,7 @@ class ComposedCaption:
     caption: str
     pinned_comment: str
     hashtag_set: list[str] = field(default_factory=list)
+    combo_hash: str | None = None
 
 
 def combo_hash(tags: list[str]) -> str:
@@ -64,7 +65,8 @@ def _build_body(frame_text: str, words: list[str]) -> str:
         if " " in w:
             parts.append(f"{w.capitalize()}.")
         else:
-            parts.append(f"A {w} name.")
+            article = "An" if w[:1].lower() in "aeiou" else "A"
+            parts.append(f"{article} {w} name.")
     return " ".join(parts)
 
 
@@ -129,6 +131,7 @@ def compose_caption(
     ctx: VideoContext,
     lexicon: Lexicon,
     state: CombinationState,
+    reserve_only: bool = False,
 ) -> ComposedCaption:
     """Compose caption, pinned comment, and hashtag set for spec_id.
 
@@ -157,6 +160,22 @@ def compose_caption(
     if len(pinned) > cfg.pinned_max_chars:
         pinned = pinned[: cfg.pinned_max_chars - 1].rsplit(" ", 1)[0] + "?"
 
+    existing = state.combination_for_spec(spec_id)
+    if existing:
+        _existing_hash, existing_tags = existing
+        hashtag_str = " " + " ".join(f"#{tag}" for tag in existing_tags)
+        max_body = cfg.caption_max_chars - len(hashtag_str)
+        rendered_body = body
+        if len(rendered_body) > max_body:
+            rendered_body = rendered_body[:max_body].rsplit(" ", 1)[0]
+        return ComposedCaption(
+            caption=rendered_body + hashtag_str,
+            pinned_comment=pinned,
+            hashtag_set=existing_tags,
+            # No pending transaction: the original successful render owns it.
+            combo_hash=None,
+        )
+
     for attempt in range(cfg.regeneration_attempts):
         tags = _pick_hashtags(spec_id, register, lexicon, state, attempt)
         h = combo_hash(tags)
@@ -174,8 +193,17 @@ def compose_caption(
         if len(caption) > cfg.caption_max_chars:
             continue
 
-        state.record(h, tags, spec_id)
-        return ComposedCaption(caption=caption, pinned_comment=pinned, hashtag_set=tags)
+        if reserve_only:
+            if not state.reserve(h, tags, spec_id):
+                continue
+        else:
+            state.record(h, tags, spec_id)
+        return ComposedCaption(
+            caption=caption,
+            pinned_comment=pinned,
+            hashtag_set=tags,
+            combo_hash=h,
+        )
 
     raise CaptionExhausted(
         f"Could not satisfy caption constraints for spec_id={spec_id!r}"

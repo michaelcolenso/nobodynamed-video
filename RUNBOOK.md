@@ -6,18 +6,18 @@
 2. Confirm preflight: `make doctor` — all checks must pass before rendering.
 3. Run the smoke test to confirm the pipeline is healthy: `make smoke`.
 4. Run the weekly batch: `make batch` or `uv run nbn batch batches/week-1.yaml`.
-5. Inspect `out/week-1.summary.json` for per-video render times and any failures.
-6. Upload resulting MP4 files from `out/` to TikTok manually.
+5. Inspect `out/week-1.summary.json`; any render or QC failure exits non-zero.
+6. Upload the complete package from `releases/<spec-id>/` and record the post with `nbn ops record-publish`.
 
 ---
 
-## How to update the LATEST_YEAR constant
+## How to update SSA data
 
-1. Open `src/nobodynamed_video/config.py`.
-2. Update the `LATEST_YEAR` field default value to the new year (e.g. `2025`).
-3. Update `.env.example` to reflect the new value.
-4. Re-run `make smoke` to confirm the pipeline resolves data correctly for the new year.
-5. Commit both `config.py` and `.env.example`.
+1. Run `python scripts/fetch_ssa.py --out data/ssa.sqlite`.
+2. Set `SQLITE_FIXTURE=data/ssa.sqlite`, `DATA_MODE=publish`, and `LATEST_YEAR=0`.
+3. Run `uv run nbn data doctor`; confirm the reported provenance and newest year.
+4. Run the smoke render and inspect its claim ledger and QC report.
+5. Keep the importer-produced checksum and import timestamp in the database metadata.
 
 ---
 
@@ -57,8 +57,7 @@
 3. Run `git bisect start` with the known-good and known-bad commits.
 4. At each bisect step, run `make smoke`; exit 0 means good, exit 1 means bad.
 5. The bisect will identify the commit. Inspect the diff for template or motion changes.
-6. Once fixed, delete the stale golden files in `fixtures/golden/<id>/` and re-run
-   `make smoke` once to re-bootstrap the golden hashes.
+6. Once reviewed, run `uv run nbn goldens update`. CI never creates missing goldens.
 
 ---
 

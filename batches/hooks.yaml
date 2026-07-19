@@ -54,6 +54,8 @@ variables:
   moment_length:         "int | None — years between rise_year and collapse_year"
   collapse_year:         "int | None — first year after peak where count dropped > 30% YoY"
   rise_year:             "int | None — first year before peak where count rose > 30% YoY"
+  peak_to_event_years:   "int | None — event_year - peak_year; negative when the peak came after the event"
+  event_decline_pct:     "int | None — how far below peak the name already was in event_year, 0–100"
 
 # -----------------------------------------------------------------------------
 # REQUIRED FILTERS
@@ -115,8 +117,8 @@ hooks:
     pillar: extinction-watch
     register: morbid
     compatible_tiers: [extinct, critical]
-    headline: "{{ name }} is dying."
-    subhead:  "{{ current_count }} births in {{ current_year }}. The curve only points down."
+    headline: "{{ name }} is near the SSA reporting floor."
+    subhead:  "{{ current_count }} recorded births in {{ current_year }}."
     pinned_comment: "Last {{ name }} you met. Go."
     caption: "{{ name }}. {{ current_count }}. {{ current_year }}. #namedata #endangered"
 
@@ -133,6 +135,8 @@ hooks:
     pillar: extinction-watch
     register: nostalgic
     compatible_tiers: [critical, declining]
+    requires_data:
+      peak_count: { min: 1000 }   # "common" needs a real peak; DECLINING alone doesn't guarantee one
     headline: "{{ name }} hasn't been common since {{ peak_year }}."
     subhead:  "Down {{ decline_pct }}% from peak."
     pinned_comment: "Do you know a {{ name }} born after 2000?"
@@ -142,17 +146,17 @@ hooks:
     pillar: extinction-watch
     register: morbid
     compatible_tiers: [extinct, critical]
-    headline: "A name disappears from the SSA list every few years."
-    subhead:  "{{ name }} is next."
-    pinned_comment: "Which name do you think dies first?"
+    headline: "Names can disappear from published SSA data."
+    subhead:  "{{ name }} is close to the reporting floor."
+    pinned_comment: "Which rare name should we chart next?"
     caption: "Watching {{ name }} from {{ peak_year }} to {{ current_year }}. #endangerednames"
 
   - id: ext-006-one-bad-year
     pillar: extinction-watch
     register: morbid
     compatible_tiers: [critical]
-    headline: "{{ name }} is one bad year from zero."
-    subhead:  "Current: {{ current_count }}. SSA floor: 5."
+    headline: "{{ name }} is near the SSA reporting floor."
+    subhead:  "Current published count: {{ current_count }}. Floor: 5."
     pinned_comment: "What's the rarest name you've ever met?"
     caption: "{{ name }} is hanging on by {{ current_count }} births. #namedata"
 
@@ -160,6 +164,8 @@ hooks:
     pillar: extinction-watch
     register: nostalgic
     compatible_tiers: [extinct, critical, declining]
+    requires_data:
+      years_since_peak: { min: 45, max: 80 }   # outside this window the grandparent framing is false
     headline: "{{ name }} peaked when your grandparents were teenagers."
     subhead:  "Now: {{ current_count }} babies a year."
     pinned_comment: "What was your grandmother's name?"
@@ -178,6 +184,9 @@ hooks:
     pillar: extinction-watch
     register: curious
     compatible_tiers: [extinct, critical, declining]
+    requires_var: last_top_1000_year
+    requires_data:
+      current_rank: { min: 1001 }   # still ranked → "hasn't cracked the top 1000" would be false
     headline: "{{ name }} used to be top {{ rank_at_peak }}."
     subhead:  "It hasn't cracked the top 1000 since {{ last_top_1000_year }}."
     pinned_comment: "Which top-10 name from {{ peak_decade }}s do you never hear anymore?"
@@ -187,19 +196,19 @@ hooks:
     pillar: extinction-watch
     register: cultural
     compatible_tiers: [critical, declining]
-    headline: "{{ name }} survived the {{ peak_decade }}s and the internet."
-    subhead:  "It might not survive the {{ current_decade }}s."
+    headline: "{{ name }} spans the {{ peak_decade }}s and the internet."
+    subhead:  "Its recorded peak was {{ peak_year }}."
     pinned_comment: "What kills a name faster: a meme or a movie?"
-    caption: "{{ name }} survived the {{ peak_decade }}s and the internet. The {{ current_decade }}s are another story. #endangerednames"
+    caption: "{{ name }} from the {{ peak_decade }}s to now. #endangerednames"
 
   - id: ext-011-names-die-quietly
     pillar: extinction-watch
     register: morbid
     compatible_tiers: [extinct, critical]
-    headline: "Names die quietly."
+    headline: "Names fade quietly."
     subhead:  "{{ name }} is on the way out. {{ current_count }} babies last year."
     pinned_comment: "Which name from your family tree is gone now?"
-    caption: "The quiet death of {{ name }}. #ssadata"
+    caption: "The quiet decline of {{ name }}. #ssadata"
 
   - id: ext-012-endangered-list
     pillar: extinction-watch
@@ -219,23 +228,16 @@ hooks:
     register: nostalgic
     compatible_tiers: [extinct, critical, declining, stable, resurrected]
     headline: "{{ name }} peaked in {{ peak_year }}."
-    subhead:  "If you know one, they're around {{ years_since_peak }}."
+    subhead:  "Peak count: {{ peak_count | thousands }} recorded births."
     pinned_comment: "Comment your name and I'll tell you when it peaked."
     caption: "{{ name }} peaked {{ years_since_peak }} years ago. #namedata"
-
-  - id: peak-002-same-age
-    pillar: peak-year
-    register: curious
-    compatible_tiers: [extinct, critical, declining, stable]
-    headline: "Every {{ name }} you've ever met is the same age."
-    subhead:  "{{ peak_year }}, give or take four years."
-    pinned_comment: "How old is the {{ name }} in your life?"
-    caption: "The {{ name }} cohort. {{ peak_year }} ± 4. #generationalnames"
 
   - id: peak-003-rank-at-peak
     pillar: peak-year
     register: curious
     compatible_tiers: [extinct, critical, declining, stable, resurrected]
+    requires_data:
+      current_rank: { max: 1000 }   # unranked names carry the 9999 sentinel — "#9999" is not a rank
     headline: "{{ name }} was the #{{ rank_at_peak }} name in {{ peak_year }}."
     subhead:  "Now: #{{ current_rank }}."
     pinned_comment: "Drop your name. I'll find the peak rank."
@@ -263,7 +265,7 @@ hooks:
     pillar: peak-year
     register: curious
     compatible_tiers: [extinct, critical, declining, stable, resurrected]
-    headline: "The most {{ name }}s ever born were born in {{ peak_year }}."
+    headline: "SSA's highest recorded {{ name }} count was in {{ peak_year }}."
     subhead:  "{{ peak_count | thousands }} of them."
     pinned_comment: "Are you part of a peak cohort?"
     caption: "Peak {{ name }}: {{ peak_count | thousands }} in {{ peak_year }}. #ssa"
@@ -271,7 +273,9 @@ hooks:
   - id: peak-007-best-and-worst
     pillar: peak-year
     register: curious
-    compatible_tiers: [extinct, critical, declining]
+    # DECLINING only: "still falling" is guaranteed by that tier's slope test,
+    # but extinct names sit at zero and critical names may have plateaued.
+    compatible_tiers: [declining]
     headline: "{{ name }}'s best year: {{ peak_year }}."
     subhead:  "Worst: {{ trough_year }}. Still falling."
     pinned_comment: "Which name has the steepest fall in your family tree?"
@@ -281,8 +285,10 @@ hooks:
     pillar: peak-year
     register: nostalgic
     compatible_tiers: [extinct, critical, declining]
-    headline: "Every {{ name }} is a {{ generation_at_peak }}."
-    subhead:  "And it's not coming back."
+    requires_data:
+      decline_pct: { min: 60 }   # the one-generation claim needs births concentrated at the peak
+    headline: "{{ name }} peaked in the {{ generation_at_peak }} birth years."
+    subhead:  "Published counts later fell {{ decline_pct }}%."
     pinned_comment: "Which generation owns your name?"
     caption: "{{ name }}: a {{ generation_at_peak }} name. #generationalnames"
 
@@ -290,6 +296,10 @@ hooks:
     pillar: peak-year
     register: nostalgic
     compatible_tiers: [extinct, critical, declining]
+    requires_var: last_top_10_year
+    requires_data:
+      top10_years: { min: 1 }     # "top 10 for 0 years" must never render
+      current_rank: { min: 11 }   # still top 10 → "hasn't been since" would be false
     headline: "{{ name }} was top 10 for {{ top10_years }} {{ top10_years | years_word }}."
     subhead:  "It hasn't been since {{ last_top_10_year }}."
     pinned_comment: "Drop a top-10 name nobody picks anymore."
@@ -308,17 +318,19 @@ hooks:
   # CULTURAL COLLAPSE (8)
   # ---------------------------------------------------------------------------
   # Use only when killing_event is curated for the name. The classifier flags
-  # which names have a known cultural causation; the runner refuses these hooks
+  # which names have a validated cultural association; the runner refuses these hooks
   # for any name without a curated event to avoid invented narratives.
 
+  # Wording is event-agnostic: curated killing_events include hurricanes,
+  # wars, and products — "meme" was false for most of them.
   - id: cult-001-not-always-meme
     pillar: cultural-collapse
     register: cultural
     compatible_tiers: [declining, critical]
     requires_var: killing_event
-    headline: "{{ name }} wasn't always a meme."
-    subhead:  "{{ peak_count | thousands }} babies in {{ peak_year }}."
-    pinned_comment: "Which name got destroyed by culture the fastest?"
+    headline: "{{ name }} meant something different in {{ peak_year }}."
+    subhead:  "{{ peak_count | thousands }} babies that year."
+    pinned_comment: "Which name shifted after a cultural moment?"
     caption: "{{ name }} was a real name once. {{ peak_count | thousands }} in {{ peak_year }}. #namedata"
 
   - id: cult-002-what-killed
@@ -326,7 +338,7 @@ hooks:
     register: cultural
     compatible_tiers: [declining, critical, extinct]
     requires_var: killing_event
-    headline: "What killed {{ name }}?"
+    headline: "What changed for {{ name }}?"
     subhead:  "Peak {{ peak_year }}. Today: {{ current_count }}."
     pinned_comment: "I'll tell you. Comment 'how'."
     caption: "The {{ name }} story is a cultural story. #namedata"
@@ -336,19 +348,21 @@ hooks:
     register: cultural
     compatible_tiers: [declining, critical]
     requires_var: killing_event
-    headline: "One word destroyed {{ name }}."
+    headline: "One moment coincided with {{ name }}'s sharpest drop."
     subhead:  "{{ peak_count | thousands }} → {{ current_count }}."
-    pinned_comment: "Guess the word."
-    caption: "{{ name }} was killed by language. #culturalcollapse"
+    pinned_comment: "Guess the moment."
+    caption: "{{ name }} where culture meets data. #culturalcollapse"
 
   - id: cult-004-before-the-joke
     pillar: cultural-collapse
     register: cultural
     compatible_tiers: [declining, critical]
     requires_var: killing_event
-    headline: "{{ name }}: before the joke."
+    requires_data:
+      rank_at_peak: { max: 100 }   # "Top N. Beloved." reads as a boast — needs a genuinely high peak
+    headline: "{{ name }}: before the headlines."
     subhead:  "{{ peak_year }}. Top {{ rank_at_peak }}. Beloved."
-    pinned_comment: "Which beloved name is now a punchline?"
+    pinned_comment: "Which beloved name can nobody use anymore?"
     caption: "{{ name }} was beautiful once. #namedata"
 
   - id: cult-005-moment-length
@@ -356,19 +370,21 @@ hooks:
     register: cultural
     compatible_tiers: [declining, critical, extinct]
     requires_var: moment_length
+    requires_data:
+      collapse_year: { min: 1880 }   # the subhead renders collapse_year; None must fail closed
     headline: "{{ name }} had a {{ moment_length }}-year moment."
     subhead:  "It ended in {{ collapse_year }}."
     pinned_comment: "Which name had the shortest run?"
-    caption: "{{ moment_length }} years of {{ name }}. Then nothing. #names"
+    caption: "{{ moment_length }} years of {{ name }} before the published break. #names"
 
   - id: cult-006-cultural-story
     pillar: cultural-collapse
     register: cultural
     compatible_tiers: [declining, critical, extinct]
     requires_var: killing_event
-    headline: "The death of {{ name }} is a cultural story."
+    headline: "The decline of {{ name }} is a cultural story."
     subhead:  "The SSA data tells it."
-    pinned_comment: "Which death surprised you most?"
+    pinned_comment: "Which shift surprised you most?"
     caption: "Names are cultural artifacts. {{ name }} is the proof. #culturalcollapse"
 
   - id: cult-007-survived-wars
@@ -376,20 +392,23 @@ hooks:
     register: cultural
     compatible_tiers: [declining, critical, extinct]
     requires_var: killing_event
-    headline: "{{ name }} survived two world wars."
-    subhead:  "It did not survive {{ killing_event }}."
+    requires_data:
+      start_year: { max: 1917 }   # must predate WWI to have "survived" it
+      event_year: { min: 1946 }   # the killing event itself must postdate WWII (Bertha's is WWI)
+    headline: "{{ name }} spans two world wars."
+    subhead:  "Its sharpest later break followed {{ killing_event }}."
     pinned_comment: "What's more dangerous: war or pop culture?"
-    caption: "{{ name }} vs {{ killing_event }}. {{ killing_event }} won. #names"
+    caption: "{{ name }} shifted after {{ killing_event }}. #names"
 
   - id: cult-008-real-before-punchline
     pillar: cultural-collapse
     register: cultural
     compatible_tiers: [declining, critical]
     requires_var: killing_event
-    headline: "{{ name }} was a real name before it was a punchline."
+    headline: "{{ name }} was a real name before it was a reference."
     subhead:  "{{ peak_count | thousands }} parents agreed."
-    pinned_comment: "Which punchline name was beautiful first?"
-    caption: "Before the joke, {{ name }} was just a name. #namedata"
+    pinned_comment: "Which name stopped being usable first?"
+    caption: "Before {{ killing_event }}, {{ name }} was just a name. #namedata"
 
   # ---------------------------------------------------------------------------
   # RESURRECTION (8)
@@ -399,10 +418,12 @@ hooks:
     pillar: resurrection
     register: hopeful
     compatible_tiers: [resurrected, rising]
-    headline: "{{ name }} was almost extinct in {{ trough_year }}."
+    requires_data:
+      trough_count: { max: 25 }   # RISING does not guarantee a near-extinct past; the trough must prove it
+    headline: "{{ name }} fell to {{ trough_count }} recorded births in {{ trough_year }}."
     subhead:  "It's the comeback name of the decade."
     pinned_comment: "Tag a baby {{ name }}."
-    caption: "{{ name }} died and came back. #resurrection #babynames"
+    caption: "{{ name }} dropped and came back. #resurrection #babynames"
 
   - id: res-002-bottomed-out
     pillar: resurrection
@@ -417,7 +438,7 @@ hooks:
     pillar: resurrection
     register: hopeful
     compatible_tiers: [resurrected]
-    headline: "Names die. {{ name }} didn't."
+    headline: "Names fade. {{ name }} came back."
     subhead:  "{{ trough_count }} → {{ current_count | thousands }} in {{ trough_to_now_years }} years."
     pinned_comment: "Which name do you predict comes back next?"
     caption: "The {{ name }} comeback in one chart. #resurrection"
@@ -426,6 +447,8 @@ hooks:
     pillar: resurrection
     register: nostalgic
     compatible_tiers: [resurrected, rising]
+    requires_data:
+      years_since_peak: { min: 80 }   # the 100-year framing needs a heyday roughly a century back
     headline: "Your great-grandmother's {{ name }} is your daughter's {{ name }}."
     subhead:  "The 100-year cycle, on schedule."
     pinned_comment: "Whose name skipped a generation in your family?"
@@ -444,6 +467,8 @@ hooks:
     pillar: resurrection
     register: hopeful
     compatible_tiers: [resurrected, rising]
+    requires_data:
+      rise_pct: { min: 20 }   # RESURRECTED can plateau after the comeback; growth must be live
     headline: "Vintage names are back. {{ name }} is leading."
     subhead:  "Up {{ rise_pct }}% in five years."
     pinned_comment: "Vote: vintage or modern names for your kid?"
@@ -453,6 +478,8 @@ hooks:
     pillar: resurrection
     register: hopeful
     compatible_tiers: [rising, resurrected]
+    requires_data:
+      rise_pct: { min: 20 }   # RESURRECTED can plateau after the comeback; growth must be live
     headline: "{{ name }} is having a renaissance."
     subhead:  "{{ rise_pct }}% growth. {{ current_count | thousands }} babies."
     pinned_comment: "Which renaissance name will you actually use?"
@@ -462,6 +489,8 @@ hooks:
     pillar: resurrection
     register: hopeful
     compatible_tiers: [resurrected]
+    requires_data:
+      years_since_peak: { min: 60 }   # the grandmother framing needs a heyday two generations back
     headline: "If your grandmother was a {{ name }}, your granddaughter will be too."
     subhead:  "Welcome to the cycle."
     pinned_comment: "Which family name keeps coming back?"
@@ -475,7 +504,7 @@ hooks:
     pillar: generation-arc
     register: curious
     compatible_tiers: [extinct, critical, declining, stable, rising, resurrected]
-    headline: "Every {{ name }} ever born."
+    headline: "SSA's recorded {{ name }} history."
     subhead:  "{{ year_range }} years. One chart."
     pinned_comment: "Which name should we chart next?"
     caption: "The full {{ name }} history. #namedata"
@@ -548,24 +577,6 @@ hooks:
     pinned_comment: "Which surprise pairing should we cover next?"
     caption: "{{ name }} vs {{ comparison_name }}. The flip. #namedata"
 
-  - id: cmp-003-avg-age
-    pillar: comparison-surprise
-    register: curious
-    compatible_tiers: [extinct, critical, declining]
-    headline: "Most {{ name }}s are over {{ avg_age }}."
-    subhead:  "Statistically."
-    pinned_comment: "How old is the {{ name }} in your life?"
-    caption: "Average {{ name }}: {{ avg_age }} years old. #namedata"
-
-  - id: cmp-004-older-than-you-think
-    pillar: comparison-surprise
-    register: curious
-    compatible_tiers: [extinct, critical, declining]
-    headline: "Your {{ name }} is older than you think."
-    subhead:  "Average age: {{ avg_age }}."
-    pinned_comment: "What's the youngest {{ name }} you know?"
-    caption: "Mean age of every living {{ name }}: {{ avg_age }}. #ssa"
-
   - id: cmp-005-pick-a-year
     pillar: comparison-surprise
     register: curious
@@ -602,6 +613,7 @@ validation:
     - "All Jinja2 variables referenced MUST exist in `variables` above"
     - "All Jinja2 filters used MUST exist in `filters` above"
     - "If `requires_var` is set, that variable MUST resolve to a non-None value for the candidate name; otherwise the hook is skipped"
+    - "If `requires_data` is set (a mapping of variable → {min, max}), every bound MUST hold for the candidate name; a None value fails closed and the hook is skipped. Use it whenever copy claims more than the tier guarantees."
 
   brand_voice:
     - "No exclamation points outside the `yell-test` hook"
