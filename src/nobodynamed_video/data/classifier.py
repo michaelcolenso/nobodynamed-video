@@ -17,6 +17,7 @@ CRITICAL_THRESHOLD: int = 25
 CRITICAL_PEAK_FLOOR: int = 1000
 DECLINING_SLOPE_5Y: float = -0.10
 DECLINING_PEAK_RATIO: float = 0.50
+POST_DECLINE_RATIO: float = 0.15
 STABLE_BAND: float = 0.10
 RISING_SLOPE_5Y: float = 0.20
 RISING_AVG_RATIO: float = 1.50
@@ -91,6 +92,12 @@ def classify(record: NameRecord) -> Tier:
 
     # 5. DECLINING — negative slope AND well below peak.
     if slope < DECLINING_SLOPE_5Y and current < DECLINING_PEAK_RATIO * peak:
+        return Tier.DECLINING
+
+    # 5b. POST-DECLINE PLATEAU — massive historical decline, flat recent slope.
+    # A name at <15% of a significant peak collapsed long ago; editorially it is
+    # not "stable" even though the recent trajectory is flat.
+    if peak >= CRITICAL_PEAK_FLOOR and current < POST_DECLINE_RATIO * peak:
         return Tier.DECLINING
 
     # 6. STABLE — default.

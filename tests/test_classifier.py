@@ -4,6 +4,7 @@ from nobodynamed_video.data.classifier import (
     CRITICAL_PEAK_FLOOR,
     CRITICAL_THRESHOLD,
     LATEST_YEAR,
+    POST_DECLINE_RATIO,
     RESURRECTION_LOOKBACK_YEARS,
     classify,
 )
@@ -189,6 +190,35 @@ def test_not_declining_current_above_half_peak() -> None:
     record = make_record(series=series)
     result = classify(record)
     assert result != Tier.DECLINING
+
+
+def test_declining_post_decline_plateau() -> None:
+    # Walter-type: peaked at 18,000, now 180 (1% of peak), flat recent slope.
+    # The collapse happened decades ago; the name is NOT stable.
+    series = [
+        (1920, 18_000),
+        *((yr, 180 + (yr % 3)) for yr in range(2019, 2025)),
+    ]
+    record = make_record(name="Walter", sex="M", series=series)
+    assert classify(record) == Tier.DECLINING
+
+
+def test_declining_post_decline_plateau_boundary() -> None:
+    # Just below POST_DECLINE_RATIO of peak → DECLINING
+    peak = 10_000
+    current = int(POST_DECLINE_RATIO * peak) - 1
+    series = [(1950, peak), *((yr, current) for yr in range(2019, 2025))]
+    record = make_record(series=series)
+    assert classify(record) == Tier.DECLINING
+
+
+def test_not_declining_post_decline_above_ratio() -> None:
+    # Above POST_DECLINE_RATIO of peak with flat slope → STABLE (not post-decline)
+    peak = 10_000
+    current = int(POST_DECLINE_RATIO * peak) + 100
+    series = [(1950, peak), *((yr, current) for yr in range(2019, 2025))]
+    record = make_record(series=series)
+    assert classify(record) == Tier.STABLE
 
 
 # ── STABLE ────────────────────────────────────────────────────────────────────
