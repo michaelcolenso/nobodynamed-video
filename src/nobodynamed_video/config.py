@@ -4,7 +4,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -26,6 +26,15 @@ class Settings(BaseSettings):
     # SQLite fixture path used in dev/test when d1_url is empty.
     sqlite_fixture: Path = Field(default=Path("./fixtures/ssa.sqlite"))
     _resolved_d1_token: str | None = None
+
+    @field_validator("d1_url", "d1_token", mode="before")
+    @classmethod
+    def _strip_whitespace(cls, value: object) -> object:
+        """Secrets pasted into CI UIs often carry stray newlines; a newline in
+        D1_TOKEN produces an illegal HTTP Authorization header at request time."""
+        if isinstance(value, str):
+            return value.strip()
+        return value
 
     @property
     def use_sqlite(self) -> bool:
