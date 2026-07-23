@@ -56,12 +56,17 @@ def check_ffmpeg() -> bool:
         parts = line.split()
         if len(parts) >= 3:
             ver_str = parts[2].lstrip("n")
-            major = int(ver_str.split(".")[0])
-            ok = major >= 6
+            ver_parts = ver_str.split(".")
+            major = int(ver_parts[0])
+            minor = int(ver_parts[1]) if len(ver_parts) > 1 else 0
+            # Feature floor is 5.1: the compose graph needs the scale filter's
+            # in_range/out_range/out_color_matrix options (added in 5.1) plus
+            # libx264 + aac. README recommends 6+, but 5.1 (Debian 12) works.
+            ok = major > 5 or (major == 5 and minor >= 1)
             return _check(
-                f"ffmpeg >= 6  (found {parts[2]})",
+                f"ffmpeg >= 5.1  (found {parts[2]}, 6+ recommended)",
                 ok,
-                "Install ffmpeg 6+: brew install ffmpeg  or  apt install ffmpeg",
+                "Install ffmpeg 5.1+ (6+ recommended): brew install ffmpeg  or  apt install ffmpeg",
             )
         return _check("ffmpeg >= 6", False, "Install ffmpeg 6+: brew install ffmpeg")
     except Exception:
