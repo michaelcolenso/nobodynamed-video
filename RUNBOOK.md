@@ -8,6 +8,11 @@
 4. Run the weekly batch: `make batch` or `uv run nbn batch batches/week-1.yaml`.
 5. Inspect `out/week-1.summary.json` for per-video render times and any failures.
 6. Upload resulting MP4 files from `out/` to TikTok manually.
+   **Add sound at upload time in the TikTok editor** — pick a trending
+   cinematic/suspense sound. The baked-in audio is a silent AAC track by
+   design: a native trending sound gets algorithmic lift and avoids licensing
+   risk, neither of which a baked-in track can provide. Keep the sound's
+   volume low enough that the visual pacing still leads.
 
 ---
 

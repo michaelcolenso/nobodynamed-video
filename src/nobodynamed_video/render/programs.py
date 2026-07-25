@@ -54,12 +54,17 @@ SUPPORT_ALPHA = (
     Hyperframe(RECOMPOSE_END_T + 0.5, 0.0, ease_out_quart),
     Hyperframe(RECOMPOSE_END_T + 1.4, 1.0),
 )
-# Footer fades in linearly over 13.8–15.6s, straddling the start of the CTA window
-# (frame 450 = t=15.0s). At t=15.0 it is ~0.67 opacity — clearly present, so the CTA beat
-# reads distinctly from the narrative tail — yet still animating through the first CTA
-# frames, which keeps them from being byte-identical (avoids FROZEN_FRAMES). Previously it
-# began at 15.0s, so the opening CTA frames matched the narrative tail exactly.
-FOOTER_ALPHA = (Hyperframe(13.8, 0.0), Hyperframe(15.6, 1.0))
+# Footer fades in 14.6–15.8s, straddling the start of the CTA window (frame
+# 450 = t=15.0s): present enough that the CTA beat reads distinctly from the
+# narrative tail, yet still animating through the first CTA frames, which
+# keeps them from being byte-identical (avoids FROZEN_FRAMES).
+FOOTER_ALPHA = (Hyperframe(14.6, 0.0), Hyperframe(15.8, 1.0))
+# The narrative support line yields to the footer ahead of the CTA beat: with
+# the enlarged type ramp both occupy the same ~150px band at the bottom of
+# the collapsed layout and collided. The fade-out (13.6–14.6s) completes
+# before the footer fade-in begins, so the two never ghost over each other;
+# the support line's facts remain visible on the chart itself.
+SUPPORT_OUT = (Hyperframe(13.6, 0.0, ease_in_out_sine), Hyperframe(14.6, 1.0))
 EVENT_ALPHA = (
     Hyperframe(RECOMPOSE_END_T + 0.2, 0.0, ease_out_quart),
     Hyperframe(RECOMPOSE_END_T + 0.8, 1.0),
@@ -136,7 +141,9 @@ def sample_program_frame(
     # low, fully opaque has settled into place.
     card_offsets = [round((1.0 - alpha) * 18.0, 6) for alpha in card_alphas]
     narrative_alpha = sample_scalar_track(NARRATIVE_ALPHA, t)
-    support_alpha = sample_scalar_track(SUPPORT_ALPHA, t)
+    support_alpha = sample_scalar_track(SUPPORT_ALPHA, t) * (
+        1.0 - sample_scalar_track(SUPPORT_OUT, t)
+    )
     footer_wave = ease_in_out_sine(triangle_wave(t, 1.2))
     return {
         "program": spec.program.value,

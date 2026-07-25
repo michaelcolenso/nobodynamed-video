@@ -3,7 +3,7 @@
 export const COLORS = {
   bg:      "#14110E",
   ink:     "#E8E0D4",
-  fade:    "#B5B0A0",
+  fade:    "#C9C4B5",
   crimson: "#A21F1F",
   emerald: "#059669",
   rule:    "#2A2622",
@@ -19,7 +19,8 @@ export const RAMP = {
   body:    [58, 43, 34, 26, 22],
 } as const;
 
-// 1080×1920 canvas; safe area avoids TikTok UI overlays.
+// 1080×1920 canvas; safe area avoids TikTok UI overlays. Bottom UI
+// (caption + sound row) can reach ~20% of frame height on some devices.
 export const CANVAS = {
   w: 1080,
   h: 1920,

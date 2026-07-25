@@ -163,8 +163,29 @@ function smoothPathD(
   // Edge segments mirror the previous/next point.
 
   const totalSegments = points.length - 1;
-  const fullSegments = Math.min(Math.floor(drawProgress * totalSegments), totalSegments);
-  const partialT = drawProgress * totalSegments - fullSegments;
+
+  // Draw speed is weighted by vertical movement: decades of flatline pass
+  // quickly while dramatic rises/falls get screen time. A uniform draw
+  // crawled through flat years (e.g. 1880–1916 on Bertha) and read as slow
+  // in the first seconds on TikTok. Data and axes are untouched — only the
+  // tracer's pacing changes.
+  const SLOPE_WEIGHT = 6;
+  const dyAbs = points.slice(1).map((p, i) => Math.abs(p.y - points[i].y));
+  const maxDy = Math.max(...dyAbs, 1);
+  const costs = dyAbs.map((d) => 1 + (SLOPE_WEIGHT * d) / maxDy);
+  const totalCost = costs.reduce((a, b) => a + b, 0);
+  const target = drawProgress * totalCost;
+  let fullSegments = totalSegments;
+  let partialT = 0;
+  let acc = 0;
+  for (let seg = 0; seg < totalSegments; seg++) {
+    if (acc + costs[seg] > target) {
+      fullSegments = seg;
+      partialT = costs[seg] > 0 ? (target - acc) / costs[seg] : 0;
+      break;
+    }
+    acc += costs[seg];
+  }
 
   let pathD = "";
   let tracerX = points[0].x;

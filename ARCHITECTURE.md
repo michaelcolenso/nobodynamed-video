@@ -184,6 +184,6 @@ Frames are cached at `out/.cache/<sha256>.png` where the hash covers the seriali
 | Headline font | Source Serif 4 Black |
 | Body font | Source Serif 4 Regular |
 | Accent (crimson) | `#A21F1F` |
-| Faded gray | `#B5B0A0` |
+| Faded gray | `#C9C4B5` |
 | Canvas | 1080 × 1920 px (9:16) |
 | Frame rate | 30 fps |
