@@ -15,8 +15,8 @@ export const TYPE = {
 } as const;
 
 export const RAMP = {
-  display: [128, 96, 72, 56],
-  body:    [48, 36, 28, 22, 18],
+  display: [154, 115, 86, 67],
+  body:    [58, 43, 34, 26, 22],
 } as const;
 
 // 1080×1920 canvas; safe area avoids TikTok UI overlays.
