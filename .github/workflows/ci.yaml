@@ -42,6 +42,8 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -103,6 +105,25 @@ jobs:
           path: out/
           retention-days: 90
           if-no-files-found: warn
+
+      - name: Publish videos to 'videos' branch
+        if: success()
+        run: |
+          shopt -s nullglob
+          mp4s=(out/*.mp4)
+          if [ ${#mp4s[@]} -eq 0 ]; then
+            echo "No rendered videos to publish; skipping."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan videos-publish
+          git rm -rf . > /dev/null 2>&1 || true
+          cp out/*.mp4 .
+          cp out/*.summary.json . 2>/dev/null || true
+          git add -A
+          git commit -m "Rendered videos from ${{ github.sha }}"
+          git push -f origin HEAD:videos
 
       - name: Summary
         if: always()
