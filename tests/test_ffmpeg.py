@@ -53,7 +53,10 @@ def test_build_ffmpeg_cmd_contains_libx264() -> None:
 
 def test_build_ffmpeg_cmd_encode_quality() -> None:
     cmd = build_ffmpeg_cmd(FRAMES, OUT)
-    assert cmd[cmd.index("-crf") + 1] == "17"
+    assert cmd[cmd.index("-b:v") + 1] == "10M"
+    assert cmd[cmd.index("-minrate") + 1] == "10M"
+    assert cmd[cmd.index("-maxrate") + 1] == "10M"
+    assert "filler=1" in cmd[cmd.index("-x264-params") + 1]
     assert cmd[cmd.index("-preset") + 1] == "slow"
     assert cmd[cmd.index("-tune") + 1] == "animation"
     assert cmd[cmd.index("-profile:v") + 1] == "high"

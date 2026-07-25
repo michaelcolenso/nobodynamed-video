@@ -66,17 +66,30 @@ def build_ffmpeg_cmd(
     cmd += ["-map", "[v]", "-map", f"{audio_input_index}:a"]
 
     # ── Video encode ──────────────────────────────────────────────────────────
-    # The platform re-encodes on upload, so the master should be visually
-    # transparent: CRF 17 + slow + tune animation (flat fills, hard edges).
+    # The platform re-encodes on upload, so the master must be a rich,
+    # high-bitrate source: true 10 Mbps CBR with bitstream filler. Near-static
+    # flat-color scenes make quality-based modes (CRF, 1-pass ABR) collapse to
+    # ~0.4–1 Mbps regardless of settings — the bits simply aren't needed
+    # locally — but TikTok's re-encode preserves more with a rich source, so
+    # we force the rate with nal-hrd=cbr:filler=1. tune animation: flat fills,
+    # hard edges.
     cmd += [
         "-c:v",
         "libx264",
         "-preset",
         "slow",
-        "-crf",
-        "17",
         "-tune",
         "animation",
+        "-b:v",
+        "10M",
+        "-minrate",
+        "10M",
+        "-maxrate",
+        "10M",
+        "-bufsize",
+        "20M",
+        "-x264-params",
+        "nal-hrd=cbr:filler=1",
         "-profile:v",
         "high",
         "-level",
