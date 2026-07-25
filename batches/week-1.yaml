@@ -1,60 +1,62 @@
 batch: week-1
+# Debut of the Year — names from "The Names That Arrived All at Once"
+# (nobodynamed.com/blog, 2026-06-13). Style: peak-year (the debut year IS the peak).
 defaults:
   fps: 30
 videos:
-  - id: bertha-2024
-    name: Bertha
-    sex: F
-    style: extinction-watch
-  - id: mildred-2024
-    name: Mildred
-    sex: F
-    style: extinction-watch
-  - id: karen-2024
-    name: Karen
-    sex: F
-    style: cultural-collapse
-  - id: hazel-2024
-    name: Hazel
-    sex: F
-    style: rising
-  - id: theodore-2024
-    name: Theodore
+  - id: foch-2024
+    name: Foch
     sex: M
-    style: rising
-  - id: linda-2024
-    name: Linda
-    sex: F
-    style: declining
-  - id: jennifer-2024
-    name: Jennifer
-    sex: F
-    style: declining
-  - id: emma-2024
-    name: Emma
-    sex: F
-    style: stable
-  - id: liam-2024
-    name: Liam
+    style: peak-year
+  - id: rockne-2024
+    name: Rockne
     sex: M
-    style: stable
-  - id: eleanor-2024
-    name: Eleanor
+    style: peak-year
+  - id: monalisa-2024
+    name: Monalisa
     sex: F
-    style: resurrected
-  - id: walter-2024
-    name: Walter
+    style: peak-year
+  - id: maverick-2024
+    name: Maverick
     sex: M
-    style: declining
-  - id: dorothy-2024
-    name: Dorothy
-    sex: F
-    style: declining
-  - id: oliver-2024
-    name: Oliver
+    style: peak-year
+  - id: illya-2024
+    name: Illya
     sex: M
-    style: rising
-  - id: charlotte-2024
-    name: Charlotte
+    style: peak-year
+  - id: nakia-2024
+    name: Nakia
+    sex: M
+    style: peak-year
+  - id: kizzy-2024
+    name: Kizzy
     sex: F
-    style: rising
+    style: peak-year
+  - id: levar-2024
+    name: Levar
+    sex: M
+    style: peak-year
+  - id: fallon-2024
+    name: Fallon
+    sex: F
+    style: peak-year
+  - id: sade-2024
+    name: Sade
+    sex: F
+    style: peak-year
+  - id: pharrell-2024
+    name: Pharrell
+    sex: M
+    style: peak-year
+  - id: greidys-2024
+    name: Greidys
+    sex: F
+    style: peak-year
+  - id: vanellope-2024
+    name: Vanellope
+    sex: F
+    style: peak-year
+  - id: kehlani-2024
+    name: Kehlani
+    sex: F
+    style: peak-year
