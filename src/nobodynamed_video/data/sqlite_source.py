@@ -51,9 +51,7 @@ class SqliteSource:
         # and the chart claims "6 births in 2024".
         last_year = series[-1].year
         if last_year < year:
-            series.extend(
-                YearCount(year=y, count=0) for y in range(last_year + 1, year + 1)
-            )
+            series.extend(YearCount(year=y, count=0) for y in range(last_year + 1, year + 1))
         current = series[-1]
 
         return NameRecord(
