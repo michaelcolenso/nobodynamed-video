@@ -1,0 +1,40 @@
+batch: week-3
+# One-Hit Wonders — names from "One-Hit Wonder Names"
+# (nobodynamed.com/blog, 2026-05-22). Five one-hit wonders, the survivor,
+# and the two counterexamples (names that outlasted the moment).
+# Style: peak-year — the article's thesis is the spike year itself.
+defaults:
+  fps: 30
+videos:
+  - id: kunta-2024
+    name: Kunta
+    sex: M
+    style: peak-year
+  - id: arsenio-2024
+    name: Arsenio
+    sex: M
+    style: peak-year
+  - id: moesha-2024
+    name: Moesha
+    sex: F
+    style: peak-year
+  - id: jkwon-2024
+    name: Jkwon
+    sex: M
+    style: peak-year
+  - id: bethzy-2024
+    name: Bethzy
+    sex: F
+    style: peak-year
+  - id: neymar-2024
+    name: Neymar
+    sex: M
+    style: peak-year
+  - id: khaleesi-2024
+    name: Khaleesi
+    sex: F
+    style: peak-year
+  - id: renesmee-2024
+    name: Renesmee
+    sex: F
+    style: peak-year

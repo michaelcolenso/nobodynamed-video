@@ -55,6 +55,17 @@ class D1Source:
             raise DataSourceError(f"All counts zero in D1 for name={name!r} sex={sex!r}")
 
         peak = max(nonzero, key=lambda yc: yc.count)
+
+        # SSA suppresses counts under 5, so a name absent from recent years is
+        # effectively at zero there. Zero-fill the gap and anchor "current" to
+        # the requested reference year — otherwise a name that vanished in 2000
+        # reports current=(2000, 6), the classifier can never mark it EXTINCT,
+        # and the chart claims "6 births in 2024".
+        last_year = series[-1].year
+        if last_year < year:
+            series.extend(
+                YearCount(year=y, count=0) for y in range(last_year + 1, year + 1)
+            )
         current = series[-1]
 
         return NameRecord(

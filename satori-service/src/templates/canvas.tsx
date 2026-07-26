@@ -191,12 +191,19 @@ function smoothPathD(
   let tracerX = points[0].x;
   let tracerY = points[0].y;
 
+  // Catmull-Rom overshoots at a floor of repeated values: a name whose count
+  // hits the zero baseline (SSA suppression / extinction) got a visible curl
+  // *below* the axis. The baseline is the largest y (y is inverted), so clamp
+  // every control point to it.
+  const floorY = Math.max(...points.map((p) => p.y));
+  const clampY = (y: number) => Math.min(y, floorY);
+
   const cp = (i: number, isEnd: boolean): { x: number; y: number } => {
     const pi = points[i];
     const pj = points[isEnd ? i + 1 : i - 1];
     const dx = (pj.x - pi.x) / 6;
     const dy = (pj.y - pi.y) / 6;
-    return { x: pi.x + dx, y: pi.y + dy };
+    return { x: pi.x + dx, y: clampY(pi.y + dy) };
   };
 
   for (let seg = 0; seg < fullSegments; seg++) {
@@ -205,8 +212,8 @@ function smoothPathD(
     const p2 = points[seg + 1];
     const p3 = points[Math.min(points.length - 1, seg + 2)];
 
-    const cp1 = { x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 };
-    const cp2 = { x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 };
+    const cp1 = { x: p1.x + (p2.x - p0.x) / 6, y: clampY(p1.y + (p2.y - p0.y) / 6) };
+    const cp2 = { x: p2.x - (p3.x - p1.x) / 6, y: clampY(p2.y - (p3.y - p1.y) / 6) };
 
     const cmd = seg === 0 ? `M ${p1.x} ${p1.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}` : ` C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}`;
     pathD += cmd;
@@ -222,8 +229,8 @@ function smoothPathD(
     const p2 = points[seg + 1];
     const p3 = points[Math.min(points.length - 1, seg + 2)];
 
-    const cp1 = { x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 };
-    const cp2 = { x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 };
+    const cp1 = { x: p1.x + (p2.x - p0.x) / 6, y: clampY(p1.y + (p2.y - p0.y) / 6) };
+    const cp2 = { x: p2.x - (p3.x - p1.x) / 6, y: clampY(p2.y - (p3.y - p1.y) / 6) };
 
     // De Casteljau at partialT — first cubic segment
     const q0 = mix(p1.x, cp1.x, partialT); const r0 = mix(p1.y, cp1.y, partialT);
