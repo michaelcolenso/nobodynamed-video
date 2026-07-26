@@ -1,6 +1,6 @@
 # nobodynamed-video
 
-Agent-driven pipeline that turns SSA baby name records into 18-second 9:16 TikTok videos in the nobodynamed.com v3 brand system.
+Agent-driven pipeline that turns SSA baby name records into 11-second 9:16 TikTok videos in the nobodynamed.com v3 brand system.
 
 One command renders an MP4 ready for TikTok upload.
 

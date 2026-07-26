@@ -9,13 +9,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-_EXPECTED_FRAMES = 540
+_EXPECTED_FRAMES = 330
 _EXPECTED_WIDTH = 1080
 _EXPECTED_HEIGHT = 1920
 _MIN_DURATION_S = 17.9
 # With straight concat composition the video stream must carry every frame:
-# 540 frames / 30 fps = 18.0 s exactly (xfade used to silently trim 0.6 s).
-_EXPECTED_STREAM_DURATION_S = 18.0
+# 330 frames / 30 fps = 11.0 s exactly (xfade used to silently trim 0.6 s).
+_EXPECTED_STREAM_DURATION_S = 11.0
 _STREAM_DURATION_TOLERANCE_S = 0.05
 _EXPECTED_FPS = "30/1"
 _EXPECTED_COLOR = {

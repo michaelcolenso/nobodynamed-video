@@ -1,4 +1,4 @@
-"""Frame planner — sample one shared-canvas hyperframe program over 18 seconds."""
+"""Frame planner — sample one shared-canvas hyperframe program over 11 seconds."""
 
 from __future__ import annotations
 
@@ -8,11 +8,14 @@ from typing import Any
 from nobodynamed_video.models import VideoSpec
 from nobodynamed_video.render.programs import sample_program_frame
 
+# Fixed 11.0s runtime for every video: completion rate is the metric that
+# matters for this format, and a fixed length makes the series legible.
+# Names with better stories earn a second video, not a longer one.
 SCENE_DURATIONS: dict[str, float] = {
-    "hook": 3.0,
-    "reveal": 6.0,
-    "narrative": 6.0,
-    "cta": 3.0,
+    "hook": 1.0,
+    "reveal": 3.5,
+    "narrative": 5.0,
+    "cta": 1.5,
 }
 SCENE_ORDER = ["hook", "reveal", "narrative", "cta"]
 TOTAL_DURATION_S: float = sum(SCENE_DURATIONS[kind] for kind in SCENE_ORDER)

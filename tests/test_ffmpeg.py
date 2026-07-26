@@ -86,9 +86,9 @@ def test_build_ffmpeg_cmd_output_path() -> None:
 
 
 def test_build_ffmpeg_cmd_total_duration() -> None:
-    cmd = build_ffmpeg_cmd(FRAMES, OUT, total_duration=18.0)
+    cmd = build_ffmpeg_cmd(FRAMES, OUT, total_duration=11.0)
     t_idx = [i for i, v in enumerate(cmd) if v == "-t"]
-    assert any(cmd[i + 1] == "18.0" for i in t_idx)
+    assert any(cmd[i + 1] == "11.0" for i in t_idx)
 
 
 def test_build_ffmpeg_cmd_silent_audio_48k() -> None:

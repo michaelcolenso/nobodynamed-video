@@ -96,23 +96,23 @@ def make_bertha_spec() -> VideoSpec:
 
 
 def test_hook_frame_count() -> None:
-    assert frame_count("hook", fps=30) == 90
+    assert frame_count("hook", fps=30) == 30
 
 
 def test_reveal_frame_count() -> None:
-    assert frame_count("reveal", fps=30) == 180
+    assert frame_count("reveal", fps=30) == 105
 
 
 def test_narrative_frame_count() -> None:
-    assert frame_count("narrative", fps=30) == 180
+    assert frame_count("narrative", fps=30) == 150
 
 
 def test_cta_frame_count() -> None:
-    assert frame_count("cta", fps=30) == 90
+    assert frame_count("cta", fps=30) == 45
 
 
 def test_total_frame_count() -> None:
-    assert total_frame_count(fps=30) == 540
+    assert total_frame_count(fps=30) == 330
 
 
 def test_scene_order() -> None:
@@ -122,7 +122,7 @@ def test_scene_order() -> None:
 def test_plan_frames_total_count() -> None:
     spec = make_bertha_spec()
     frames = list(plan_frames(spec, fps=30))
-    assert len(frames) == 540
+    assert len(frames) == 330
 
 
 def test_plan_frames_scene_distribution() -> None:
@@ -130,10 +130,10 @@ def test_plan_frames_scene_distribution() -> None:
     counts: dict[str, int] = {}
     for scene_kind, _idx, _tpl, _props in plan_frames(spec, fps=30):
         counts[scene_kind] = counts.get(scene_kind, 0) + 1
-    assert counts["hook"] == 90
-    assert counts["reveal"] == 180
-    assert counts["narrative"] == 180
-    assert counts["cta"] == 90
+    assert counts["hook"] == 30
+    assert counts["reveal"] == 105
+    assert counts["narrative"] == 150
+    assert counts["cta"] == 45
 
 
 def test_plan_frames_use_shared_canvas_template() -> None:
@@ -156,16 +156,16 @@ def test_canvas_props_have_required_blocks() -> None:
 def test_recompose_progress_increases_after_dot_lands() -> None:
     spec = make_bertha_spec()
     frames = [props for _scene, _idx, _tpl, props in plan_frames(spec, fps=30)]
-    pre_land = frames[245]["chart"]["layout_progress"]
-    later = frames[290]["chart"]["layout_progress"]
+    pre_land = frames[120]["chart"]["layout_progress"]
+    later = frames[180]["chart"]["layout_progress"]
     assert pre_land <= later
 
 
 def test_narrative_alpha_appears_in_second_half() -> None:
     spec = make_bertha_spec()
     frames = [props for _scene, _idx, _tpl, props in plan_frames(spec, fps=30)]
-    first_half = frames[180]["narrative"]["alpha"]
-    second_half = frames[330]["narrative"]["alpha"]
+    first_half = frames[120]["narrative"]["alpha"]
+    second_half = frames[300]["narrative"]["alpha"]
     assert first_half <= second_half
 
 

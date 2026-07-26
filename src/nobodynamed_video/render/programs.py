@@ -15,12 +15,13 @@ from nobodynamed_video.render.motion import (
     triangle_wave,
 )
 
-TOTAL_DURATION_S = 18.0
-DOT_LAND_T = 8.0
-# Collapse starts a beat AFTER the dot lands (not simultaneously) so the landing and
-# count-up read clearly in the still-expanded chart before the layout recomposes.
-RECOMPOSE_START_T = 9.2
-RECOMPOSE_END_T = 10.2
+TOTAL_DURATION_S = 11.0
+DOT_LAND_T = 4.5
+# Collapse starts a beat AFTER the dot lands so the landing reads clearly in
+# the still-expanded chart before the layout recomposes to make room for the
+# stat cards.
+RECOMPOSE_START_T = 4.6
+RECOMPOSE_END_T = 5.4
 
 # Frame 0 is the default TikTok cover and the loop-seam landing frame: the
 # header and hook headline must be fully readable on it, never faded up from a
@@ -28,13 +29,13 @@ RECOMPOSE_END_T = 10.2
 # (distinct hashes, no FROZEN_FRAMES) while the type carries the cover.
 HEADER_ALPHA = (Hyperframe(0.0, 1.0),)
 DIAGNOSIS_ALPHA = (Hyperframe(0.0, 1.0),)
-CHART_ALPHA = (Hyperframe(0.0, 0.0, ease_out_quart), Hyperframe(0.8, 1.0))
-# Sine in-out, not quart-out: with the year readout riding the tracer, the
-# draw must spend its time where the story is. Quart-out raced through 70% of
-# history before the reveal scene began, then crawled along the flat modern
-# tail; sine paces the rise through the hook, lands the collapse mid-reveal,
-# and decelerates into the present.
-CHART_DRAW = (Hyperframe(1.2, 0.0, ease_in_out_sine), Hyperframe(DOT_LAND_T, 1.0))
+CHART_ALPHA = (Hyperframe(0.0, 0.0, ease_out_quart), Hyperframe(0.5, 1.0))
+# The sequence is inverted from the original 18s cut: chart motion starts
+# almost immediately (t=0.3) UNDER the hook text, instead of holding a static
+# title card for 1.2s and only then drawing. The slope-weighted draw in
+# smoothPathD spends its time where the story is, so the spike lands inside
+# the 1.0–4.5s reveal window while flat years flash by.
+CHART_DRAW = (Hyperframe(0.3, 0.0, ease_in_out_sine), Hyperframe(DOT_LAND_T, 1.0))
 DOT_ALPHA = (Hyperframe(DOT_LAND_T, 0.0, ease_out_quart), Hyperframe(DOT_LAND_T + 0.45, 1.0))
 DOT_RADIUS = (Hyperframe(DOT_LAND_T, 18.0, ease_out_back), Hyperframe(DOT_LAND_T + 0.45, 12.0))
 DOT_RING_ALPHA = (Hyperframe(DOT_LAND_T, 0.7), Hyperframe(DOT_LAND_T + 0.6, 0.0))
@@ -47,29 +48,29 @@ LAYOUT_PROGRESS = (
     Hyperframe(RECOMPOSE_END_T, 1.0),
 )
 NARRATIVE_ALPHA = (
-    Hyperframe(RECOMPOSE_END_T, 0.0, ease_out_quart),
-    Hyperframe(RECOMPOSE_END_T + 0.8, 1.0),
+    Hyperframe(RECOMPOSE_END_T + 1.1, 0.0, ease_out_quart),
+    Hyperframe(RECOMPOSE_END_T + 1.8, 1.0),
 )
 SUPPORT_ALPHA = (
-    Hyperframe(RECOMPOSE_END_T + 0.5, 0.0, ease_out_quart),
-    Hyperframe(RECOMPOSE_END_T + 1.4, 1.0),
+    Hyperframe(RECOMPOSE_END_T + 1.6, 0.0, ease_out_quart),
+    Hyperframe(RECOMPOSE_END_T + 2.4, 1.0),
 )
-# Footer fades in 14.6–15.8s, straddling the start of the CTA window (frame
-# 450 = t=15.0s): present enough that the CTA beat reads distinctly from the
-# narrative tail, yet still animating through the first CTA frames, which
-# keeps them from being byte-identical (avoids FROZEN_FRAMES).
-FOOTER_ALPHA = (Hyperframe(14.6, 0.0), Hyperframe(15.8, 1.0))
-# The narrative support line yields to the footer ahead of the CTA beat: with
-# the enlarged type ramp both occupy the same ~150px band at the bottom of
-# the collapsed layout and collided. The fade-out (13.6–14.6s) completes
-# before the footer fade-in begins, so the two never ghost over each other;
-# the support line's facts remain visible on the chart itself.
-SUPPORT_OUT = (Hyperframe(13.6, 0.0, ease_in_out_sine), Hyperframe(14.6, 1.0))
+# Footer fades in 9.5–10.4s at the start of the CTA window (t=9.5s): the
+# endcard beat reads distinctly from the takeaway, and the animation keeps the
+# final frames byte-distinct (no FROZEN_FRAMES).
+FOOTER_ALPHA = (Hyperframe(9.5, 0.0), Hyperframe(10.4, 1.0))
+# The narrative support line yields to the footer ahead of the endcard: with
+# the enlarged type ramp both occupy the same ~150px band at the bottom of the
+# collapsed layout and collided. The fade-out (8.8–9.5s) completes before the
+# footer fade-in begins, so the two never ghost over each other; the support
+# line's facts remain visible on the chart itself.
+SUPPORT_OUT = (Hyperframe(8.8, 0.0, ease_in_out_sine), Hyperframe(9.5, 1.0))
 EVENT_ALPHA = (
-    Hyperframe(RECOMPOSE_END_T + 0.2, 0.0, ease_out_quart),
-    Hyperframe(RECOMPOSE_END_T + 0.8, 1.0),
+    Hyperframe(RECOMPOSE_END_T + 1.3, 0.0, ease_out_quart),
+    Hyperframe(RECOMPOSE_END_T + 1.9, 1.0),
 )
-STAT_ALPHA = (Hyperframe(0.8, 0.0, ease_out_quart), Hyperframe(1.6, 1.0))
+# Stat cards snap in over 5.2–6.0s, right after the layout recomposes.
+STAT_ALPHA = (Hyperframe(5.2, 0.0, ease_out_quart), Hyperframe(6.0, 1.0))
 
 
 def _status_label(ctx: VideoContext) -> str:

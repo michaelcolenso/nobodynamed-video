@@ -96,7 +96,7 @@ out/<id>/frames/<scene>_<NNN>.png
 ffmpeg concat (BT.709 limited-range conversion) + audio mux
         │
         ▼
-out/<id>.mp4  (1080×1920, 30fps, 540-frame/18.0s stream, H.264, AAC, faststart)
+out/<id>.mp4  (1080×1920, 30fps, 330-frame/11.0s stream, H.264, AAC, faststart)
         │
         ▼
 RenderManifest → out/<id>.json
@@ -108,15 +108,21 @@ RenderManifest → out/<id>.json
 ## Scene timing
 
 ```
- 0s          3s          9s         15s        18s
- ├───────────┼───────────┼───────────┼──────────┤
- │  hook.tsx │ reveal.tsx│narrative.tsx│ cta.tsx │
- │   90 fr   │  180 fr   │  180 fr   │  90 fr  │
- └───────────┴───────────┴───────────┴──────────┘
+ 0s       1s        4.5s        9.5s     11s
+ ├─────────┼───────────┼───────────┼──────┤
+ │  hook   │  reveal   │ narrative │ cta  │
+ │  30 fr  │  105 fr   │  150 fr   │45 fr │
+ └─────────┴───────────┴───────────┴──────┘
        ↑ straight concat — no transitions
 ```
 
-Total: 540 frames at 30fps = 18.00s, carried 1:1 into the video stream.
+Total: 330 frames at 30fps = 11.00s, carried 1:1 into the video stream.
+Fixed 11s runtime for every video: completion rate is the metric that
+matters for this format, and a fixed length makes the series legible.
+The sequence is inverted from the original 18s cut: the chart starts
+drawing at t=0.3s UNDER the hook text rather than holding a static title
+card first; stat cards snap in at 5.2–6.0s, takeaway at 6.5s, endcard at
+9.5s with the chart still on screen.
 
 The four scenes are windows over one continuous shared-canvas program, so
 they are joined with a straight concat. (The original four-template design

@@ -1,10 +1,10 @@
 """ffmpeg composition — concatenates the frame sequence and encodes for upload.
 
-The 540 frames are one continuous shared-canvas program, so scenes are joined
+The 330 frames are one continuous shared-canvas program, so scenes are joined
 with a straight concat (no xfade): crossfading a continuous animation against
 itself only produces double-exposure ghosting, shortens the video stream by
 0.2 s per transition, and shifts every authored timing earlier in the output.
-Concat keeps the stream at exactly 540 frames / 18.000 s.
+Concat keeps the stream at exactly 330 frames / 11.000 s.
 
 Color: PNG frames are full-range sRGB. The RGB→YUV conversion is forced to
 BT.709 limited range to match the stream tags — swscale's default matrix is
@@ -29,7 +29,7 @@ def build_ffmpeg_cmd(
     frames_dir: Path,
     out_path: Path,
     fps: int = 30,
-    total_duration: float = 18.0,
+    total_duration: float = 11.0,
     audio_path: Path | None = None,
     audio_lufs: float = AUDIO_TARGET_LUFS,
 ) -> list[str]:
