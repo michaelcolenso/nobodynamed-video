@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from nobodynamed_video.models import ProgramType, VideoContext, VideoSpec
+from nobodynamed_video.models import ProgramType, VideoContext, VideoSpec, YearCount
 from nobodynamed_video.render.hyperframes import Hyperframe, sample_scalar_track
 from nobodynamed_video.render.motion import (
     ease_in_out_cubic,
@@ -16,6 +16,7 @@ from nobodynamed_video.render.motion import (
 )
 
 TOTAL_DURATION_S = 11.0
+SSA_FIRST_YEAR = 1880
 DOT_LAND_T = 4.5
 # Collapse starts a beat AFTER the dot lands so the landing reads clearly in
 # the still-expanded chart before the layout recomposes to make room for the
@@ -122,6 +123,15 @@ def sample_program_frame(
     )
 
     series = spec.record.series
+    if series and series[0].year > SSA_FIRST_YEAR:
+        # Pad the chart back to 1880 with zeros so the x-domain is always the
+        # full record. Without this a 1977 debut starts AT its peak and only
+        # the collapse is visible; the flat baseline makes the arrival — the
+        # steep rise — the story. Presentation-only: record.series and the
+        # classifier are untouched. Matches the blog charts' 1880–2025 domain.
+        series = [
+            YearCount(year=y, count=0) for y in range(SSA_FIRST_YEAR, series[0].year)
+        ] + series
     if series:
         s_min = series[0].year
         s_max = series[-1].year
@@ -195,7 +205,7 @@ def sample_program_frame(
             else 0.0,
             "event_year": ctx.event_year,
             "event_label": ctx.killing_event,
-            "series": [{"year": point.year, "count": point.count} for point in spec.record.series],
+            "series": [{"year": point.year, "count": point.count} for point in series],
             "current_year": ctx.current_year,
             "peak_year": ctx.peak_year,
             "peak_count": ctx.peak_count,
