@@ -24,6 +24,38 @@ from nobodynamed_video.seed import spec_seed
 
 _BLOCKLIST_PATH = Path("fixtures/blocklist.txt")
 
+# Hard character caps, enforced at load: every copy field sits in a fixed
+# layout band; overflow wraps into the chart or the TikTok caption zone.
+# Caps are ~2 lines at the field's font size inside the 920px safe width.
+COPY_CAPS = {"headline": 60, "subhead": 55, "narrative": 70, "support": 55}
+
+
+def _validate_copy(
+    spec_id: str,
+    fields: dict[str, str],
+    event: dict[str, Any] | None,
+) -> None:
+    """Enforce copy caps and the withholding rule on final (post-override) text."""
+    for field, text in fields.items():
+        cap = COPY_CAPS[field]
+        if len(text) > cap:
+            raise ValueError(f"{spec_id}: {field} exceeds {cap} chars ({len(text)}): {text!r}")
+    # Cause-leak lint: the hook teases the year, never the cause — the chart's
+    # event marker is the payoff. Applies to headline/subhead only; the
+    # narrative may assert a cause precisely because one was passed in here.
+    if event:
+        tokens = {
+            w.strip(".,'\"()").lower()
+            for w in str(event.get("killing_event", "")).split()
+            if len(w) >= 4
+        }
+        tokens.add(str(event.get("event_year", "")))
+        for field in ("headline", "subhead"):
+            lowered = fields[field].lower()
+            leaked = sorted(t for t in tokens if t and t in lowered)
+            if leaked:
+                raise ValueError(f"{spec_id}: {field} leaks the cause {leaked}: {fields[field]!r}")
+
 
 def _load_blocklist() -> set[str]:
     if not _BLOCKLIST_PATH.exists():
@@ -103,6 +135,17 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
             context = context.model_copy(update={"narrative_text": narrative})
         if support := entry.get("support"):
             context = context.model_copy(update={"supporting_text": support})
+
+        _validate_copy(
+            vid_id,
+            {
+                "headline": hook.headline,
+                "subhead": hook.subhead,
+                "narrative": context.narrative_text or "",
+                "support": context.supporting_text,
+            },
+            cultural_events.get((record.name.lower(), record.sex)),
+        )
 
         # Re-narrow after model_copy: program is always set by
         # finalize_video_context and preserved by the copies above.

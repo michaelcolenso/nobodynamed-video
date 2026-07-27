@@ -61,6 +61,15 @@ def _was_low_recently(record: NameRecord, threshold: int, lookback: int) -> bool
     return any(yc.year >= cutoff and yc.count <= threshold for yc in record.series)
 
 
+def _count_five_years_ago(record: NameRecord) -> int | None:
+    """Count at (or just before) current_year - 5, None if no such point."""
+    target = record.current_year - 5
+    eligible = [yc for yc in record.series if yc.year <= target]
+    if not eligible:
+        return None
+    return eligible[-1].count
+
+
 def classify(record: NameRecord) -> Tier:
     """Classify a NameRecord into one of the six tiers.
 
@@ -73,10 +82,23 @@ def classify(record: NameRecord) -> Tier:
     if current == 0:
         return Tier.EXTINCT
 
-    # 2. RESURRECTED — was EXTINCT or CRITICAL within last 30 years, now STABLE+
-    #    "STABLE+" means current count > CRITICAL_THRESHOLD.
-    if current > CRITICAL_THRESHOLD and _was_low_recently(
-        record, CRITICAL_THRESHOLD, RESURRECTION_LOOKBACK_YEARS
+    # 2. RESURRECTED — had a real presence, dropped to near-zero within the
+    #    last 30 years, and is currently climbing back.
+    #    Guards: a debut name (first appearance less than 10 years ago) is not
+    #    a resurrection — nothing came "back" (the zero-fill makes every debut
+    #    name "was low recently", which wrongly badged invented-from-zero
+    #    names like Renesmee); and a name still falling wears DECLINING, not
+    #    this — a flat-or-falling curve under the RESURRECTED badge undermines
+    #    the authoritative-record voice (Neymar 499→62 was badged RESURRECTED).
+    first_nonzero_year = next((yc.year for yc in record.series if yc.count > 0), None)
+    count_5y_ago = _count_five_years_ago(record)
+    if (
+        current > CRITICAL_THRESHOLD
+        and _was_low_recently(record, CRITICAL_THRESHOLD, RESURRECTION_LOOKBACK_YEARS)
+        and first_nonzero_year is not None
+        and first_nonzero_year <= record.current_year - 10
+        and count_5y_ago is not None
+        and current > count_5y_ago
     ):
         return Tier.RESURRECTED
 
