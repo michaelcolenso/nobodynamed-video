@@ -16,6 +16,7 @@ interface DiagnosisState {
 interface ChartState {
   alpha: number;
   draw_progress: number;
+  draw_duration_s: number;
   tracer_glow_alpha: number;
   tracer_glow_radius: number;
   dot_visible: boolean;
@@ -152,6 +153,7 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone: 
 function smoothPathD(
   points: Array<{ x: number; y: number }>,
   drawProgress: number,
+  drawDurationS: number = 4.2,
 ): { pathD: string; tracerX: number; tracerY: number } {
   if (points.length === 0) return { pathD: "", tracerX: 0, tracerY: 0 };
   if (points.length === 1) return { pathD: `M ${points[0].x} ${points[0].y}`, tracerX: points[0].x, tracerY: points[0].y };
@@ -164,30 +166,37 @@ function smoothPathD(
 
   const totalSegments = points.length - 1;
 
-  // Two-phase pacing. The pre-story flatline (everything before the name's
-  // first nonzero year) gets a fixed FLAT_BUDGET of the draw, played
-  // uniformly — a century of nothing in ~0.6s. The story zone is
-  // slope-weighted: steep moves get the screen time, while flat runs
-  // (the post-collapse baseline) cost FLAT_COST and flash by. Replaces a
-  // single weighted pass whose flat segments ate ~65% of the draw, leaving
-  // Kunta's entire spike+fall 0.4s and Renesmee's climb 1.3s.
-  const FLAT_BUDGET = 0.15;
-  const FLAT_COST = 0.15;
+  // Two-phase pacing, speed-based. The pre-story flatline (everything before
+  // the name's first nonzero year) plays at a constant FLAT_PACE_YPS
+  // years/sec — a fixed BUDGET SHARE made long flatlines teleport (Khaleesi's
+  // 131 years sprinted at ~200 y/s); a fixed speed reads the same on every
+  // video. The story zone is slope-weighted: steep moves get the screen time,
+  // flat runs cost FLAT_COST so the post-collapse tail moves briskly but
+  // visibly (~35 y/s) instead of flashing.
+  const FLAT_PACE_YPS = 100;
+  const FLAT_BUDGET_CAP = 0.3; // never let the flatline eat the story
+  const FLAT_COST = 0.35;
   const SLOPE_WEIGHT = 10;
   const maxY = Math.max(...points.map((p) => p.y));
   const firstNz = points.findIndex((p) => p.y < maxY - 0.5);
   const storyStart = firstNz === -1 ? 0 : firstNz;
 
+  // Yearly series → segments between 0 and storyStart equal flatline years.
+  const flatBudget = Math.min(
+    storyStart / FLAT_PACE_YPS / drawDurationS,
+    FLAT_BUDGET_CAP
+  );
+
   let fullSegments = totalSegments;
   let partialT = 0;
 
-  if (storyStart > 0 && drawProgress < FLAT_BUDGET) {
-    const fp = (drawProgress / FLAT_BUDGET) * storyStart;
+  if (storyStart > 0 && drawProgress < flatBudget) {
+    const fp = (drawProgress / flatBudget) * storyStart;
     fullSegments = Math.min(Math.floor(fp), storyStart - 1);
     partialT = Math.min(fp - Math.floor(fp), 1);
   } else {
     const sp =
-      storyStart > 0 ? (drawProgress - FLAT_BUDGET) / (1 - FLAT_BUDGET) : drawProgress;
+      storyStart > 0 ? (drawProgress - flatBudget) / (1 - flatBudget) : drawProgress;
     const storyDy = points
       .slice(storyStart + 1)
       .map((p, i) => Math.abs(p.y - points[storyStart + i].y));
@@ -328,7 +337,7 @@ export default function Canvas(props: CanvasProps) {
   const toY = (count: number) => chartHeight - (count / maxCount) * chartHeight;
 
   const curvePoints = filtered.map((p) => ({ x: toX(p.year), y: toY(p.count) }));
-  const { pathD, tracerX, tracerY } = smoothPathD(curvePoints, chart.draw_progress);
+  const { pathD, tracerX, tracerY } = smoothPathD(curvePoints, chart.draw_progress, chart.draw_duration_s);
 
   // Area fill — closes the path with a clean line to baseline, then smooth bezier back.
   const pathAreaD = pathD

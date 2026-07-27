@@ -180,6 +180,7 @@ def sample_program_frame(
         "chart": {
             "alpha": round(sample_scalar_track(CHART_ALPHA, t), 6),
             "draw_progress": round(chart_draw_progress, 6),
+            "draw_duration_s": round(DOT_LAND_T - 0.3, 3),
             "tracer_glow_alpha": round(
                 lerp(0.14, 0.38, ease_in_out_cubic(tracer_wave)),
                 6,
