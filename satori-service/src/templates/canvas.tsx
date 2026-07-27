@@ -166,57 +166,118 @@ function smoothPathD(
 
   const totalSegments = points.length - 1;
 
-  // Two-phase pacing, speed-based. The pre-story flatline (everything before
-  // the name's first nonzero year) plays at a constant FLAT_PACE_YPS
-  // years/sec — a fixed BUDGET SHARE made long flatlines teleport (Khaleesi's
-  // 131 years sprinted at ~200 y/s); a fixed speed reads the same on every
-  // video. The story zone is slope-weighted: steep moves get the screen time,
-  // flat runs cost FLAT_COST so the post-collapse tail moves briskly but
-  // visibly (~35 y/s) instead of flashing.
+  // Time-domain speed design. Earlier versions mapped draw progress to
+  // segment indices via piecewise-constant per-segment costs — every year
+  // boundary was a velocity STEP (~145 hard cuts per video), the draw
+  // started and stopped dead, and the flatline→story transition slammed
+  // from 100 y/s to near-zero in one frame. Instead, design the tracer's
+  // SPEED CURVE directly: per-segment nominal seconds (flatline at
+  // FLAT_PACE_YPS years/sec, story slope-weighted) become speeds on a fine
+  // time grid, get multiplied by soft start/stop ramps, gaussian-smoothed,
+  // then integrated and normalized. Velocity is smooth end to end: the
+  // tracer glides up to pace, decelerates into the story over ~0.4s, and
+  // lands softly instead of stopping dead.
   const FLAT_PACE_YPS = 100;
   const FLAT_BUDGET_CAP = 0.3; // never let the flatline eat the story
   const FLAT_COST = 0.35;
   const SLOPE_WEIGHT = 10;
+  const RAMP_S = 0.35; // soft start / soft landing
+  const SIGMA_S = 0.08; // speed-curve smoothing width (seconds)
+  const TICKS_PER_S = 120;
+
   const maxY = Math.max(...points.map((p) => p.y));
   const firstNz = points.findIndex((p) => p.y < maxY - 0.5);
   const storyStart = firstNz === -1 ? 0 : firstNz;
 
-  // Yearly series → segments between 0 and storyStart equal flatline years.
-  const flatBudget = Math.min(
-    storyStart / FLAT_PACE_YPS / drawDurationS,
-    FLAT_BUDGET_CAP
+  // Per-segment nominal seconds: flatline zone at constant years/sec,
+  // story zone slope-weighted (steep moves get the screen time, flat runs
+  // cost FLAT_COST so the post-collapse tail moves briskly but visibly).
+  const flatSeconds =
+    storyStart > 0
+      ? Math.min(storyStart / FLAT_PACE_YPS, FLAT_BUDGET_CAP * drawDurationS)
+      : 0;
+  const storySeconds = drawDurationS - flatSeconds;
+  const nStory = totalSegments - storyStart;
+  const storyDy = points
+    .slice(storyStart + 1)
+    .map((p, i) => Math.abs(p.y - points[storyStart + i].y));
+  const maxDy = Math.max(...storyDy, 1);
+  const costs = storyDy.map((d) =>
+    d < 0.5 ? FLAT_COST : 1 + (SLOPE_WEIGHT * d) / maxDy
   );
+  const costSum = costs.reduce((a, b) => a + b, 0);
+
+  const segT = new Array<number>(totalSegments).fill(0);
+  for (let i = 0; i < totalSegments; i++) {
+    if (i < storyStart) segT[i] = storyStart > 0 ? flatSeconds / storyStart : 0;
+    else if (nStory > 0 && costSum > 0)
+      segT[i] = (storySeconds * costs[i - storyStart]) / costSum;
+  }
+  const cumT: number[] = [0];
+  for (let i = 0; i < totalSegments; i++) cumT.push(cumT[i] + segT[i]);
+
+  // Speed on a fine time grid, with smoothstep ramps at both ends.
+  const clamp01 = (x: number) => Math.min(Math.max(x, 0), 1);
+  const smoothstep = (x: number) => {
+    const u = clamp01(x);
+    return u * u * (3 - 2 * u);
+  };
+  const K = Math.max(2, Math.ceil(drawDurationS * TICKS_PER_S));
+  const v = new Array<number>(K).fill(0);
+  for (let k = 0; k < K; k++) {
+    const tau = (k + 0.5) / TICKS_PER_S;
+    let seg = totalSegments - 1;
+    for (let i = 0; i < totalSegments; i++) {
+      if (cumT[i + 1] > tau) {
+        seg = i;
+        break;
+      }
+    }
+    const segSpeed = segT[seg] > 0 ? 1 / segT[seg] : 0;
+    v[k] =
+      smoothstep(tau / RAMP_S) *
+      smoothstep((drawDurationS - tau) / RAMP_S) *
+      segSpeed;
+  }
+
+  // Gaussian-smooth the speed curve (edge-padded), then integrate and
+  // normalize so the full draw covers every segment in drawDurationS.
+  const sigma = SIGMA_S * TICKS_PER_S;
+  const kr = Math.ceil(3 * sigma);
+  const kernel: number[] = [];
+  let kSum = 0;
+  for (let j = -kr; j <= kr; j++) {
+    const wgt = Math.exp(-0.5 * (j / sigma) ** 2);
+    kernel.push(wgt);
+    kSum += wgt;
+  }
+  const pos = new Array<number>(K);
+  let run = 0;
+  for (let k = 0; k < K; k++) {
+    let acc = 0;
+    for (let j = -kr; j <= kr; j++) {
+      const idx = Math.min(Math.max(k + j, 0), K - 1);
+      acc += kernel[j + kr] * v[idx];
+    }
+    run += acc / kSum;
+    pos[k] = run;
+  }
+  const posTotal = pos[K - 1] || 1;
+
+  // Look up the tracer's segment-space position at this frame's time.
+  const tauNow = clamp01(drawProgress) * drawDurationS;
+  const fTick = Math.min(Math.max(tauNow * TICKS_PER_S - 0.5, 0), K - 1);
+  const tk0 = Math.floor(fTick);
+  const tk1 = Math.min(tk0 + 1, K - 1);
+  const segPos =
+    ((pos[tk0] + (pos[tk1] - pos[tk0]) * (fTick - tk0)) / posTotal) *
+    totalSegments;
 
   let fullSegments = totalSegments;
   let partialT = 0;
-
-  if (storyStart > 0 && drawProgress < flatBudget) {
-    const fp = (drawProgress / flatBudget) * storyStart;
-    fullSegments = Math.min(Math.floor(fp), storyStart - 1);
-    partialT = Math.min(fp - Math.floor(fp), 1);
-  } else {
-    const sp =
-      storyStart > 0 ? (drawProgress - flatBudget) / (1 - flatBudget) : drawProgress;
-    const storyDy = points
-      .slice(storyStart + 1)
-      .map((p, i) => Math.abs(p.y - points[storyStart + i].y));
-    const maxDy = Math.max(...storyDy, 1);
-    const costs = storyDy.map((d) =>
-      d < 0.5 ? FLAT_COST : 1 + (SLOPE_WEIGHT * d) / maxDy
-    );
-    const totalCost = costs.reduce((a, b) => a + b, 0);
-    const target = sp * totalCost;
-    let acc = 0;
-    fullSegments = totalSegments;
-    partialT = 0;
-    for (let seg = 0; seg < costs.length; seg++) {
-      if (acc + costs[seg] > target) {
-        fullSegments = storyStart + seg;
-        partialT = costs[seg] > 0 ? (target - acc) / costs[seg] : 0;
-        break;
-      }
-      acc += costs[seg];
-    }
+  if (segPos < totalSegments) {
+    fullSegments = Math.max(0, Math.floor(segPos));
+    partialT = Math.min(segPos - fullSegments, 1);
   }
 
   let pathD = "";
