@@ -164,27 +164,50 @@ function smoothPathD(
 
   const totalSegments = points.length - 1;
 
-  // Draw speed is weighted by vertical movement: decades of flatline pass
-  // quickly while dramatic rises/falls get screen time. A uniform draw
-  // crawled through flat years (e.g. 1880–1916 on Bertha) and read as slow
-  // in the first seconds on TikTok. Data and axes are untouched — only the
-  // tracer's pacing changes.
-  const SLOPE_WEIGHT = 6;
-  const dyAbs = points.slice(1).map((p, i) => Math.abs(p.y - points[i].y));
-  const maxDy = Math.max(...dyAbs, 1);
-  const costs = dyAbs.map((d) => 1 + (SLOPE_WEIGHT * d) / maxDy);
-  const totalCost = costs.reduce((a, b) => a + b, 0);
-  const target = drawProgress * totalCost;
+  // Two-phase pacing. The pre-story flatline (everything before the name's
+  // first nonzero year) gets a fixed FLAT_BUDGET of the draw, played
+  // uniformly — a century of nothing in ~0.6s. The story zone is
+  // slope-weighted: steep moves get the screen time, while flat runs
+  // (the post-collapse baseline) cost FLAT_COST and flash by. Replaces a
+  // single weighted pass whose flat segments ate ~65% of the draw, leaving
+  // Kunta's entire spike+fall 0.4s and Renesmee's climb 1.3s.
+  const FLAT_BUDGET = 0.15;
+  const FLAT_COST = 0.15;
+  const SLOPE_WEIGHT = 10;
+  const maxY = Math.max(...points.map((p) => p.y));
+  const firstNz = points.findIndex((p) => p.y < maxY - 0.5);
+  const storyStart = firstNz === -1 ? 0 : firstNz;
+
   let fullSegments = totalSegments;
   let partialT = 0;
-  let acc = 0;
-  for (let seg = 0; seg < totalSegments; seg++) {
-    if (acc + costs[seg] > target) {
-      fullSegments = seg;
-      partialT = costs[seg] > 0 ? (target - acc) / costs[seg] : 0;
-      break;
+
+  if (storyStart > 0 && drawProgress < FLAT_BUDGET) {
+    const fp = (drawProgress / FLAT_BUDGET) * storyStart;
+    fullSegments = Math.min(Math.floor(fp), storyStart - 1);
+    partialT = Math.min(fp - Math.floor(fp), 1);
+  } else {
+    const sp =
+      storyStart > 0 ? (drawProgress - FLAT_BUDGET) / (1 - FLAT_BUDGET) : drawProgress;
+    const storyDy = points
+      .slice(storyStart + 1)
+      .map((p, i) => Math.abs(p.y - points[storyStart + i].y));
+    const maxDy = Math.max(...storyDy, 1);
+    const costs = storyDy.map((d) =>
+      d < 0.5 ? FLAT_COST : 1 + (SLOPE_WEIGHT * d) / maxDy
+    );
+    const totalCost = costs.reduce((a, b) => a + b, 0);
+    const target = sp * totalCost;
+    let acc = 0;
+    fullSegments = totalSegments;
+    partialT = 0;
+    for (let seg = 0; seg < costs.length; seg++) {
+      if (acc + costs[seg] > target) {
+        fullSegments = storyStart + seg;
+        partialT = costs[seg] > 0 ? (target - acc) / costs[seg] : 0;
+        break;
+      }
+      acc += costs[seg];
     }
-    acc += costs[seg];
   }
 
   let pathD = "";

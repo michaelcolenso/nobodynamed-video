@@ -33,10 +33,11 @@ DIAGNOSIS_ALPHA = (Hyperframe(0.0, 1.0),)
 CHART_ALPHA = (Hyperframe(0.0, 0.0, ease_out_quart), Hyperframe(0.5, 1.0))
 # The sequence is inverted from the original 18s cut: chart motion starts
 # almost immediately (t=0.3) UNDER the hook text, instead of holding a static
-# title card for 1.2s and only then drawing. The slope-weighted draw in
-# smoothPathD spends its time where the story is, so the spike lands inside
-# the 1.0–4.5s reveal window while flat years flash by.
-CHART_DRAW = (Hyperframe(0.3, 0.0, ease_in_out_sine), Hyperframe(DOT_LAND_T, 1.0))
+# title card for 1.2s and only then drawing. Progress is LINEAR — all pacing
+# lives in smoothPathD's two-phase weighted mapping; the previous sine easing
+# stacked a second nonlinearity on top (slow start crawled the flatline, slow
+# end dragged the flat tail) and squeezed the spike from both sides.
+CHART_DRAW = (Hyperframe(0.3, 0.0), Hyperframe(DOT_LAND_T, 1.0))
 DOT_ALPHA = (Hyperframe(DOT_LAND_T, 0.0, ease_out_quart), Hyperframe(DOT_LAND_T + 0.45, 1.0))
 DOT_RADIUS = (Hyperframe(DOT_LAND_T, 18.0, ease_out_back), Hyperframe(DOT_LAND_T + 0.45, 12.0))
 DOT_RING_ALPHA = (Hyperframe(DOT_LAND_T, 0.7), Hyperframe(DOT_LAND_T + 0.6, 0.0))
