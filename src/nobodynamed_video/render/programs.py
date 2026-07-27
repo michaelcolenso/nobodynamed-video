@@ -9,7 +9,9 @@ from nobodynamed_video.render.hyperframes import Hyperframe, sample_scalar_track
 from nobodynamed_video.render.motion import (
     ease_in_out_cubic,
     ease_in_out_sine,
+    ease_in_quart,
     ease_out_back,
+    ease_out_cubic,
     ease_out_quart,
     lerp,
     triangle_wave,
@@ -40,7 +42,10 @@ CHART_ALPHA = (Hyperframe(0.0, 0.0, ease_out_quart), Hyperframe(0.5, 1.0))
 CHART_DRAW = (Hyperframe(0.3, 0.0), Hyperframe(DOT_LAND_T, 1.0))
 DOT_ALPHA = (Hyperframe(DOT_LAND_T, 0.0, ease_out_quart), Hyperframe(DOT_LAND_T + 0.45, 1.0))
 DOT_RADIUS = (Hyperframe(DOT_LAND_T, 18.0, ease_out_back), Hyperframe(DOT_LAND_T + 0.45, 12.0))
-DOT_RING_ALPHA = (Hyperframe(DOT_LAND_T, 0.7), Hyperframe(DOT_LAND_T + 0.6, 0.0))
+# Shockwave ring: holds visible briefly then snaps to zero. ease_in_quart
+# (slow start, fast finish) keeps the ring readable for the first ~60% then
+# accelerates the dissipation — reads as a pulse, not a constant fade.
+DOT_RING_ALPHA = (Hyperframe(DOT_LAND_T, 0.7, ease_in_quart), Hyperframe(DOT_LAND_T + 0.6, 0.0))
 DOT_RING_RADIUS = (
     Hyperframe(DOT_LAND_T, 10.0, ease_out_quart),
     Hyperframe(DOT_LAND_T + 0.6, 30.0),
@@ -49,12 +54,16 @@ LAYOUT_PROGRESS = (
     Hyperframe(RECOMPOSE_START_T, 0.0, ease_in_out_cubic),
     Hyperframe(RECOMPOSE_END_T, 1.0),
 )
+# Text entrances use ease_out_cubic (gentler than ease_out_quart): content
+# arrives quickly enough to read but with a more natural deceleration. Quart
+# slams 80% of the motion in the first 20% of time, which felt mechanical on
+# text elements.
 NARRATIVE_ALPHA = (
-    Hyperframe(RECOMPOSE_END_T + 1.1, 0.0, ease_out_quart),
+    Hyperframe(RECOMPOSE_END_T + 1.1, 0.0, ease_out_cubic),
     Hyperframe(RECOMPOSE_END_T + 1.8, 1.0),
 )
 SUPPORT_ALPHA = (
-    Hyperframe(RECOMPOSE_END_T + 1.6, 0.0, ease_out_quart),
+    Hyperframe(RECOMPOSE_END_T + 1.6, 0.0, ease_out_cubic),
     Hyperframe(RECOMPOSE_END_T + 2.4, 1.0),
 )
 # Footer fades in 9.5–10.1s with ease_out_quart for a snappier CTA entrance.
@@ -68,11 +77,14 @@ FOOTER_ALPHA = (Hyperframe(9.5, 0.0, ease_out_quart), Hyperframe(10.1, 1.0))
 # line's facts remain visible on the chart itself.
 SUPPORT_OUT = (Hyperframe(8.8, 0.0, ease_in_out_sine), Hyperframe(9.5, 1.0))
 EVENT_ALPHA = (
-    Hyperframe(RECOMPOSE_END_T + 1.3, 0.0, ease_out_quart),
+    Hyperframe(RECOMPOSE_END_T + 1.3, 0.0, ease_out_cubic),
     Hyperframe(RECOMPOSE_END_T + 1.9, 1.0),
 )
-# Stat cards snap in over 5.2–6.0s, right after the layout recomposes.
-STAT_ALPHA = (Hyperframe(5.2, 0.0, ease_out_quart), Hyperframe(6.0, 1.0))
+# Stat cards snap in over 5.2–6.0s with ease_out_cubic for a gentler
+# entrance than the old ease_out_quart. The staggered card offsets already
+# provide the sense of sequential arrival; the aggressive quart easing was
+# fighting the stagger by finishing each card too fast.
+STAT_ALPHA = (Hyperframe(5.2, 0.0, ease_out_cubic), Hyperframe(6.0, 1.0))
 
 
 def _status_label(ctx: VideoContext) -> str:

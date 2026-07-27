@@ -27,6 +27,27 @@ def ease_out_quart(t: float) -> float:
     return 1.0 - p * p * p * p
 
 
+def ease_in_quart(t: float) -> float:
+    """Slow start, fast finish — inverse of ease_out_quart.
+
+    Used for fade-OUT effects that should hold visible then snap to zero:
+    the shockwave ring holds briefly before dissipating.
+    """
+    t = max(0.0, min(1.0, t))
+    return t * t * t * t
+
+
+def ease_out_cubic(t: float) -> float:
+    """Gentle deceleration — less aggressive than ease_out_quart.
+
+    Used for text element entrances where the content should be readable
+    quickly but arrive with a more natural, less mechanical feel.
+    """
+    t = max(0.0, min(1.0, t))
+    p = 1.0 - t
+    return 1.0 - p * p * p
+
+
 def ease_out_back(t: float, overshoot: float = 0.6) -> float:
     """Overshoot beyond 1.0 then settle back — spring-lite easing.
 
