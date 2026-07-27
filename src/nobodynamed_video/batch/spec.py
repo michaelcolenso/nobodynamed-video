@@ -90,7 +90,6 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
             library=hooks_library,
         )
         context = finalize_video_context(base_context, hook, seed)
-        assert context.program is not None
 
         # Editorial copy overrides — hand-written per name in the batch YAML.
         # Tier-templated copy can misfire on a name's actual story (an
@@ -104,6 +103,10 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
             context = context.model_copy(update={"narrative_text": narrative})
         if support := entry.get("support"):
             context = context.model_copy(update={"supporting_text": support})
+
+        # Re-narrow after model_copy: program is always set by
+        # finalize_video_context and preserved by the copies above.
+        assert context.program is not None
 
         specs.append(
             VideoSpec(
