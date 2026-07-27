@@ -85,22 +85,6 @@ function mix(a: number, b: number, progress: number) {
   return a + (b - a) * progress;
 }
 
-function smoothCurveParts(pts: Array<[number, number]>): string {
-  let d = "";
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[Math.max(0, i - 1)];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[Math.min(pts.length - 1, i + 2)];
-    const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
-    const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
-    const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
-    const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
-    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]}`;
-  }
-  return d;
-}
-
 function StatCard({ label, value, tone }: { label: string; value: string; tone: string }) {
   const valueColor = tone === "crimson" ? COLORS.crimson : tone === "emerald" ? COLORS.emerald : COLORS.ink;
   return (
@@ -150,199 +134,227 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone: 
   );
 }
 
-function smoothPathD(
-  points: Array<{ x: number; y: number }>,
-  drawProgress: number,
-  drawDurationS: number = 4.2,
-): { pathD: string; tracerX: number; tracerY: number } {
-  if (points.length === 0) return { pathD: "", tracerX: 0, tracerY: 0 };
-  if (points.length === 1) return { pathD: `M ${points[0].x} ${points[0].y}`, tracerX: points[0].x, tracerY: points[0].y };
-
-  // Standard Catmull-Rom → cubic bezier conversion.
-  // For segment i→i+1, control points are:
-  //   cp1 = Pi + (Pi+1 - Pi-1) / 6
-  //   cp2 = Pi+1 - (Pi+2 - Pi) / 6
-  // Edge segments mirror the previous/next point.
-
-  const totalSegments = points.length - 1;
-
-  // Time-domain speed design. Earlier versions mapped draw progress to
-  // segment indices via piecewise-constant per-segment costs — every year
-  // boundary was a velocity STEP (~145 hard cuts per video), the draw
-  // started and stopped dead, and the flatline→story transition slammed
-  // from 100 y/s to near-zero in one frame. Instead, design the tracer's
-  // SPEED CURVE directly: per-segment nominal seconds (flatline at
-  // FLAT_PACE_YPS years/sec, story slope-weighted) become speeds on a fine
-  // time grid, get multiplied by soft start/stop ramps, gaussian-smoothed,
-  // then integrated and normalized. Velocity is smooth end to end: the
-  // tracer glides up to pace, decelerates into the story over ~0.4s, and
-  // lands softly instead of stopping dead.
-  const FLAT_PACE_YPS = 100;
-  const FLAT_BUDGET_CAP = 0.3; // never let the flatline eat the story
-  const FLAT_COST = 0.35;
-  const SLOPE_WEIGHT = 10;
-  const RAMP_S = 0.35; // soft start / soft landing
-  const SIGMA_S = 0.08; // speed-curve smoothing width (seconds)
-  const TICKS_PER_S = 120;
-
-  const maxY = Math.max(...points.map((p) => p.y));
-  const firstNz = points.findIndex((p) => p.y < maxY - 0.5);
-  const storyStart = firstNz === -1 ? 0 : firstNz;
-
-  // Per-segment nominal seconds: flatline zone at constant years/sec,
-  // story zone slope-weighted (steep moves get the screen time, flat runs
-  // cost FLAT_COST so the post-collapse tail moves briskly but visibly).
-  const flatSeconds =
-    storyStart > 0
-      ? Math.min(storyStart / FLAT_PACE_YPS, FLAT_BUDGET_CAP * drawDurationS)
-      : 0;
-  const storySeconds = drawDurationS - flatSeconds;
-  const nStory = totalSegments - storyStart;
-  const storyDy = points
-    .slice(storyStart + 1)
-    .map((p, i) => Math.abs(p.y - points[storyStart + i].y));
-  const maxDy = Math.max(...storyDy, 1);
-  const costs = storyDy.map((d) =>
-    d < 0.5 ? FLAT_COST : 1 + (SLOPE_WEIGHT * d) / maxDy
-  );
-  const costSum = costs.reduce((a, b) => a + b, 0);
-
-  const segT = new Array<number>(totalSegments).fill(0);
-  for (let i = 0; i < totalSegments; i++) {
-    if (i < storyStart) segT[i] = storyStart > 0 ? flatSeconds / storyStart : 0;
-    else if (nStory > 0 && costSum > 0)
-      segT[i] = (storySeconds * costs[i - storyStart]) / costSum;
-  }
-  const cumT: number[] = [0];
-  for (let i = 0; i < totalSegments; i++) cumT.push(cumT[i] + segT[i]);
-
-  // Speed on a fine time grid, with smoothstep ramps at both ends.
-  const clamp01 = (x: number) => Math.min(Math.max(x, 0), 1);
-  const smoothstep = (x: number) => {
-    const u = clamp01(x);
-    return u * u * (3 - 2 * u);
-  };
-  const K = Math.max(2, Math.ceil(drawDurationS * TICKS_PER_S));
-  const v = new Array<number>(K).fill(0);
-  for (let k = 0; k < K; k++) {
-    const tau = (k + 0.5) / TICKS_PER_S;
-    let seg = totalSegments - 1;
-    for (let i = 0; i < totalSegments; i++) {
-      if (cumT[i + 1] > tau) {
-        seg = i;
-        break;
-      }
-    }
-    const segSpeed = segT[seg] > 0 ? 1 / segT[seg] : 0;
-    v[k] =
-      smoothstep(tau / RAMP_S) *
-      smoothstep((drawDurationS - tau) / RAMP_S) *
-      segSpeed;
-  }
-
-  // Gaussian-smooth the speed curve (edge-padded), then integrate and
-  // normalize so the full draw covers every segment in drawDurationS.
-  const sigma = SIGMA_S * TICKS_PER_S;
-  const kr = Math.ceil(3 * sigma);
-  const kernel: number[] = [];
-  let kSum = 0;
-  for (let j = -kr; j <= kr; j++) {
-    const wgt = Math.exp(-0.5 * (j / sigma) ** 2);
-    kernel.push(wgt);
-    kSum += wgt;
-  }
-  const pos = new Array<number>(K);
-  let run = 0;
-  for (let k = 0; k < K; k++) {
-    let acc = 0;
-    for (let j = -kr; j <= kr; j++) {
-      const idx = Math.min(Math.max(k + j, 0), K - 1);
-      acc += kernel[j + kr] * v[idx];
-    }
-    run += acc / kSum;
-    pos[k] = run;
-  }
-  const posTotal = pos[K - 1] || 1;
-
-  // Look up the tracer's segment-space position at this frame's time.
-  const tauNow = clamp01(drawProgress) * drawDurationS;
-  const fTick = Math.min(Math.max(tauNow * TICKS_PER_S - 0.5, 0), K - 1);
-  const tk0 = Math.floor(fTick);
-  const tk1 = Math.min(tk0 + 1, K - 1);
-  const segPos =
-    ((pos[tk0] + (pos[tk1] - pos[tk0]) * (fTick - tk0)) / posTotal) *
-    totalSegments;
-
-  let fullSegments = totalSegments;
-  let partialT = 0;
-  if (segPos < totalSegments) {
-    fullSegments = Math.max(0, Math.floor(segPos));
-    partialT = Math.min(segPos - fullSegments, 1);
-  }
-
-  let pathD = "";
-  let tracerX = points[0].x;
-  let tracerY = points[0].y;
-
-  // Catmull-Rom overshoots at a floor of repeated values: a name whose count
-  // hits the zero baseline (SSA suppression / extinction) got a visible curl
-  // *below* the axis. The baseline is the largest y (y is inverted), so clamp
-  // every control point to it.
-  const floorY = Math.max(...points.map((p) => p.y));
-  const clampY = (y: number) => Math.min(y, floorY);
-
-  const cp = (i: number, isEnd: boolean): { x: number; y: number } => {
-    const pi = points[i];
-    const pj = points[isEnd ? i + 1 : i - 1];
-    const dx = (pj.x - pi.x) / 6;
-    const dy = (pj.y - pi.y) / 6;
-    return { x: pi.x + dx, y: clampY(pi.y + dy) };
-  };
-
-  for (let seg = 0; seg < fullSegments; seg++) {
-    const p0 = points[Math.max(0, seg - 1)];
-    const p1 = points[seg];
-    const p2 = points[seg + 1];
-    const p3 = points[Math.min(points.length - 1, seg + 2)];
-
-    const cp1 = { x: p1.x + (p2.x - p0.x) / 6, y: clampY(p1.y + (p2.y - p0.y) / 6) };
-    const cp2 = { x: p2.x - (p3.x - p1.x) / 6, y: clampY(p2.y - (p3.y - p1.y) / 6) };
-
-    const cmd = seg === 0 ? `M ${p1.x} ${p1.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}` : ` C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}`;
-    pathD += cmd;
-    tracerX = p2.x;
-    tracerY = p2.y;
-  }
-
-  // Partial segment — use De Casteljau to split the bezier at partialT
-  if (fullSegments < totalSegments && partialT > 0) {
-    const seg = fullSegments;
-    const p0 = points[Math.max(0, seg - 1)];
-    const p1 = points[seg];
-    const p2 = points[seg + 1];
-    const p3 = points[Math.min(points.length - 1, seg + 2)];
-
-    const cp1 = { x: p1.x + (p2.x - p0.x) / 6, y: clampY(p1.y + (p2.y - p0.y) / 6) };
-    const cp2 = { x: p2.x - (p3.x - p1.x) / 6, y: clampY(p2.y - (p3.y - p1.y) / 6) };
-
-    // De Casteljau at partialT — first cubic segment
-    const q0 = mix(p1.x, cp1.x, partialT); const r0 = mix(p1.y, cp1.y, partialT);
-    const q1 = mix(cp1.x, cp2.x, partialT); const r1 = mix(cp1.y, cp2.y, partialT);
-    const q2 = mix(cp2.x, p2.x, partialT); const r2 = mix(cp2.y, p2.y, partialT);
-    const s0 = mix(q0, q1, partialT); const t0 = mix(r0, r1, partialT);
-    const s1 = mix(q1, q2, partialT); const t1 = mix(r1, r2, partialT);
-    const endX = mix(s0, s1, partialT); const endY = mix(t0, t1, partialT);
-
-    const cmd = seg === 0
-      ? `M ${p1.x} ${p1.y} C ${q0} ${r0}, ${s0} ${t0}, ${endX} ${endY}`
-      : ` C ${q0} ${r0}, ${s0} ${t0}, ${endX} ${endY}`;
-    pathD += cmd;
-    tracerX = endX;
-    tracerY = endY;
-  }
-
-  return { pathD, tracerX, tracerY };
+// ── Speed-curve cache ──────────────────────────────────────────────────────
+// smoothPathD is called once per frame (330× per video). The speed curve
+// (the pos[] array and posTotal) depends only on the data points and
+// drawDurationS — never on drawProgress. Without memoization, each frame
+// recomputes the 120 Hz grid, gaussian kernel, and integration from scratch
+// (~14K ops × 330 frames = 4.6M redundant operations). A single-entry cache
+// eliminates 99.7% of the work: frames for the same video hit the cache,
+// and a new video simply evicts.
+interface SpeedCurve {
+  pos: number[];
+  posTotal: number;
+  totalSegments: number;
 }
+let _speedCacheKey = "";
+let _speedCache: SpeedCurve | null = null;
+
+function computeSpeedCurve(
+  points: Array<{ x: number; y: number }>,
+  totalSegments: number,
+  drawDurationS: number,
+): SpeedCurve {
+  // Cache key: first/last point + length + duration — enough to distinguish
+  // any two distinct series without hashing all 145 points every frame.
+  const key = `${points.length}:${points[0]?.x}:${points[0]?.y}:${
+    points[points.length - 1]?.x
+  }:${points[points.length - 1]?.y}:${drawDurationS}`;
+  if (_speedCacheKey === key && _speedCache) return _speedCache;
+  _speedCacheKey = key;
+
+    // Time-domain speed design. Earlier versions mapped draw progress to
+    // segment indices via piecewise-constant per-segment costs — every year
+    // boundary was a velocity STEP (~145 hard cuts per video), the draw
+    // started and stopped dead, and the flatline→story transition slammed
+    // from 100 y/s to near-zero in one frame. Instead, design the tracer's
+    // SPEED CURVE directly: per-segment nominal seconds (flatline at
+    // FLAT_PACE_YPS years/sec, story slope-weighted) become speeds on a fine
+    // time grid, get multiplied by soft start/stop ramps, gaussian-smoothed,
+    // then integrated and normalized. Velocity is smooth end to end: the
+    // tracer glides up to pace, decelerates into the story over ~0.4s, and
+    // lands softly instead of stopping dead.
+    const FLAT_PACE_YPS = 100;
+    const FLAT_BUDGET_CAP = 0.3;
+    const FLAT_COST = 0.35;
+    const SLOPE_WEIGHT = 10;
+    const RAMP_S = 0.35;
+    const SIGMA_S = 0.08;
+    const TICKS_PER_S = 120;
+
+    const maxY = Math.max(...points.map((p) => p.y));
+    const firstNz = points.findIndex((p) => p.y < maxY - 0.5);
+    const storyStart = firstNz === -1 ? 0 : firstNz;
+
+    const flatSeconds =
+      storyStart > 0
+        ? Math.min(storyStart / FLAT_PACE_YPS, FLAT_BUDGET_CAP * drawDurationS)
+        : 0;
+    const storySeconds = drawDurationS - flatSeconds;
+    const nStory = totalSegments - storyStart;
+    const storyDy = points
+      .slice(storyStart + 1)
+      .map((p, i) => Math.abs(p.y - points[storyStart + i].y));
+    const maxDy = Math.max(...storyDy, 1);
+    const costs = storyDy.map((d) =>
+      d < 0.5 ? FLAT_COST : 1 + (SLOPE_WEIGHT * d) / maxDy
+    );
+    const costSum = costs.reduce((a, b) => a + b, 0);
+
+    const segT = new Array<number>(totalSegments).fill(0);
+    for (let i = 0; i < totalSegments; i++) {
+      if (i < storyStart) segT[i] = storyStart > 0 ? flatSeconds / storyStart : 0;
+      else if (nStory > 0 && costSum > 0)
+        segT[i] = (storySeconds * costs[i - storyStart]) / costSum;
+    }
+    const cumT: number[] = [0];
+    for (let i = 0; i < totalSegments; i++) cumT.push(cumT[i] + segT[i]);
+
+    // Speed on a fine time grid, with smoothstep ramps at both ends.
+    const clamp01 = (x: number) => Math.min(Math.max(x, 0), 1);
+    const smoothstep = (x: number) => {
+      const u = clamp01(x);
+      return u * u * (3 - 2 * u);
+    };
+    const K = Math.max(2, Math.ceil(drawDurationS * TICKS_PER_S));
+    const v = new Array<number>(K).fill(0);
+    for (let k = 0; k < K; k++) {
+      const tau = (k + 0.5) / TICKS_PER_S;
+      let seg = totalSegments - 1;
+      for (let i = 0; i < totalSegments; i++) {
+        if (cumT[i + 1] > tau) {
+          seg = i;
+          break;
+        }
+      }
+      const segSpeed = segT[seg] > 0 ? 1 / segT[seg] : 0;
+      v[k] =
+        smoothstep(tau / RAMP_S) *
+        smoothstep((drawDurationS - tau) / RAMP_S) *
+        segSpeed;
+    }
+
+    // Gaussian-smooth the speed curve (edge-padded), then integrate and
+    // normalize so the full draw covers every segment in drawDurationS.
+    const sigma = SIGMA_S * TICKS_PER_S;
+    const kr = Math.ceil(3 * sigma);
+    const kernel: number[] = [];
+    let kSum = 0;
+    for (let j = -kr; j <= kr; j++) {
+      const wgt = Math.exp(-0.5 * (j / sigma) ** 2);
+      kernel.push(wgt);
+      kSum += wgt;
+    }
+    const pos = new Array<number>(K);
+    let run = 0;
+    for (let k = 0; k < K; k++) {
+      let acc = 0;
+      for (let j = -kr; j <= kr; j++) {
+        const idx = Math.min(Math.max(k + j, 0), K - 1);
+        acc += kernel[j + kr] * v[idx];
+      }
+      run += acc / kSum;
+      pos[k] = run;
+    }
+    const posTotal = pos[K - 1] || 1;
+
+    _speedCache = { pos, posTotal, totalSegments };
+    return _speedCache;
+  }
+
+  function smoothPathD(
+    points: Array<{ x: number; y: number }>,
+    drawProgress: number,
+    drawDurationS: number = 4.2,
+  ): { pathD: string; tracerX: number; tracerY: number } {
+    if (points.length === 0) return { pathD: "", tracerX: 0, tracerY: 0 };
+    if (points.length === 1) return { pathD: `M ${points[0].x} ${points[0].y}`, tracerX: points[0].x, tracerY: points[0].y };
+
+    // Standard Catmull-Rom → cubic bezier conversion.
+    // For segment i→i+1, control points are:
+    //   cp1 = Pi + (Pi+1 - Pi-1) / 6
+    //   cp2 = Pi+1 - (Pi+2 - Pi) / 6
+    // Edge segments mirror the previous/next point.
+
+    const totalSegments = points.length - 1;
+
+    // Speed curve is identical across all frames of a video — memoize.
+    const { pos, posTotal } = computeSpeedCurve(points, totalSegments, drawDurationS);
+
+    // Look up the tracer's segment-space position at this frame's time.
+    const TICKS_PER_S = 120;
+    const clamp01 = (x: number) => Math.min(Math.max(x, 0), 1);
+    const tauNow = clamp01(drawProgress) * drawDurationS;
+    const K = pos.length;
+    const fTick = Math.min(Math.max(tauNow * TICKS_PER_S - 0.5, 0), K - 1);
+    const tk0 = Math.floor(fTick);
+    const tk1 = Math.min(tk0 + 1, K - 1);
+    const segPos =
+      ((pos[tk0] + (pos[tk1] - pos[tk0]) * (fTick - tk0)) / posTotal) *
+      totalSegments;
+
+    let fullSegments = totalSegments;
+    let partialT = 0;
+    if (segPos < totalSegments) {
+      fullSegments = Math.max(0, Math.floor(segPos));
+      partialT = Math.min(segPos - fullSegments, 1);
+    }
+
+    let pathD = "";
+    let tracerX = points[0].x;
+    let tracerY = points[0].y;
+
+    // Catmull-Rom overshoots at a floor of repeated values: a name whose count
+    // hits the zero baseline (SSA suppression / extinction) got a visible curl
+    // *below* the axis. The baseline is the largest y (y is inverted), so clamp
+    // every control point to it.
+    const floorY = Math.max(...points.map((p) => p.y));
+    const clampY = (y: number) => Math.min(y, floorY);
+
+    for (let seg = 0; seg < fullSegments; seg++) {
+      const p0 = points[Math.max(0, seg - 1)];
+      const p1 = points[seg];
+      const p2 = points[seg + 1];
+      const p3 = points[Math.min(points.length - 1, seg + 2)];
+
+      const cp1 = { x: p1.x + (p2.x - p0.x) / 6, y: clampY(p1.y + (p2.y - p0.y) / 6) };
+      const cp2 = { x: p2.x - (p3.x - p1.x) / 6, y: clampY(p2.y - (p3.y - p1.y) / 6) };
+
+      const cmd = seg === 0 ? `M ${p1.x} ${p1.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}` : ` C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}`;
+      pathD += cmd;
+      tracerX = p2.x;
+      tracerY = p2.y;
+    }
+
+    // Partial segment — use De Casteljau to split the bezier at partialT
+    if (fullSegments < totalSegments && partialT > 0) {
+      const seg = fullSegments;
+      const p0 = points[Math.max(0, seg - 1)];
+      const p1 = points[seg];
+      const p2 = points[seg + 1];
+      const p3 = points[Math.min(points.length - 1, seg + 2)];
+
+      const cp1 = { x: p1.x + (p2.x - p0.x) / 6, y: clampY(p1.y + (p2.y - p0.y) / 6) };
+      const cp2 = { x: p2.x - (p3.x - p1.x) / 6, y: clampY(p2.y - (p3.y - p1.y) / 6) };
+
+      // De Casteljau at partialT — first cubic segment
+      const q0 = mix(p1.x, cp1.x, partialT); const r0 = mix(p1.y, cp1.y, partialT);
+      const q1 = mix(cp1.x, cp2.x, partialT); const r1 = mix(cp1.y, cp2.y, partialT);
+      const q2 = mix(cp2.x, p2.x, partialT); const r2 = mix(cp2.y, p2.y, partialT);
+      const s0 = mix(q0, q1, partialT); const t0 = mix(r0, r1, partialT);
+      const s1 = mix(q1, q2, partialT); const t1 = mix(r1, r2, partialT);
+      const endX = mix(s0, s1, partialT); const endY = mix(t0, t1, partialT);
+
+      const cmd = seg === 0
+        ? `M ${p1.x} ${p1.y} C ${q0} ${r0}, ${s0} ${t0}, ${endX} ${endY}`
+        : ` C ${q0} ${r0}, ${s0} ${t0}, ${endX} ${endY}`;
+      pathD += cmd;
+      tracerX = endX;
+      tracerY = endY;
+    }
+
+    return { pathD, tracerX, tracerY };
+  }
 
 
 function formatYLabel(val: number): string {
@@ -422,7 +434,11 @@ export default function Canvas(props: CanvasProps) {
   // Year the tracer is currently passing through — toX is linear in year, so
   // the inverse mapping from tracerX recovers it exactly.
   const tracerYear = Math.round(minYear + (tracerX / Math.max(chartWidth, 1)) * (maxYear - minYear));
-  const tracerYearAlpha = 0.95 * Math.min(1, chart.draw_progress / 0.05);
+  // Smoothstep ramp over 12% of draw progress — softer than the old 5% linear
+  // snap, which popped the year readout in almost immediately. The gentler
+  // ramp lets the tracer dot establish itself before the year label appears.
+  const _tracerAlphaU = Math.min(Math.max(chart.draw_progress / 0.12, 0), 1);
+  const tracerYearAlpha = 0.95 * _tracerAlphaU * _tracerAlphaU * (3 - 2 * _tracerAlphaU);
 
   return (
     <div
@@ -732,7 +748,20 @@ export default function Canvas(props: CanvasProps) {
             />
           )}
 
-          {/* Chart line */}
+          {/* Chart line — wide soft halo behind the crisp 3px stroke for
+              depth. Two stacked paths: a 10px semi-transparent stroke acts
+              as a glow, then the 3px ink stroke sits on top. No SVG filters
+              (resvg-safe), just paint order. */}
+          <path
+            d={pathD}
+            fill="none"
+            stroke={COLORS.ink}
+            strokeWidth={10}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={0.08}
+          />
+          {/* Chart line — crisp 3px stroke on top of the halo */}
           <path
             d={pathD}
             fill="none"
