@@ -92,6 +92,19 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
         context = finalize_video_context(base_context, hook, seed)
         assert context.program is not None
 
+        # Editorial copy overrides — hand-written per name in the batch YAML.
+        # Tier-templated copy can misfire on a name's actual story (an
+        # invented-from-zero name getting "Vintage names are back"), so any
+        # entry may pin reviewed text: headline, subhead, narrative, support.
+        if headline := entry.get("headline"):
+            hook = hook.model_copy(update={"headline": headline})
+        if subhead := entry.get("subhead"):
+            hook = hook.model_copy(update={"subhead": subhead})
+        if narrative := entry.get("narrative"):
+            context = context.model_copy(update={"narrative_text": narrative})
+        if support := entry.get("support"):
+            context = context.model_copy(update={"supporting_text": support})
+
         specs.append(
             VideoSpec(
                 id=vid_id,

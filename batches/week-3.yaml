@@ -1,8 +1,10 @@
 batch: week-3
 # One-Hit Wonders — names from "One-Hit Wonder Names"
-# (nobodynamed.com/blog, 2026-05-22). Five one-hit wonders, the survivor,
-# and the two counterexamples (names that outlasted the moment).
-# Style: peak-year — the article's thesis is the spike year itself.
+# (nobodynamed.com/blog, 2026-05-22). Style: peak-year.
+# Copy is hand-written per name (headline/subhead/narrative/support
+# overrides) — tier templates misfire on these stories. Cultural references
+# only where documented; otherwise data-only. No spoilers of the "why"
+# before the chart draws — the year is the tease, never the cause.
 defaults:
   fps: 30
 videos:
@@ -10,31 +12,63 @@ videos:
     name: Kunta
     sex: M
     style: peak-year
+    headline: "A single week of TV named 215 boys in 1977."
+    subhead: "None have been recorded since 2000."
+    narrative: "The biggest audience in television history moved the needle exactly once."
+    support: "Peak: 215. Now: 0."
   - id: arsenio-2024
     name: Arsenio
     sex: M
     style: peak-year
+    headline: "Late night put this name on 397 birth certificates."
+    subhead: "All of them in 1989."
+    narrative: "A couch, a fist pump, and a one-year naming window."
+    support: "Peak: 397. Now: 16."
   - id: moesha-2024
     name: Moesha
     sex: F
     style: peak-year
+    headline: "A sitcom premiere invented this name in 1996."
+    subhead: "426 girls that year. None since 2014."
+    narrative: "The show ran six seasons. The name barely outlived it."
+    support: "Peak: 426. Now: 0."
   - id: jkwon-2024
     name: Jkwon
     sex: M
     style: peak-year
+    headline: "One hit song put 100 boys named Jkwon on the chart."
+    subhead: "All of them in 2004. None since 2008."
+    narrative: "The song hit number two. The name was gone in four years."
+    support: "Peak: 100. Now: 0."
   - id: bethzy-2024
     name: Bethzy
     sex: F
     style: peak-year
+    headline: "Bethzy arrived all at once in 2006."
+    subhead: "301 girls that year. None since 2009."
+    narrative: "Three years on the chart, then gone."
+    support: "Peak: 301. Now: 0."
   - id: neymar-2024
     name: Neymar
     sex: M
     style: peak-year
+    headline: "A World Cup put Neymar on American birth certificates."
+    subhead: "499 boys in 2014."
+    narrative: "Most one-hit names vanish. This one refuses to."
+    support: "Peak: 499. Now: 62."
   - id: khaleesi-2024
     name: Khaleesi
     sex: F
     style: peak-year
+    headline: "A made-up title became 565 baby girls a year."
+    subhead: "Peak: 565 in 2018."
+    narrative: "The show ended. The name didn't."
+    support: "Peak: 565. Now: 434."
   - id: renesmee-2024
     name: Renesmee
     sex: F
     style: peak-year
+    headline: "Invented for a novel in 2008. Peaking right now."
+    subhead: "175 girls in 2024 — the most ever."
+    narrative: "Most fictional names flare and die. This one kept climbing."
+    support: "Peak: 175. Now: 175."
