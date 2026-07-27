@@ -142,7 +142,7 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
                 "headline": hook.headline,
                 "subhead": hook.subhead,
                 "narrative": context.narrative_text or "",
-                "support": context.supporting_text,
+                "support": context.supporting_text or "",
             },
             cultural_events.get((record.name.lower(), record.sex)),
         )
