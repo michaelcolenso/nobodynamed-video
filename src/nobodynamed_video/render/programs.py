@@ -57,10 +57,10 @@ SUPPORT_ALPHA = (
     Hyperframe(RECOMPOSE_END_T + 1.6, 0.0, ease_out_quart),
     Hyperframe(RECOMPOSE_END_T + 2.4, 1.0),
 )
-# Footer fades in 9.5–10.4s at the start of the CTA window (t=9.5s): the
-# endcard beat reads distinctly from the takeaway, and the animation keeps the
-# final frames byte-distinct (no FROZEN_FRAMES).
-FOOTER_ALPHA = (Hyperframe(9.5, 0.0), Hyperframe(10.4, 1.0))
+# Footer fades in 9.5–10.1s with ease_out_quart for a snappier CTA entrance.
+# The tighter 0.6s fade (was 0.9s linear) gives 0.9s of hold before the 11s
+# cutoff — the endcard reads as a deliberate beat, not a slow drift in.
+FOOTER_ALPHA = (Hyperframe(9.5, 0.0, ease_out_quart), Hyperframe(10.1, 1.0))
 # The narrative support line yields to the footer ahead of the endcard: with
 # the enlarged type ramp both occupy the same ~150px band at the bottom of the
 # collapsed layout and collided. The fade-out (8.8–9.5s) completes before the
