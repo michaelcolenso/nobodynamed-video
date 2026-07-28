@@ -14,6 +14,7 @@ from nobodynamed_video.render.motion import (
     ease_out_cubic,
     ease_out_quart,
     lerp,
+    progress_in_window,
     triangle_wave,
 )
 
@@ -58,33 +59,52 @@ LAYOUT_PROGRESS = (
 # arrives quickly enough to read but with a more natural deceleration. Quart
 # slams 80% of the motion in the first 20% of time, which felt mechanical on
 # text elements.
+# Metric cards: spring-like entrance with a strict 80ms stagger between
+# PEAK YEAR, PEAK BIRTHS, CURRENT. ease_out_back gives the spring feel —
+# the 12px rise overshoots slightly past the resting position, then settles.
+CARD_START_T = 5.2
+CARD_IN_S = 0.5
+CARD_STAGGER_S = 0.08
+CARD_RISE_PX = 12.0
+# Rolling numeric counters (PEAK BIRTHS, CURRENT) run ~400ms with
+# deceleration, starting with each card's staggered entrance.
+COUNTER_IN_S = 0.4
+CARDS_SETTLED_T = CARD_START_T + CARD_STAGGER_S * 2 + CARD_IN_S
+# ease_out_back dips below 0 at t=0 (anticipation); normalise so the card
+# rise is exactly CARD_RISE_PX end to end.
+_CARD_SPRING_NORM = 1.0 - ease_out_back(0.0)
+# Reveal timeline anchored at CARD_START_T (user-specified beats): PEAK YEAR
+# at 0ms, PEAK BIRTHS at 80ms, CURRENT at 160ms, Text Narrative at 300ms,
+# URL/CTA at 450ms. The support line rides in with the narrative beat.
+NARRATIVE_DELAY_S = 0.300
+CTA_DELAY_S = 0.450
+SUPPORT_DELAY_S = 0.300
 NARRATIVE_ALPHA = (
-    Hyperframe(RECOMPOSE_END_T + 1.1, 0.0, ease_out_cubic),
-    Hyperframe(RECOMPOSE_END_T + 1.8, 1.0),
+    Hyperframe(CARD_START_T + NARRATIVE_DELAY_S, 0.0, ease_out_cubic),
+    Hyperframe(CARD_START_T + NARRATIVE_DELAY_S + 0.7, 1.0),
 )
 SUPPORT_ALPHA = (
-    Hyperframe(RECOMPOSE_END_T + 1.6, 0.0, ease_out_cubic),
-    Hyperframe(RECOMPOSE_END_T + 2.4, 1.0),
+    Hyperframe(CARD_START_T + SUPPORT_DELAY_S, 0.0, ease_out_cubic),
+    Hyperframe(CARD_START_T + SUPPORT_DELAY_S + 0.8, 1.0),
 )
-# Footer fades in 9.5–10.1s with ease_out_quart for a snappier CTA entrance.
-# The tighter 0.6s fade (was 0.9s linear) gives 0.9s of hold before the 11s
-# cutoff — the endcard reads as a deliberate beat, not a slow drift in.
-FOOTER_ALPHA = (Hyperframe(9.5, 0.0, ease_out_quart), Hyperframe(10.1, 1.0))
-# The narrative support line yields to the footer ahead of the endcard: with
-# the enlarged type ramp both occupy the same ~150px band at the bottom of the
-# collapsed layout and collided. The fade-out (8.8–9.5s) completes before the
-# footer fade-in begins, so the two never ghost over each other; the support
-# line's facts remain visible on the chart itself.
-SUPPORT_OUT = (Hyperframe(8.8, 0.0, ease_in_out_sine), Hyperframe(9.5, 1.0))
+# Footer fades in at CARD_START_T + 450ms with ease_out_quart for a snappier
+# CTA entrance. The tighter 0.6s fade (was 0.9s linear) keeps the endcard a
+# deliberate beat, not a slow drift in.
+FOOTER_ALPHA = (
+    Hyperframe(CARD_START_T + CTA_DELAY_S, 0.0, ease_out_quart),
+    Hyperframe(CARD_START_T + CTA_DELAY_S + 0.6, 1.0),
+)
 EVENT_ALPHA = (
-    Hyperframe(RECOMPOSE_END_T + 1.3, 0.0, ease_out_cubic),
-    Hyperframe(RECOMPOSE_END_T + 1.9, 1.0),
+    Hyperframe(CARDS_SETTLED_T + 0.35, 0.0, ease_out_cubic),
+    Hyperframe(CARDS_SETTLED_T + 1.0, 1.0),
 )
-# Stat cards snap in over 5.2–6.0s with ease_out_cubic for a gentler
-# entrance than the old ease_out_quart. The staggered card offsets already
-# provide the sense of sequential arrival; the aggressive quart easing was
-# fighting the stagger by finishing each card too fast.
-STAT_ALPHA = (Hyperframe(5.2, 0.0, ease_out_cubic), Hyperframe(6.0, 1.0))
+# Stat card alpha envelope: ease_out_cubic (gentler than quart) so each card
+# is readable quickly without a mechanical slam; the spring feel lives in the
+# per-card offsets below, not the opacity.
+STAT_ALPHA = (
+    Hyperframe(CARD_START_T, 0.0, ease_out_cubic),
+    Hyperframe(CARD_START_T + CARD_IN_S, 1.0),
+)
 
 
 def _status_label(ctx: VideoContext) -> str:
@@ -106,6 +126,19 @@ def _stats_cards(ctx: VideoContext) -> list[dict[str, str]]:
     elif ctx.program == ProgramType.CULTURAL_EVENT and ctx.killing_event:
         cards[2] = {"label": "Trigger", "value": ctx.killing_event, "tone": "crimson"}
     return cards
+
+
+def _card_display_value(card: dict[str, str], ctx: VideoContext, t: float, start: float) -> str:
+    """Roll the numeric counter for PEAK BIRTHS / CURRENT cards.
+
+    Counts up over ~400ms from the card's staggered entrance with ease_out_quart
+    deceleration. Non-numeric cards (peak year, growth %, trigger) stay static.
+    """
+    target = {"Peak births": ctx.peak_count, "Current": ctx.current_count}.get(card["label"])
+    if target is None:
+        return card["value"]
+    progress = progress_in_window(t, start, start + COUNTER_IN_S)
+    return f"{round(target * ease_out_quart(progress)):,}"
 
 
 def sample_program_frame(
@@ -155,19 +188,23 @@ def sample_program_frame(
     peak_annotation_alpha = ease_out_quart(min(1.0, peak_raw)) * (1.0 - layout_progress)
 
     chart_cards = _stats_cards(ctx)
-    card_stagger_s = 0.15
-    card_alphas = [
-        round(sample_scalar_track(STAT_ALPHA, t - card_stagger_s * i), 6)
-        for i in range(len(chart_cards))
-    ]
-    # Entrances rise as they fade in. Deriving the offset from the (already
-    # eased) alpha keeps the two perfectly in sync: fully transparent sits
-    # low, fully opaque has settled into place.
-    card_offsets = [round((1.0 - alpha) * 18.0, 6) for alpha in card_alphas]
+    card_alphas: list[float] = []
+    card_offsets: list[float] = []
+    card_values: list[str] = []
+    for i, card in enumerate(chart_cards):
+        start = CARD_START_T + CARD_STAGGER_S * i
+        progress = progress_in_window(t, start, start + CARD_IN_S)
+        card_alphas.append(round(ease_out_cubic(progress), 6))
+        # Spring-like rise: ease_out_back overshoots past 1.0 mid-entrance,
+        # so the offset dips slightly negative (card pops above its resting
+        # spot) before settling — the spring feel, frame-sampled. The track
+        # is normalised by ease_out_back's anticipation dip at t=0 so the
+        # total rise is exactly CARD_RISE_PX.
+        spring = (1.0 - ease_out_back(progress)) / _CARD_SPRING_NORM
+        card_offsets.append(round(CARD_RISE_PX * spring, 6))
+        card_values.append(_card_display_value(card, ctx, t, start))
     narrative_alpha = sample_scalar_track(NARRATIVE_ALPHA, t)
-    support_alpha = sample_scalar_track(SUPPORT_ALPHA, t) * (
-        1.0 - sample_scalar_track(SUPPORT_OUT, t)
-    )
+    support_alpha = sample_scalar_track(SUPPORT_ALPHA, t)
     footer_wave = ease_in_out_sine(triangle_wave(t, 1.2))
     return {
         "program": spec.program.value,
@@ -231,6 +268,7 @@ def sample_program_frame(
             "cards": chart_cards,
             "card_alphas": card_alphas,
             "card_offsets": card_offsets,
+            "card_values": card_values,
         },
         "narrative": {
             "alpha": round(narrative_alpha, 6),
