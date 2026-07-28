@@ -41,6 +41,7 @@ interface StatsState {
   cards: Array<{ label: string; value: string; tone: string }>;
   card_alphas: number[];
   card_offsets?: number[];
+  card_values?: string[];
 }
 
 interface NarrativeState {
@@ -174,17 +175,34 @@ function computeSpeedCurve(
     // then integrated and normalized. Velocity is smooth end to end: the
     // tracer glides up to pace, decelerates into the story over ~0.4s, and
     // lands softly instead of stopping dead.
-    const FLAT_PACE_YPS = 100;
-    const FLAT_BUDGET_CAP = 0.3;
+    //
+    // Peak-impact shaping (2025 feedback): express pace through the flat
+    // years (faster nominal pace + a longer smoothstep ease-in ramp), a
+    // high-velocity expressive rise into the peak, a deceleration right at
+    // the apex, a quick snap down just past it, and a slightly slower
+    // over-damped settle on the early tail. All shaping lives in the
+    // per-segment cost multipliers, so the gaussian smoothing below still
+    // guarantees end-to-end velocity continuity (no hard cuts).
+    const FLAT_PACE_YPS = 140;
+    const FLAT_BUDGET_CAP = 0.25;
     const FLAT_COST = 0.35;
     const SLOPE_WEIGHT = 10;
-    const RAMP_S = 0.35;
+    const RAMP_S = 0.45;
     const SIGMA_S = 0.08;
     const TICKS_PER_S = 120;
+    const RISE_VELOCITY = 0.45; // <1 = less time per segment = faster rise
+    const APEX_DECEL = 1.9; // >1 = linger as the tracer nears the apex
+    const SNAP_VELOCITY = 0.35; // quick snap down right after the peak
+    const SETTLE_DECEL = 1.35; // over-damped settle on the early tail
 
     const maxY = Math.max(...points.map((p) => p.y));
     const firstNz = points.findIndex((p) => p.y < maxY - 0.5);
     const storyStart = firstNz === -1 ? 0 : firstNz;
+    // Apex: y is inverted (peak count = smallest y).
+    let peakIdx = 0;
+    for (let i = 1; i < points.length; i++) {
+      if (points[i].y < points[peakIdx].y) peakIdx = i;
+    }
 
     const flatSeconds =
       storyStart > 0
@@ -196,9 +214,17 @@ function computeSpeedCurve(
       .slice(storyStart + 1)
       .map((p, i) => Math.abs(p.y - points[storyStart + i].y));
     const maxDy = Math.max(...storyDy, 1);
-    const costs = storyDy.map((d) =>
-      d < 0.5 ? FLAT_COST : 1 + (SLOPE_WEIGHT * d) / maxDy
-    );
+    const costs = storyDy.map((d, j) => {
+      if (d < 0.5) return FLAT_COST;
+      const base = 1 + (SLOPE_WEIGHT * d) / maxDy;
+      // Global segment index of the segment ENDING at points[segIdx].
+      const segIdx = storyStart + 1 + j;
+      if (segIdx < peakIdx) return base * RISE_VELOCITY; // expressive rise
+      if (segIdx === peakIdx) return base * APEX_DECEL; // decelerate at apex
+      if (segIdx <= peakIdx + 2) return base * SNAP_VELOCITY; // snap down
+      if (segIdx <= peakIdx + 4) return base * SETTLE_DECEL; // elastic settle
+      return base;
+    });
     const costSum = costs.reduce((a, b) => a + b, 0);
 
     const segT = new Array<number>(totalSegments).fill(0);
@@ -367,7 +393,7 @@ function formatYLabel(val: number): string {
   return Math.round(val).toString();
 }
 
-function AxisLabel({ top, text }: { top: number; text: string }) {
+function AxisLabel({ top, text, intensity = 0.5 }: { top: number; text: string; intensity?: number }) {
   return (
     <div
       style={{
@@ -376,8 +402,8 @@ function AxisLabel({ top, text }: { top: number; text: string }) {
         top: top,
         fontFamily: TYPE.body.family,
         fontSize: RAMP.body[4],
-        color: COLORS.fade,
-        opacity: 0.5,
+        color: intensity > 0.85 ? COLORS.ink : COLORS.fade,
+        opacity: intensity,
         fontVariantNumeric: "tabular-nums",
         display: "flex",
       }}
@@ -422,12 +448,12 @@ export default function Canvas(props: CanvasProps) {
   const dotY = toY(currentPoint?.count ?? 0);
   const eventX = chart.event_year != null ? toX(Math.max(minYear, Math.min(maxYear, chart.event_year))) : 0;
 
-  const narrativeTop = mix(1250, 1340, chart.layout_progress) + (narrative.offset_y ?? 0);
+  const narrativeTop = mix(1250, 1300, chart.layout_progress) + (narrative.offset_y ?? 0);
   // The comparison row lives in the gap between the stat cards (~1230) and
-  // the narrative rule (1340) — at 1420 it sat on top of the narrative's
+  // the narrative rule (1300) — at 1420 it sat on top of the narrative's
   // supporting line. It is only visible post-recompose (alpha follows
   // SUPPORT_ALPHA), so the expanded-layout value never renders.
-  const comparisonTop = mix(1640, 1262, chart.layout_progress) + (comparison.offset_y ?? 0);
+  const comparisonTop = mix(1640, 1256, chart.layout_progress) + (comparison.offset_y ?? 0);
   const dotColor =
     tier === "rising" || tier === "resurrected" ? COLORS.emerald : COLORS.crimson;
   const peakX = toX(chart.peak_year);
@@ -439,6 +465,32 @@ export default function Canvas(props: CanvasProps) {
   // ramp lets the tracer dot establish itself before the year label appears.
   const _tracerAlphaU = Math.min(Math.max(chart.draw_progress / 0.12, 0), 1);
   const tracerYearAlpha = 0.95 * _tracerAlphaU * _tracerAlphaU * (3 - 2 * _tracerAlphaU);
+
+  const drawing = chart.draw_progress > 0 && chart.draw_progress < 1;
+
+  // Peak-impact scrubber treatment: as the tracer passes the apex, scale it
+  // up ~1.4x with a stronger glow, settling back as it continues toward the
+  // current year. Spatial (position-driven) so it stays exact under the
+  // speed curve's non-linear pacing; per-frame state, resvg-safe.
+  const peakProx = Math.max(0, 1 - Math.abs(tracerX - peakX) / Math.max(chartWidth * 0.08, 1));
+  const peakProxEase = peakProx * peakProx * (3 - 2 * peakProx);
+  const tracerScale = 1 + 0.4 * peakProxEase;
+  const tracerGlowRadius = chart.tracer_glow_radius * tracerScale;
+  const tracerGlowAlpha = Math.min(1, chart.tracer_glow_alpha + 0.4 * peakProxEase);
+
+  // Y-axis threshold crossings: while the line is drawing, brighten each
+  // tick label as the rising tracer crosses its value (momentary flash at
+  // the crossing, settling to a lit state once above it).
+  const tracerValue = drawing
+    ? (1 - tracerY / Math.max(chartHeight, 1)) * maxCount
+    : -1;
+  const axisIntensity = (threshold: number): number => {
+    if (!drawing || threshold <= 0) return 0.5;
+    const crossed = tracerValue >= threshold;
+    const band = Math.max(maxCount * 0.05, 1);
+    const flash = Math.max(0, 1 - Math.abs(tracerValue - threshold) / band);
+    return Math.min(1, 0.5 + (crossed ? 0.25 : 0) + 0.35 * flash);
+  };
 
   return (
     <div
@@ -587,11 +639,11 @@ export default function Canvas(props: CanvasProps) {
           }}
         />
 
-        {/* Y-axis labels */}
-        <AxisLabel top={-26} text={formatYLabel(maxCount)} />
-        <AxisLabel top={chartHeight * 0.25 - 26} text={formatYLabel(maxCount * 0.75)} />
-        <AxisLabel top={chartHeight * 0.5 - 26} text={formatYLabel(maxCount * 0.5)} />
-        <AxisLabel top={chartHeight * 0.75 - 26} text={formatYLabel(maxCount * 0.25)} />
+        {/* Y-axis labels — brighten as the drawn line crosses each threshold */}
+        <AxisLabel top={-26} text={formatYLabel(maxCount)} intensity={axisIntensity(maxCount)} />
+        <AxisLabel top={chartHeight * 0.25 - 26} text={formatYLabel(maxCount * 0.75)} intensity={axisIntensity(maxCount * 0.75)} />
+        <AxisLabel top={chartHeight * 0.5 - 26} text={formatYLabel(maxCount * 0.5)} intensity={axisIntensity(maxCount * 0.5)} />
+        <AxisLabel top={chartHeight * 0.75 - 26} text={formatYLabel(maxCount * 0.25)} intensity={axisIntensity(maxCount * 0.25)} />
         <AxisLabel top={chartHeight - 26} text="0" />
 
         {/* X-axis year labels */}
@@ -835,24 +887,24 @@ export default function Canvas(props: CanvasProps) {
             <div
               style={{
                 position: "absolute",
-                left: tracerX - chart.tracer_glow_radius,
-                top: tracerY - chart.tracer_glow_radius,
-                width: chart.tracer_glow_radius * 2,
-                height: chart.tracer_glow_radius * 2,
-                borderRadius: chart.tracer_glow_radius,
+                left: tracerX - tracerGlowRadius,
+                top: tracerY - tracerGlowRadius,
+                width: tracerGlowRadius * 2,
+                height: tracerGlowRadius * 2,
+                borderRadius: tracerGlowRadius,
                 backgroundColor: COLORS.ink,
-                opacity: chart.tracer_glow_alpha,
+                opacity: tracerGlowAlpha,
                 display: "flex",
               }}
             />
             <div
               style={{
                 position: "absolute",
-                left: tracerX - 5,
-                top: tracerY - 5,
-                width: 10,
-                height: 10,
-                borderRadius: 5,
+                left: tracerX - 5 * tracerScale,
+                top: tracerY - 5 * tracerScale,
+                width: 10 * tracerScale,
+                height: 10 * tracerScale,
+                borderRadius: 5 * tracerScale,
                 backgroundColor: COLORS.ink,
                 display: "flex",
               }}
@@ -936,7 +988,7 @@ export default function Canvas(props: CanvasProps) {
               display: "flex",
             }}
           >
-            <StatCard label={card.label} value={card.value} tone={card.tone} />
+            <StatCard label={card.label} value={stats.card_values?.[index] ?? card.value} tone={card.tone} />
           </div>
         ))}
       </div>
@@ -999,7 +1051,7 @@ export default function Canvas(props: CanvasProps) {
             width: CANVAS.w - CANVAS.safe.x * 2,
             height: 1,
             backgroundColor: COLORS.rule,
-            marginBottom: 26,
+            marginBottom: 16,
             display: "flex",
           }}
         />
@@ -1009,8 +1061,8 @@ export default function Canvas(props: CanvasProps) {
             fontWeight: TYPE.display.weight,
             fontSize: RAMP.body[1],
             color: COLORS.ink,
-            lineHeight: 1.2,
-            maxWidth: 840,
+            lineHeight: 1.12,
+            maxWidth: 920,
             display: "flex",
           }}
         >
@@ -1020,12 +1072,12 @@ export default function Canvas(props: CanvasProps) {
           <div
             style={{
               fontFamily: TYPE.body.family,
-              fontSize: RAMP.body[3],
+              fontSize: RAMP.body[4],
               color: COLORS.fade,
-              lineHeight: 1.45,
-              marginTop: 24 + (narrative.support_offset_y ?? 0),
+              lineHeight: 1.3,
+              marginTop: 16 + (narrative.support_offset_y ?? 0),
               opacity: narrative.support_alpha,
-              maxWidth: 820,
+              maxWidth: 920,
               display: "flex",
             }}
           >
