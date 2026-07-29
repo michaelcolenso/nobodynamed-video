@@ -17,6 +17,8 @@ interface ChartState {
   alpha: number;
   draw_progress: number;
   draw_duration_s: number;
+  tracer_alpha?: number;
+  tracer_year_alpha?: number;
   tracer_glow_alpha: number;
   tracer_glow_radius: number;
   dot_visible: boolean;
@@ -439,6 +441,17 @@ export default function Canvas(props: CanvasProps) {
   // ramp lets the tracer dot establish itself before the year label appears.
   const _tracerAlphaU = Math.min(Math.max(chart.draw_progress / 0.12, 0), 1);
   const tracerYearAlpha = 0.95 * _tracerAlphaU * _tracerAlphaU * (3 - 2 * _tracerAlphaU);
+  // Fall back to the old hard on/off when the prop is absent (older payloads).
+  const tracerAlpha =
+    chart.tracer_alpha ?? (chart.draw_progress > 0 && chart.draw_progress < 1 ? 1 : 0);
+  // The year readout has its own, earlier exit so it never prints under the
+  // landing callout that occupies the same corner.
+  const tracerYearOut = chart.tracer_year_alpha ?? tracerAlpha;
+  // Peak-year x-label: fade it across the last 60px at either edge instead of
+  // switching it off at a threshold — during the recompose chartWidth animates
+  // through that threshold and the label blinked out mid-move.
+  const peakLabelAlpha =
+    0.5 * Math.min(Math.max(peakX / 60, 0), 1) * Math.min(Math.max((chartWidth - peakX) / 60, 0), 1);
 
   return (
     <div
@@ -609,7 +622,7 @@ export default function Canvas(props: CanvasProps) {
         >
           {String(minYear)}
         </div>
-        {peakX > 60 && peakX < chartWidth - 60 && (
+        {peakLabelAlpha > 0.01 && (
           <div
             style={{
               position: "absolute",
@@ -618,7 +631,7 @@ export default function Canvas(props: CanvasProps) {
               fontFamily: TYPE.body.family,
               fontSize: 22,
               color: COLORS.fade,
-              opacity: 0.5,
+              opacity: peakLabelAlpha,
               display: "flex",
             }}
           >
@@ -830,7 +843,12 @@ export default function Canvas(props: CanvasProps) {
           </>
         )}
 
-        {chart.draw_progress > 0 && chart.draw_progress < 1 && (
+        {/* The tracer cross-fades into the landing dot rather than being
+            switched off on the frame the draw completes: at draw_progress === 1
+            the tracer sits exactly on the landing point, so a short overlap
+            (tracer_alpha 1 → 0 while dot_alpha 0 → 1) reads as one mark
+            arriving, not one disappearing and another appearing. */}
+        {tracerAlpha > 0 && (
           <>
             <div
               style={{
@@ -841,7 +859,7 @@ export default function Canvas(props: CanvasProps) {
                 height: chart.tracer_glow_radius * 2,
                 borderRadius: chart.tracer_glow_radius,
                 backgroundColor: COLORS.ink,
-                opacity: chart.tracer_glow_alpha,
+                opacity: chart.tracer_glow_alpha * tracerAlpha,
                 display: "flex",
               }}
             />
@@ -854,6 +872,7 @@ export default function Canvas(props: CanvasProps) {
                 height: 10,
                 borderRadius: 5,
                 backgroundColor: COLORS.ink,
+                opacity: tracerAlpha,
                 display: "flex",
               }}
             />
@@ -874,7 +893,7 @@ export default function Canvas(props: CanvasProps) {
                 color: COLORS.ink,
                 letterSpacing: 2,
                 fontVariantNumeric: "tabular-nums",
-                opacity: tracerYearAlpha,
+                opacity: tracerYearAlpha * tracerYearOut,
                 display: "flex",
               }}
             >
