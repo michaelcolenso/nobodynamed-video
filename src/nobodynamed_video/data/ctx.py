@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any
 
@@ -172,18 +173,27 @@ async def build_base_context(
     avg_age = round(current_year - _weighted_mean_year(record))
     decline_pct = _compute_decline_pct(record)
     rise_pct = _compute_rise_pct(record)
-    current_rank = await source.get_rank(record.name, record.sex, record.current_year)
-    rank_at_peak = await source.get_rank(record.name, record.sex, record.peak_year)
-    last_top_1000_year = await source.get_last_top_year(record.name, record.sex, 1000)
-    last_top_10_year = await source.get_last_top_year(record.name, record.sex, 10)
-    top10_years = await source.count_years_in_top(record.name, record.sex, 10)
-    comparison_name = await source.find_comparison_name(
-        record.name,
-        record.sex,
-        record.peak_count,
-        record.current_count,
-        record.peak_year,
-        current_year,
+    (
+        current_rank,
+        rank_at_peak,
+        last_top_1000_year,
+        last_top_10_year,
+        top10_years,
+        comparison_name,
+    ) = await asyncio.gather(
+        source.get_rank(record.name, record.sex, record.current_year),
+        source.get_rank(record.name, record.sex, record.peak_year),
+        source.get_last_top_year(record.name, record.sex, 1000),
+        source.get_last_top_year(record.name, record.sex, 10),
+        source.count_years_in_top(record.name, record.sex, 10),
+        source.find_comparison_name(
+            record.name,
+            record.sex,
+            record.peak_count,
+            record.current_count,
+            record.peak_year,
+            current_year,
+        ),
     )
     event = _resolve_event(events or load_cultural_events(), record)
     collapse_year = (

@@ -1,5 +1,7 @@
 import express, { Request, Response } from "express";
+import cluster from "node:cluster";
 import type { Server } from "node:http";
+import { availableParallelism } from "node:os";
 import { renderFrame, TemplateName } from "./render";
 import { getFontNames } from "./fonts";
 
@@ -7,6 +9,14 @@ const app = express();
 app.use(express.json({ limit: "4mb" }));
 
 const PORT = parseInt(process.env["PORT"] ?? "3001", 10);
+const DEFAULT_WORKERS = Math.min(4, availableParallelism());
+const requestedWorkers = parseInt(
+  process.env["SATORI_WORKERS"] ?? String(DEFAULT_WORKERS),
+  10
+);
+const WORKERS = Number.isFinite(requestedWorkers)
+  ? Math.max(1, requestedWorkers)
+  : DEFAULT_WORKERS;
 
 async function reportListenError(err: NodeJS.ErrnoException): Promise<never> {
   if (err.code === "EADDRINUSE") {
@@ -95,20 +105,31 @@ app.post("/render", async (req: Request, res: Response) => {
   }
 });
 
-// Eagerly load fonts to fail fast if they're missing.
-try {
-  getFontNames();
-} catch (err) {
-  console.error(`[satori-service] FATAL: ${err}`);
-  process.exit(1);
+function startWorker(): void {
+  // Eagerly load fonts in every renderer process to fail before accepting work.
+  try {
+    getFontNames();
+  } catch (err) {
+    console.error(`[satori-service] FATAL: ${err}`);
+    process.exit(1);
+  }
+
+  const server: Server = app.listen(PORT);
+
+  server.on("listening", () => {
+    console.log(`[satori-service] worker ${process.pid} listening on :${PORT}`);
+  });
+
+  server.on("error", (err: NodeJS.ErrnoException) => {
+    void reportListenError(err);
+  });
 }
 
-const server: Server = app.listen(PORT);
-
-server.on("listening", () => {
-  console.log(`[satori-service] listening on :${PORT}`);
-});
-
-server.on("error", (err: NodeJS.ErrnoException) => {
-  void reportListenError(err);
-});
+if (cluster.isPrimary && WORKERS > 1) {
+  console.log(`[satori-service] starting ${WORKERS} renderer workers`);
+  for (let index = 0; index < WORKERS; index += 1) {
+    cluster.fork();
+  }
+} else {
+  startWorker();
+}
