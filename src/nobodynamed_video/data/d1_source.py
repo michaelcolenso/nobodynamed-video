@@ -9,6 +9,8 @@ Fetches the full series for a name in a single query to stay within
 Cloudflare's ~50 req/s rate limit.
 """
 
+import asyncio
+import logging
 from typing import cast
 
 import httpx
@@ -16,17 +18,24 @@ import httpx
 from nobodynamed_video.exceptions import DataSourceError
 from nobodynamed_video.models import NameRecord, YearCount
 
+log = logging.getLogger(__name__)
+
+_MAX_CONCURRENT_QUERIES = 2
+_MAX_RETRIES = 3
+_BACKOFF_BASE_S = 0.5
+
 
 class D1Source:
     """Production DataSource backed by Cloudflare D1 over HTTP."""
 
-    def __init__(self, d1_url: str, d1_token: str, timeout: float = 10.0) -> None:
+    def __init__(self, d1_url: str, d1_token: str, timeout: float = 30.0) -> None:
         self._url = d1_url
         self._headers = {
             "Authorization": f"Bearer {d1_token}",
             "Content-Type": "application/json",
         }
         self._timeout = timeout
+        self._semaphore = asyncio.Semaphore(_MAX_CONCURRENT_QUERIES)
 
     async def get_record(self, name: str, sex: str, year: int) -> NameRecord:
         """Return a NameRecord for *name*/*sex* up to *year*, fetched from D1."""
@@ -79,12 +88,37 @@ class D1Source:
     async def query_rows(self, sql: str, params: list[object]) -> list[dict[str, object]]:
         payload = {"sql": sql, "params": params}
 
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            try:
-                resp = await client.post(self._url, json=payload, headers=self._headers)
-                resp.raise_for_status()
-            except httpx.HTTPError as exc:
-                raise DataSourceError(f"D1 request failed: {exc}") from exc
+        async with self._semaphore:
+            for attempt in range(_MAX_RETRIES + 1):
+                try:
+                    async with httpx.AsyncClient(timeout=self._timeout) as client:
+                        resp = await client.post(self._url, json=payload, headers=self._headers)
+                        resp.raise_for_status()
+                    break
+                except httpx.HTTPStatusError as exc:
+                    status = exc.response.status_code
+                    if status < 500 and status != 429:
+                        raise DataSourceError(
+                            f"D1 request failed with HTTP {status}: {exc.response.text}"
+                        ) from exc
+                    if attempt == _MAX_RETRIES:
+                        raise DataSourceError(
+                            f"D1 request failed after {_MAX_RETRIES + 1} attempts: {exc}"
+                        ) from exc
+                except httpx.HTTPError as exc:
+                    if attempt == _MAX_RETRIES:
+                        raise DataSourceError(
+                            f"D1 request failed after {_MAX_RETRIES + 1} attempts: {exc!r}"
+                        ) from exc
+
+                delay = _BACKOFF_BASE_S * (2**attempt)
+                log.warning(
+                    "D1 query attempt %d/%d failed; retrying in %.1fs",
+                    attempt + 1,
+                    _MAX_RETRIES + 1,
+                    delay,
+                )
+                await asyncio.sleep(delay)
 
         body = resp.json()
         if not body.get("success"):
