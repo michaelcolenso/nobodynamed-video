@@ -260,10 +260,7 @@ def sample_program_frame(
             else 0.0,
             "event_year": ctx.event_year,
             "event_label": ctx.killing_event,
-            "series": [
-                {"year": point.year, "count": point.count}
-                for point in series
-            ],
+            "series": [{"year": point.year, "count": point.count} for point in series],
             "current_year": ctx.current_year,
             "peak_year": ctx.peak_year,
             "peak_count": ctx.peak_count,
