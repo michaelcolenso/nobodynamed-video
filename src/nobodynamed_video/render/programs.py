@@ -113,17 +113,13 @@ def _stats_cards(ctx: VideoContext) -> list[dict[str, str]]:
 
 
 def _prepare_render_series(
-    source: Sequence[YearCount],
-    peak_year: int,
-    peak_count: int,
+    source: Sequence[YearCount], peak_year: int, peak_count: int
 ) -> list[RenderPoint]:
     """Add render-only temporal resolution around extreme one-year spikes."""
     if not source:
         return []
 
-    points = [
-        RenderPoint(float(point.year), float(point.count)) for point in source
-    ]
+    points = [RenderPoint(float(point.year), float(point.count)) for point in source]
     if points[0].year > SSA_FIRST_YEAR:
         points = [
             RenderPoint(float(year), 0.0)
