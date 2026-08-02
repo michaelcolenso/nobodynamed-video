@@ -121,7 +121,9 @@ def _prepare_render_series(
     if not source:
         return []
 
-    points = [RenderPoint(year=float(point.year), count=float(point.count)) for point in source]
+    points = [
+        RenderPoint(year=float(point.year), count=float(point.count)) for point in source
+    ]
     if points[0].year > SSA_FIRST_YEAR:
         padding = [
             RenderPoint(year=float(year), count=0.0)
