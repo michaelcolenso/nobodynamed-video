@@ -5,12 +5,9 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
-import os
-import shutil
 import time
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
 
 from rich.console import Console
 from rich.markup import escape
@@ -53,61 +50,6 @@ def _renderer_digest() -> str:
     return digest.hexdigest()
 
 
-def _frame_cache_key(template: str, props: dict[str, Any]) -> str:
-    """Return a stable cache key for a rendered frame."""
-    payload = json.dumps(
-        {"renderer": _renderer_digest(), "template": template, "props": props},
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-    )
-    return hashlib.sha256(payload.encode()).hexdigest()
-
-
-def _link_or_copy(source: Path, destination: Path) -> None:
-    """Materialize a cached frame without duplicating its data when possible."""
-    destination.unlink(missing_ok=True)
-    try:
-        os.link(source, destination)
-    except OSError:
-        # Hard links can fail across filesystems or on filesystems that do not
-        # support them. Preserve the previous copy behavior in that case.
-        shutil.copyfile(source, destination)
-
-
-class _FrameCache:
-    """Coordinates cache access across concurrently rendered video specs."""
-
-    def __init__(self, cache_dir: Path) -> None:
-        self._cache_dir = cache_dir
-        self._locks: dict[str, asyncio.Lock] = {}
-
-    async def materialize(
-        self,
-        client: SatoriClient,
-        template: str,
-        props: dict[str, Any],
-        destination: Path,
-    ) -> tuple[bytes, float]:
-        cache_key = _frame_cache_key(template, props)
-        cache_path = self._cache_dir / f"{cache_key}.png"
-        lock = self._locks.setdefault(cache_key, asyncio.Lock())
-
-        async with lock:
-            render_time = 0.0
-            if not cache_path.exists():
-                started = time.monotonic()
-                png_bytes = await client.render(template, props)
-                render_time = time.monotonic() - started
-                self._cache_dir.mkdir(parents=True, exist_ok=True)
-                cache_path.write_bytes(png_bytes)
-            else:
-                png_bytes = cache_path.read_bytes()
-
-            _link_or_copy(cache_path, destination)
-            return png_bytes, render_time
-
-
 async def render_spec(
     spec: VideoSpec,
     client: SatoriClient,
@@ -117,7 +59,6 @@ async def render_spec(
     no_compose: bool = False,
     debug_safe: bool = False,
     audio_path: Path | None = None,
-    frame_cache: _FrameCache | None = None,
 ) -> dict[str, object]:
     """Render one VideoSpec: frames → caption → ffmpeg → manifest."""
     spec_out = out_dir / spec.id
@@ -127,27 +68,27 @@ async def render_spec(
     sha256_frames: dict[str, str] = {}
     scene_times: dict[str, float] = {}
     total_start = time.monotonic()
-    cache = frame_cache or _FrameCache(out_dir / ".cache")
 
-    async def _render_frame(
-        scene_kind: str,
-        frame_idx: int,
-        template: str,
-        props: dict[str, Any],
-    ) -> tuple[str, str, str, float]:
+    for scene_kind, frame_idx, template, props in plan_frames(spec, spec.fps, debug_safe):
         png_path = frames_dir / f"{scene_kind}_{frame_idx:03d}.png"
-        png_bytes, render_time = await cache.materialize(client, template, props, png_path)
-        return scene_kind, png_path.name, sha256_bytes(png_bytes), render_time
 
-    frame_results = await asyncio.gather(
-        *(
-            _render_frame(scene_kind, frame_idx, template, props)
-            for scene_kind, frame_idx, template, props in plan_frames(spec, spec.fps, debug_safe)
-        )
-    )
-    for scene_kind, filename, frame_hash, render_time in frame_results:
-        sha256_frames[filename] = frame_hash
-        scene_times[scene_kind] = scene_times.get(scene_kind, 0.0) + render_time
+        cache_key = hashlib.sha256(
+            (_renderer_digest() + template + str(sorted(props.items()))).encode()
+        ).hexdigest()
+        cache_path = out_dir / ".cache" / f"{cache_key}.png"
+
+        if cache_path.exists():
+            png_bytes = cache_path.read_bytes()
+        else:
+            t_start = time.monotonic()
+            png_bytes = await client.render(template, props)
+            elapsed = time.monotonic() - t_start
+            scene_times[scene_kind] = scene_times.get(scene_kind, 0.0) + elapsed
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            cache_path.write_bytes(png_bytes)
+
+        png_path.write_bytes(png_bytes)
+        sha256_frames[png_path.name] = sha256_bytes(png_bytes)
 
     for scene_kind in ["hook", "reveal"]:
         first_file = frames_dir / f"{scene_kind}_000.png"
@@ -155,12 +96,7 @@ async def render_spec(
             check_or_write_golden(spec.id, f"{scene_kind}_f00", first_file.read_bytes())
 
     if no_compose:
-        return {
-            "id": spec.id,
-            "frames": len(sha256_frames),
-            "composed": False,
-            "render_time_s": time.monotonic() - total_start,
-        }
+        return {"id": spec.id, "frames": len(sha256_frames), "composed": False}
 
     caption: str | None = None
     pinned_comment: str | None = None
@@ -234,7 +170,6 @@ async def run_batch(
     """Run all specs concurrently, write summary JSON."""
     lexicon = Lexicon.from_yaml(_CAPTIONS_YAML)
     state = CombinationState(_STATE_DB)
-    frame_cache = _FrameCache(out_dir / ".cache")
 
     semaphore = asyncio.Semaphore(_BATCH_CONCURRENCY)
     results: list[dict[str, object]] = []
@@ -254,7 +189,6 @@ async def run_batch(
                         no_compose,
                         debug_safe,
                         audio_path,
-                        frame_cache,
                     )
                     results.append(result)
                     console.print(f"[green]✓[/green] {spec.id}")

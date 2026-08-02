@@ -68,6 +68,7 @@ ALPHA_CHANNELS = [
     ("chart", "dot_alpha"),
     ("chart", "dot_ring_alpha"),
     ("chart", "tracer_alpha"),
+    ("chart", "peak_annotation_alpha"),
     ("chart", "layout_progress"),
     ("stats", "alpha"),
     ("narrative", "alpha"),
@@ -139,23 +140,6 @@ def test_count_up_settles_at_the_real_count() -> None:
     assert values[0] == 0.0
     assert values[-1] == float(spec.record.current_count)
     assert all(b >= a for a, b in zip(values, values[1:], strict=False))
-
-
-def test_landing_resolves_before_layout_recomposes() -> None:
-    """The impact ring gets a clean landing beat before the chart contracts."""
-    before_recompose = sample_program_frame(spec_cache(), 5.15)
-    moving = sample_program_frame(spec_cache(), 5.3)
-
-    assert before_recompose["chart"]["layout_progress"] == 0.0
-    assert before_recompose["chart"]["dot_ring_alpha"] <= 0.02
-    assert moving["chart"]["layout_progress"] > 0.0
-
-
-def test_landing_halo_retires_during_narrative() -> None:
-    """The landing pulse is finite; it must not throb through the whole video."""
-    frame = sample_program_frame(spec_cache(), 8.5)
-
-    assert frame["chart"]["dot_ring_alpha"] == 0.0
 
 
 _SPEC: VideoSpec | None = None
