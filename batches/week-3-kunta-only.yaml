@@ -1,0 +1,14 @@
+batch: week-3-kunta-only
+# Temporary focused animation test batch. Keep only Kunta while tuning the
+# one-hit-spike chart pacing; restore the full week-3 list after validation.
+defaults:
+  fps: 30
+videos:
+  - id: kunta-2024
+    name: Kunta
+    sex: M
+    style: peak-year
+    headline: "A single week of TV named 215 boys in 1977."
+    subhead: "16 by 1979. Gone by 1981."
+    narrative: "Television created a name. The news cycle consumed it."
+    support: "Peak: 215. Now: 0."
