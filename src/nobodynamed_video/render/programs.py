@@ -112,6 +112,7 @@ def _stats_cards(ctx: VideoContext) -> list[dict[str, str]]:
     return cards
 
 
+# fmt: off
 def _prepare_render_series(
     source: Sequence[YearCount],
     peak_year: int,
@@ -167,6 +168,7 @@ def _prepare_render_series(
 
     expanded.extend(points[peak_index + 1 :])
     return expanded
+# fmt: on
 
 
 def sample_program_frame(
