@@ -112,7 +112,6 @@ def _stats_cards(ctx: VideoContext) -> list[dict[str, str]]:
     return cards
 
 
-# fmt: off
 def _prepare_render_series(
     source: Sequence[YearCount],
     peak_year: int,
@@ -122,9 +121,7 @@ def _prepare_render_series(
     if not source:
         return []
 
-    points = [
-        RenderPoint(year=float(point.year), count=float(point.count)) for point in source
-    ]
+    points = [RenderPoint(year=float(point.year), count=float(point.count)) for point in source]
     if points[0].year > SSA_FIRST_YEAR:
         padding = [
             RenderPoint(year=float(year), count=0.0)
@@ -168,7 +165,6 @@ def _prepare_render_series(
 
     expanded.extend(points[peak_index + 1 :])
     return expanded
-# fmt: on
 
 
 def sample_program_frame(
@@ -194,7 +190,9 @@ def sample_program_frame(
     halo_alpha = halo_ramp * lerp(0.10, 0.22, halo_wave)
     halo_radius = lerp(14.0, 22.0, halo_wave)
     count_progress = (
-        smootherstep((t - (DOT_LAND_T - DOT_FADE_LEAD)) / 1.3) if dot_visible else 0.0
+        smootherstep((t - (DOT_LAND_T - DOT_FADE_LEAD)) / 1.3)
+        if dot_visible
+        else 0.0
     )
 
     series = _prepare_render_series(spec.record.series, ctx.peak_year, ctx.peak_count)
