@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>QC Report — week-3</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: #0f0f0f; color: #e5e5e5; padding: 24px; }
+h1 { font-size: 1.25rem; margin-bottom: 8px; }
+.summary { font-size: 0.875rem; color: #9ca3af; margin-bottom: 24px; }
+.pass { color: #22c55e; }
+.fail { color: #ef4444; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 16px; }
+.card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 16px; }
+.card-header { display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px; }
+.spec-id { font-weight: 600; font-size: 0.95rem; font-family: monospace; }
+.status-badge { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px;
+  color: #fff; letter-spacing: 0.05em; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.badge { font-size: 0.65rem; font-weight: 600; padding: 2px 7px; border-radius: 4px;
+  color: #fff; cursor: default; letter-spacing: 0.03em; }
+.filmstrip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.thumb { display: flex; flex-direction: column; gap: 3px; }
+.thumb img { width: 100%; aspect-ratio: 9/16; object-fit: cover; border-radius: 3px;
+  background: #111; display: block; }
+.thumb-label { font-size: 0.6rem; color: #6b7280; text-align: center; }
+</style>
+</head>
+<body>
+<h1>QC Report — week-3</h1>
+<p class="summary">1 renders &nbsp;·&nbsp; <span class='pass'>0 passed</span> &nbsp;·&nbsp; <span class='fail'>1 failed</span></p>
+<div class="grid">
+<div class="card"><div class="card-header"><span class="spec-id">kunta-2024</span><span class="status-badge" style="background:#ef4444">FAIL</span></div><div class="badges"><span class="badge" style="background:#f59e0b" title="hook frames 0 and 1 are identical">FROZEN_FRAMES</span><span class="badge" style="background:#ef4444" title="duration 11.00s < 17.9s">MP4_INVALID</span></div><div class="filmstrip"><div class="thumb"><img src="kunta-2024/frames/hook_000.png" alt="hook 0s"><div class="thumb-label">hook 0s</div></div><div class="thumb"><img src="kunta-2024/frames/reveal_000.png" alt="hook 1.5s"><div class="thumb-label">hook 1.5s</div></div><div class="thumb"><img src="kunta-2024/frames/reveal_090.png" alt="reveal 3s"><div class="thumb-label">reveal 3s</div></div><div class="thumb"><img src="kunta-2024/frames/narrative_000.png" alt="reveal 6s"><div class="thumb-label">reveal 6s</div></div><div class="thumb"><img src="kunta-2024/frames/narrative_090.png" alt="narr 9s"><div class="thumb-label">narr 9s</div></div><div class="thumb"><img src="kunta-2024/frames/cta_000.png" alt="narr 12s"><div class="thumb-label">narr 12s</div></div></div></div>
+</div>
+</body>
+</html>

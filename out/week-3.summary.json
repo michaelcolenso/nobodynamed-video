@@ -1,0 +1,33 @@
+{
+  "batch": "week-3",
+  "total": 1,
+  "succeeded": 1,
+  "failed": 0,
+  "results": [
+    {
+      "id": "kunta-2024",
+      "frames": 330,
+      "composed": true,
+      "mp4": "out/kunta-2024.mp4",
+      "duration_s": 11.0,
+      "render_time_s": 44.30009221499999,
+      "caption": "1977. One year defined the entire Kunta cohort A classic name. Quietly enduring. A timeless #ssadata #babynamehelp #grandmacore #classicnames #fyp",
+      "qc": {
+        "passed": false,
+        "issues": [
+          {
+            "severity": "warning",
+            "code": "FROZEN_FRAMES",
+            "message": "hook frames 0 and 1 are identical"
+          },
+          {
+            "severity": "error",
+            "code": "MP4_INVALID",
+            "message": "duration 11.00s < 17.9s"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": []
+}
