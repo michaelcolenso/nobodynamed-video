@@ -35,7 +35,6 @@ interface ChartState {
   peak_year: number;
   peak_count: number;
   count_value: number;
-  peak_annotation_alpha?: number;
 }
 
 interface StatsState {
@@ -152,16 +151,42 @@ interface SpeedCurve {
 let _speedCacheKey = "";
 let _speedCache: SpeedCurve | null = null;
 
+export function speedCurveCacheKey(
+  points: Array<{ x: number; y: number }>,
+  drawDurationS: number,
+): string {
+  let seriesHash = 2166136261;
+  for (const point of points) {
+    const token = `${point.x.toFixed(3)},${point.y.toFixed(3)};`;
+    for (let index = 0; index < token.length; index += 1) {
+      seriesHash ^= token.charCodeAt(index);
+      seriesHash = Math.imul(seriesHash, 16777619);
+    }
+  }
+  return `${points.length}:${seriesHash >>> 0}:${drawDurationS}`;
+}
+
+export function selectTracerYearLabel(
+  tracerYear: number,
+  milestoneYears: number[],
+): number {
+  const nearestMilestone = milestoneYears.reduce((best, year) =>
+    Math.abs(year - tracerYear) < Math.abs(best - tracerYear) ? year : best,
+  );
+  return Math.abs(nearestMilestone - tracerYear) <= 1
+    ? nearestMilestone
+    : Math.round(tracerYear / 10) * 10;
+}
+
 function computeSpeedCurve(
   points: Array<{ x: number; y: number }>,
   totalSegments: number,
   drawDurationS: number,
 ): SpeedCurve {
-  // Cache key: first/last point + length + duration — enough to distinguish
-  // any two distinct series without hashing all 145 points every frame.
-  const key = `${points.length}:${points[0]?.x}:${points[0]?.y}:${
-    points[points.length - 1]?.x
-  }:${points[points.length - 1]?.y}:${drawDurationS}`;
+  // Hash every point. Name-series commonly have the same length, baseline
+  // endpoints, and duration, so an endpoint-only key can serve one video's
+  // timing curve to another when clustered workers receive interleaved jobs.
+  const key = speedCurveCacheKey(points, drawDurationS);
   if (_speedCacheKey === key && _speedCache) return _speedCache;
   _speedCacheKey = key;
 
@@ -198,9 +223,35 @@ function computeSpeedCurve(
       .slice(storyStart + 1)
       .map((p, i) => Math.abs(p.y - points[storyStart + i].y));
     const maxDy = Math.max(...storyDy, 1);
-    const costs = storyDy.map((d) =>
-      d < 0.5 ? FLAT_COST : 1 + (SLOPE_WEIGHT * d) / maxDy
+    const peakIndex = points.reduce(
+      (best, point, index) => (point.y < points[best].y ? index : best),
+      0,
     );
+    const steepestFallIndex = points.slice(1).reduce(
+      (best, point, index) => {
+        const segment = index;
+        const fall = point.y - points[segment].y;
+        const bestFall = points[best + 1].y - points[best].y;
+        return fall > bestFall ? segment : best;
+      },
+      0,
+    );
+    const recentStart = Math.max(storyStart, totalSegments - 15);
+    const landmarkWeight = (segment: number, center: number, radius: number, boost: number) => {
+      const distance = Math.abs(segment - center);
+      if (distance >= radius) return 1;
+      const u = 1 - distance / radius;
+      return 1 + boost * u * u * (3 - 2 * u);
+    };
+    const costs = storyDy.map((d, storyIndex) => {
+      const segment = storyStart + storyIndex;
+      const slopeCost = d < 0.5 ? FLAT_COST : 1 + (SLOPE_WEIGHT * d) / maxDy;
+      const firstAppearance = landmarkWeight(segment, storyStart, 3, 1.4);
+      const peak = landmarkWeight(segment, peakIndex, 4, 3.2);
+      const collapse = landmarkWeight(segment, steepestFallIndex, 3, 1.8);
+      const recent = segment >= recentStart ? 1.45 : 1;
+      return slopeCost * firstAppearance * peak * collapse * recent;
+    });
     const costSum = costs.reduce((a, b) => a + b, 0);
 
     const segT = new Array<number>(totalSegments).fill(0);
@@ -268,9 +319,16 @@ function computeSpeedCurve(
     points: Array<{ x: number; y: number }>,
     drawProgress: number,
     drawDurationS: number = 4.2,
-  ): { pathD: string; tracerX: number; tracerY: number } {
-    if (points.length === 0) return { pathD: "", tracerX: 0, tracerY: 0 };
-    if (points.length === 1) return { pathD: `M ${points[0].x} ${points[0].y}`, tracerX: points[0].x, tracerY: points[0].y };
+  ): { pathD: string; tracerX: number; tracerY: number; tracerSegment: number } {
+    if (points.length === 0)
+      return { pathD: "", tracerX: 0, tracerY: 0, tracerSegment: 0 };
+    if (points.length === 1)
+      return {
+        pathD: `M ${points[0].x} ${points[0].y}`,
+        tracerX: points[0].x,
+        tracerY: points[0].y,
+        tracerSegment: 0,
+      };
 
     // Standard Catmull-Rom → cubic bezier conversion.
     // For segment i→i+1, control points are:
@@ -355,7 +413,7 @@ function computeSpeedCurve(
       tracerY = endY;
     }
 
-    return { pathD, tracerX, tracerY };
+    return { pathD, tracerX, tracerY, tracerSegment: segPos };
   }
 
 
@@ -412,7 +470,11 @@ export default function Canvas(props: CanvasProps) {
   const toY = (count: number) => chartHeight - (count / maxCount) * chartHeight;
 
   const curvePoints = filtered.map((p) => ({ x: toX(p.year), y: toY(p.count) }));
-  const { pathD, tracerX, tracerY } = smoothPathD(curvePoints, chart.draw_progress, chart.draw_duration_s);
+  const { pathD, tracerX, tracerY, tracerSegment } = smoothPathD(
+    curvePoints,
+    chart.draw_progress,
+    chart.draw_duration_s,
+  );
 
   // Area fill — closes the path with a clean line to baseline, then smooth bezier back.
   const pathAreaD = pathD
@@ -435,7 +497,30 @@ export default function Canvas(props: CanvasProps) {
   const peakX = toX(chart.peak_year);
   // Year the tracer is currently passing through — toX is linear in year, so
   // the inverse mapping from tracerX recovers it exactly.
-  const tracerYear = Math.round(minYear + (tracerX / Math.max(chartWidth, 1)) * (maxYear - minYear));
+  const tracerYear = Math.round(
+    minYear + (tracerX / Math.max(chartWidth, 1)) * (maxYear - minYear),
+  );
+  const firstAppearanceYear =
+    filtered.find((point) => point.count > 0)?.year ?? minYear;
+  const steepestFallYear = filtered.slice(1).reduce(
+    (bestYear, point, index) => {
+      const fall = filtered[index].count - point.count;
+      const bestIndex = Math.max(
+        1,
+        filtered.findIndex((candidate) => candidate.year === bestYear),
+      );
+      const bestFall = filtered[bestIndex - 1].count - filtered[bestIndex].count;
+      return fall > bestFall ? point.year : bestYear;
+    },
+    filtered[1]?.year ?? minYear,
+  );
+  const milestoneYears = [
+    firstAppearanceYear,
+    chart.peak_year,
+    steepestFallYear,
+    chart.current_year,
+  ];
+  const tracerYearLabel = selectTracerYearLabel(tracerYear, milestoneYears);
   // Smoothstep ramp over 12% of draw progress — softer than the old 5% linear
   // snap, which popped the year readout in almost immediately. The gentler
   // ramp lets the tracer dot establish itself before the year label appears.
@@ -452,6 +537,15 @@ export default function Canvas(props: CanvasProps) {
   // through that threshold and the label blinked out mid-move.
   const peakLabelAlpha =
     0.5 * Math.min(Math.max(peakX / 60, 0), 1) * Math.min(Math.max((chartWidth - peakX) / 60, 0), 1);
+  const peakIndex = Math.max(
+    0,
+    filtered.findIndex((point) => point.year === chart.peak_year),
+  );
+  // Trigger from the tracer's actual remapped position, not the peak's linear
+  // year fraction. This keeps the callout attached to the moment of arrival.
+  const peakRevealU = Math.min(Math.max((tracerSegment - peakIndex) / 2.5, 0), 1);
+  const peakAnnotationAlpha =
+    peakRevealU * peakRevealU * (3 - 2 * peakRevealU) * (1 - chart.layout_progress);
 
   return (
     <div
@@ -785,7 +879,7 @@ export default function Canvas(props: CanvasProps) {
           />
         </svg>
 
-        {(chart.peak_annotation_alpha ?? 0) > 0 && (
+        {peakAnnotationAlpha > 0 && (
           <>
             <div
               style={{
@@ -796,7 +890,7 @@ export default function Canvas(props: CanvasProps) {
                 height: 10,
                 borderRadius: 5,
                 backgroundColor: COLORS.ink,
-                opacity: (chart.peak_annotation_alpha ?? 0) * 0.85,
+                opacity: peakAnnotationAlpha * 0.85,
                 display: "flex",
               }}
             />
@@ -808,7 +902,7 @@ export default function Canvas(props: CanvasProps) {
                 width: 2,
                 height: 32,
                 backgroundColor: COLORS.ink,
-                opacity: (chart.peak_annotation_alpha ?? 0) * 0.4,
+                opacity: peakAnnotationAlpha * 0.4,
                 display: "flex",
               }}
             />
@@ -820,7 +914,7 @@ export default function Canvas(props: CanvasProps) {
                 left: Math.max(0, Math.min(chartWidth - 320, peakX - 160)),
                 top: toY(chart.peak_count) + 50,
                 width: 320,
-                opacity: chart.peak_annotation_alpha ?? 0,
+                opacity: peakAnnotationAlpha,
                 display: "flex",
                 justifyContent: "center",
               }}
@@ -893,11 +987,12 @@ export default function Canvas(props: CanvasProps) {
                 color: COLORS.ink,
                 letterSpacing: 2,
                 fontVariantNumeric: "tabular-nums",
-                opacity: tracerYearAlpha * tracerYearOut,
+                opacity:
+                  tracerYearAlpha * tracerYearOut * (1 - peakAnnotationAlpha),
                 display: "flex",
               }}
             >
-              {String(tracerYear)}
+              {String(tracerYearLabel)}
             </div>
           </>
         )}
