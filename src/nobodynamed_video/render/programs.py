@@ -23,9 +23,6 @@ DOT_LAND_T = 4.5
 RECOMPOSE_START_T = 4.6
 RECOMPOSE_END_T = 5.4
 
-# One-hit spikes need more temporal samples than their one-year data interval
-# provides. These render-only points slow the rise and create a short visual
-# hold at the apex without changing the source record or classifier.
 ONE_HIT_RISE_RATIO = 0.60
 ONE_HIT_RISE_STEPS = 12
 ONE_HIT_HOLD_STEPS = 6
@@ -42,7 +39,6 @@ HEADER_ALPHA = (Hyperframe(0.0, 1.0),)
 DIAGNOSIS_ALPHA = (Hyperframe(0.0, 1.0),)
 CHART_ALPHA = (Hyperframe(0.0, 0.0, smootherstep), Hyperframe(0.6, 1.0))
 CHART_DRAW = (Hyperframe(0.3, 0.0), Hyperframe(DOT_LAND_T, 1.0))
-
 DOT_FADE_LEAD = 0.15
 DOT_ALPHA = (
     Hyperframe(DOT_LAND_T - DOT_FADE_LEAD, 0.0, smootherstep),
@@ -113,68 +109,53 @@ def _stats_cards(ctx: VideoContext) -> list[dict[str, str]]:
 
 
 def _prepare_render_series(
-    source: Sequence[YearCount],
-    peak_year: int,
-    peak_count: int,
+    source: Sequence[YearCount], peak_year: int, peak_count: int
 ) -> list[RenderPoint]:
-    """Return presentation-only chart points with extra timing around one-hit spikes."""
+    """Add render-only temporal resolution around extreme one-year spikes."""
     if not source:
         return []
-
-    points = [RenderPoint(year=float(point.year), count=float(point.count)) for point in source]
+    points = [RenderPoint(float(point.year), float(point.count)) for point in source]
     if points[0].year > SSA_FIRST_YEAR:
-        padding = [
-            RenderPoint(year=float(year), count=0.0)
+        points = [
+            RenderPoint(float(year), 0.0)
             for year in range(SSA_FIRST_YEAR, int(points[0].year))
-        ]
-        points = padding + points
-
+        ] + points
     peak_index = next(
-        (index for index, point in enumerate(points) if point.year == peak_year),
-        -1,
+        (index for index, point in enumerate(points) if point.year == peak_year), -1
     )
     if peak_index <= 0 or peak_count <= 0:
         return points
-
     previous = points[peak_index - 1]
     peak = points[peak_index]
     year_gap = peak.year - previous.year
-    rise = peak.count - previous.count
-    rise_ratio = rise / max(peak.count, 1.0)
-
+    rise_ratio = (peak.count - previous.count) / max(peak.count, 1.0)
     if year_gap <= 0 or year_gap > 1.01 or rise_ratio < ONE_HIT_RISE_RATIO:
         return points
-
     expanded = points[:peak_index]
     for step in range(1, ONE_HIT_RISE_STEPS + 1):
         progress = step / ONE_HIT_RISE_STEPS
         expanded.append(
             RenderPoint(
-                year=lerp(previous.year, peak.year, progress),
-                count=lerp(previous.count, peak.count, smootherstep(progress)),
+                lerp(previous.year, peak.year, progress),
+                lerp(previous.count, peak.count, smootherstep(progress)),
             )
         )
-
     for step in range(1, ONE_HIT_HOLD_STEPS + 1):
         expanded.append(
             RenderPoint(
-                year=peak.year + ONE_HIT_HOLD_YEAR_SPAN * step / ONE_HIT_HOLD_STEPS,
-                count=peak.count,
+                peak.year + ONE_HIT_HOLD_YEAR_SPAN * step / ONE_HIT_HOLD_STEPS,
+                peak.count,
             )
         )
-
     expanded.extend(points[peak_index + 1 :])
     return expanded
 
 
 def sample_program_frame(
-    spec: VideoSpec,
-    t: float,
-    debug_safe: bool = False,
+    spec: VideoSpec, t: float, debug_safe: bool = False
 ) -> dict[str, Any]:
     if spec.context is None or spec.hook is None or spec.program is None:
         raise RuntimeError("VideoSpec must have context, hook, and program before rendering")
-
     ctx = spec.context
     dot_visible = t >= DOT_LAND_T - DOT_FADE_LEAD
     layout_progress = sample_scalar_track(LAYOUT_PROGRESS, t)
@@ -183,18 +164,12 @@ def sample_program_frame(
     tracer_in = sample_scalar_track(TRACER_IN, t)
     tracer_alpha = tracer_in * sample_scalar_track(TRACER_OUT, t)
     tracer_year_alpha = tracer_in * sample_scalar_track(TRACER_YEAR_OUT, t)
-
     halo_t = t - (DOT_LAND_T + 0.8)
     halo_ramp = smoothstep(halo_t / 0.6)
     halo_wave = sine_wave(t, 2.4)
     halo_alpha = halo_ramp * lerp(0.10, 0.22, halo_wave)
     halo_radius = lerp(14.0, 22.0, halo_wave)
-    count_progress = (
-        smootherstep((t - (DOT_LAND_T - DOT_FADE_LEAD)) / 1.3)
-        if dot_visible
-        else 0.0
-    )
-
+    count_progress = smootherstep((t - (DOT_LAND_T - DOT_FADE_LEAD)) / 1.3) if dot_visible else 0.0
     series = _prepare_render_series(spec.record.series, ctx.peak_year, ctx.peak_count)
     if series:
         s_min = series[0].year
@@ -202,10 +177,8 @@ def sample_program_frame(
         peak_frac = (ctx.peak_year - s_min) / max(s_max - s_min, 1.0)
     else:
         peak_frac = 0.5
-
     peak_raw = smoothstep((chart_draw_progress - peak_frac) / 0.14)
     peak_annotation_alpha = peak_raw * (1.0 - layout_progress)
-
     chart_cards = _stats_cards(ctx)
     card_stagger_s = 0.15
     card_alphas = [
@@ -218,7 +191,6 @@ def sample_program_frame(
         1.0 - sample_scalar_track(SUPPORT_OUT, t)
     )
     footer_wave = sine_wave(t, 2.4, phase=0.5)
-
     return {
         "program": spec.program.value,
         "register": spec.hook.voice_register,
@@ -231,8 +203,7 @@ def sample_program_frame(
         },
         "diagnosis": {
             "alpha": round(
-                sample_scalar_track(DIAGNOSIS_ALPHA, t) * (1.0 - 0.38 * layout_progress),
-                6,
+                sample_scalar_track(DIAGNOSIS_ALPHA, t) * (1.0 - 0.38 * layout_progress), 6
             ),
             "headline": spec.hook.headline,
             "subhead": spec.hook.subhead,
@@ -249,12 +220,10 @@ def sample_program_frame(
             "dot_alpha": round(sample_scalar_track(DOT_ALPHA, t), 6),
             "dot_radius": round(sample_scalar_track(DOT_RADIUS, t), 6),
             "dot_ring_alpha": round(
-                halo_alpha if halo_t >= 0.0 else sample_scalar_track(DOT_RING_ALPHA, t),
-                6,
+                halo_alpha if halo_t >= 0.0 else sample_scalar_track(DOT_RING_ALPHA, t), 6
             ),
             "dot_ring_radius": round(
-                halo_radius if halo_t >= 0.0 else sample_scalar_track(DOT_RING_RADIUS, t),
-                6,
+                halo_radius if halo_t >= 0.0 else sample_scalar_track(DOT_RING_RADIUS, t), 6
             ),
             "layout_progress": round(layout_progress, 6),
             "event_alpha": round(sample_scalar_track(EVENT_ALPHA, t), 6)
