@@ -21,8 +21,8 @@ DOT_LAND_T = 4.5
 # Collapse starts a beat AFTER the dot lands so the landing reads clearly in
 # the still-expanded chart before the layout recomposes to make room for the
 # stat cards.
-RECOMPOSE_START_T = 5.2
-RECOMPOSE_END_T = 5.9
+RECOMPOSE_START_T = 4.6
+RECOMPOSE_END_T = 5.4
 
 # Frame 0 is the default TikTok cover and the loop-seam landing frame: the
 # header and hook headline must be fully readable on it, never faded up from a
@@ -79,11 +79,11 @@ DOT_RADIUS = (
 DOT_RING_ALPHA = (
     Hyperframe(DOT_LAND_T - DOT_FADE_LEAD, 0.0, smootherstep),
     Hyperframe(DOT_LAND_T + 0.2, 0.6, ease_out_cubic),
-    Hyperframe(DOT_LAND_T + 0.65, 0.0),
+    Hyperframe(DOT_LAND_T + 0.8, 0.0),
 )
 DOT_RING_RADIUS = (
     Hyperframe(DOT_LAND_T - DOT_FADE_LEAD, 10.0, ease_out_cubic),
-    Hyperframe(DOT_LAND_T + 0.65, 30.0),
+    Hyperframe(DOT_LAND_T + 0.8, 30.0),
 )
 # The recompose moves the largest object on the canvas, so it gets the
 # smoothest curve available: smootherstep's zero acceleration at both ends
@@ -114,8 +114,8 @@ EVENT_ALPHA = (
     Hyperframe(RECOMPOSE_END_T + 1.3, 0.0, smootherstep),
     Hyperframe(RECOMPOSE_END_T + 1.9, 1.0),
 )
-# Stat cards ease in after the landing beat and layout recompose.
-STAT_ALPHA = (Hyperframe(5.95, 0.0, smootherstep), Hyperframe(6.65, 1.0))
+# Stat cards ease in over 5.2–6.0s, right after the layout recomposes.
+STAT_ALPHA = (Hyperframe(5.2, 0.0, smootherstep), Hyperframe(6.0, 1.0))
 
 
 def _status_label(ctx: VideoContext) -> str:
@@ -166,11 +166,10 @@ def sample_program_frame(
     # and never reverses direction abruptly.
     # Starts exactly where the impact ring's fade ends, so the single ring
     # element never cuts from one radius to another while it is visible.
-    halo_t = t - (DOT_LAND_T + 0.65)
+    halo_t = t - (DOT_LAND_T + 0.8)
     halo_ramp = smoothstep(halo_t / 0.6)
-    halo_retire = 1.0 - smoothstep((halo_t - 2.4) / 0.6)
-    halo_wave = sine_wave(halo_t, 1.2)
-    halo_alpha = halo_ramp * halo_retire * lerp(0.10, 0.22, halo_wave)
+    halo_wave = sine_wave(t, 2.4)
+    halo_alpha = halo_ramp * lerp(0.10, 0.22, halo_wave)
     halo_radius = lerp(14.0, 22.0, halo_wave)
     # Count finishes as the collapse begins, so the hero number lands in the
     # expanded chart. smootherstep rather than ease_out_quart: a counter that
@@ -188,6 +187,19 @@ def sample_program_frame(
         series = [
             YearCount(year=y, count=0) for y in range(SSA_FIRST_YEAR, series[0].year)
         ] + series
+    if series:
+        s_min = series[0].year
+        s_max = series[-1].year
+        peak_frac = (ctx.peak_year - s_min) / max(s_max - s_min, 1)
+    else:
+        peak_frac = 0.5
+    # The peak label used to snap on inside 4% of draw progress — around two
+    # frames, which registers as a pop rather than a reveal. A 14% smoothstep
+    # window fades it up over ~0.4s as the tracer clears the apex, and the
+    # already-eased recompose track carries it back out.
+    peak_raw = smoothstep((chart_draw_progress - peak_frac) / 0.14)
+    peak_annotation_alpha = peak_raw * (1.0 - layout_progress)
+
     chart_cards = _stats_cards(ctx)
     card_stagger_s = 0.15
     card_alphas = [
@@ -261,6 +273,7 @@ def sample_program_frame(
             "peak_year": ctx.peak_year,
             "peak_count": ctx.peak_count,
             "count_value": round(spec.record.current_count * count_progress),
+            "peak_annotation_alpha": round(peak_annotation_alpha, 6),
         },
         "stats": {
             "alpha": round(sample_scalar_track(STAT_ALPHA, t), 6),

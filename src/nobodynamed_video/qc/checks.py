@@ -9,15 +9,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-from nobodynamed_video.render.frame_planner import SCENE_ORDER, frame_count, total_frame_count
-from nobodynamed_video.render.programs import TOTAL_DURATION_S
-
-_EXPECTED_FRAMES = total_frame_count()
+_EXPECTED_FRAMES = 330
 _EXPECTED_WIDTH = 1080
 _EXPECTED_HEIGHT = 1920
+_MIN_DURATION_S = 17.9
+# With straight concat composition the video stream must carry every frame:
+# 330 frames / 30 fps = 11.0 s exactly (xfade used to silently trim 0.6 s).
+_EXPECTED_STREAM_DURATION_S = 11.0
 _STREAM_DURATION_TOLERANCE_S = 0.05
-_MIN_DURATION_S = TOTAL_DURATION_S - _STREAM_DURATION_TOLERANCE_S
-_EXPECTED_STREAM_DURATION_S = TOTAL_DURATION_S
 _EXPECTED_FPS = "30/1"
 _EXPECTED_COLOR = {
     "color_space": "bt709",
@@ -25,7 +24,7 @@ _EXPECTED_COLOR = {
     "color_transfer": "bt709",
     "color_range": "tv",
 }
-_SCENE_FRAME_COUNTS = {scene: frame_count(scene) for scene in SCENE_ORDER}
+_SCENE_FRAME_COUNTS = {"hook": 90, "reveal": 180, "narrative": 180, "cta": 90}
 _FROZEN_CHECK_DEPTH = 10
 # Cover check: flag the first frame if ≥98% of pixels sit below luma 32
 # (limited range) — i.e. nothing but background. Frame 0 is the default
@@ -34,13 +33,14 @@ _COVER_BLACK_AMOUNT = 98
 _COVER_BLACK_THRESHOLD = 32
 
 KEYFRAME_NAMES = [
-    filename
-    for scene, count in _SCENE_FRAME_COUNTS.items()
-    for filename in (
-        f"{scene}_000.png",
-        f"{scene}_{count // 2:03d}.png",
-        f"{scene}_{count - 1:03d}.png",
-    )
+    "hook_000.png",
+    "hook_045.png",
+    "reveal_000.png",
+    "reveal_090.png",
+    "narrative_000.png",
+    "narrative_090.png",
+    "cta_000.png",
+    "cta_089.png",
 ]
 
 
@@ -75,11 +75,12 @@ def _check_frozen_frames(sha256_frames: dict[str, str]) -> list[QCIssue]:
     issues: list[QCIssue] = []
     for scene, total in _SCENE_FRAME_COUNTS.items():
         depth = min(_FROZEN_CHECK_DEPTH, total - 1)
-        hashes = [sha256_frames.get(f"{scene}_{index:03d}.png") for index in range(depth + 1)]
-        present = [frame_hash for frame_hash in hashes if frame_hash]
-        if len(present) == depth + 1 and len(set(present)) == 1:
-            msg = f"{scene} frames 0–{depth} are identical"
-            issues.append(QCIssue("warning", "FROZEN_FRAMES", msg))
+        for i in range(depth):
+            a = sha256_frames.get(f"{scene}_{i:03d}.png")
+            b = sha256_frames.get(f"{scene}_{i + 1:03d}.png")
+            if a and b and a == b:
+                msg = f"{scene} frames {i} and {i + 1} are identical"
+                issues.append(QCIssue("warning", "FROZEN_FRAMES", msg))
     return issues
 
 
@@ -148,8 +149,8 @@ def _check_mp4(mp4_path: Path) -> list[QCIssue]:
         msg = f"duration {duration:.2f}s < {_MIN_DURATION_S}s"
         issues.append(QCIssue("error", "MP4_INVALID", msg))
 
-    # Video stream duration — concat composition must carry every frame for
-    # exactly the canonical program duration; a short stream means a
+    # Video stream duration — concat composition must carry all 540 frames to
+    # exactly 18.0 s; a short stream means trimmed/overlapped frames and a
     # frozen tail padded out by the audio track.
     stream_duration = video.get("duration")
     if stream_duration is not None:
