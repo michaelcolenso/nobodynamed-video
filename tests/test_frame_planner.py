@@ -1,6 +1,9 @@
 """Frame planner tests — verifies shared-canvas planning over fixed frame buckets."""
 
+from pathlib import Path
+
 from nobodynamed_video.data.classifier import classify
+from nobodynamed_video.editorial.story import load_story
 from nobodynamed_video.models import (
     NameRecord,
     ProgramType,
@@ -14,6 +17,7 @@ from nobodynamed_video.render.frame_planner import (
     SCENE_ORDER,
     frame_count,
     plan_frames,
+    scene_frame_counts,
     total_frame_count,
 )
 from nobodynamed_video.seed import spec_seed
@@ -113,6 +117,30 @@ def test_cta_frame_count() -> None:
 
 def test_total_frame_count() -> None:
     assert total_frame_count(fps=30) == 330
+
+
+def test_story_timeline_uses_reviewed_adaptive_duration() -> None:
+    story = load_story(Path("stories/bertha-2024.yaml"))
+    spec = make_bertha_spec().model_copy(
+        update={"story": story, "duration_s": story.target_duration_s}
+    )
+    counts = scene_frame_counts(spec, fps=30)
+    assert sum(counts.values()) == 375
+    assert counts["hook"] < counts["reveal"]
+    assert len(list(plan_frames(spec, fps=30))) == 375
+
+
+def test_story_loop_returns_hook_over_stable_composition() -> None:
+    story = load_story(Path("stories/bertha-2024.yaml"))
+    spec = make_bertha_spec().model_copy(
+        update={"story": story, "duration_s": story.target_duration_s}
+    )
+    frames = [props for _scene, _idx, _tpl, props in plan_frames(spec, fps=30)]
+
+    assert frames[0]["loop_progress"] == 0.0
+    assert frames[-1]["loop_progress"] > 0.99
+    for block in ("chart", "stats", "narrative", "footer"):
+        assert frames[-1][block]["alpha"] == 1.0
 
 
 def test_scene_order() -> None:

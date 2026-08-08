@@ -19,9 +19,11 @@ from nobodynamed_video.render.motion import (
 
 TOTAL_DURATION_S = 11.0
 SSA_FIRST_YEAR = 1880
-DOT_LAND_T = 4.5
-RECOMPOSE_START_T = 4.6
-RECOMPOSE_END_T = 5.4
+# Give the historical chart enough time to read as a journey. The previous
+# 4.2-second draw made extreme one-hit spikes feel like a vertical cut.
+DOT_LAND_T = 6.0
+RECOMPOSE_START_T = 6.1
+RECOMPOSE_END_T = 6.9
 
 ONE_HIT_RISE_RATIO = 0.60
 ONE_HIT_RISE_STEPS = 12
@@ -84,10 +86,17 @@ EVENT_ALPHA = (
     Hyperframe(RECOMPOSE_END_T + 1.3, 0.0, smootherstep),
     Hyperframe(RECOMPOSE_END_T + 1.9, 1.0),
 )
-STAT_ALPHA = (Hyperframe(5.2, 0.0, smootherstep), Hyperframe(6.0, 1.0))
+STAT_ALPHA = (Hyperframe(6.7, 0.0, smootherstep), Hyperframe(7.5, 1.0))
 
 
-def _status_label(ctx: VideoContext) -> str:
+def _status_label(ctx: VideoContext, spec: VideoSpec) -> str:
+    if spec.story:
+        return {
+            "one_hit": "ONE-HIT FILE",
+            "cultural_rupture": "CULTURAL RUPTURE",
+            "long_decline": "LONG DECLINE",
+            "comeback": "RETURN FILE",
+        }[spec.story.story_kind.value]
     if ctx.program == ProgramType.RETURN_NOTICE:
         return "RETURN NOTICE"
     if ctx.program == ProgramType.CULTURAL_EVENT:
@@ -110,6 +119,38 @@ def _stats_cards(ctx: VideoContext) -> list[dict[str, str]]:
     elif ctx.program == ProgramType.CULTURAL_EVENT and ctx.killing_event:
         cards[2] = {"label": "Trigger", "value": ctx.killing_event, "tone": "crimson"}
     return cards
+
+
+def _caption_state(spec: VideoSpec, t: float) -> dict[str, Any]:
+    words = spec.word_timings
+    if not words:
+        return {"alpha": 0.0, "text": "", "current_word": "", "progress": 0.0}
+
+    active_index = next(
+        (index for index, word in enumerate(words) if word.start_s <= t < word.end_s),
+        -1,
+    )
+    if active_index < 0:
+        active_index = max(
+            (index for index, word in enumerate(words) if word.start_s <= t),
+            default=-1,
+        )
+    if active_index < 0 or t > words[-1].end_s + 0.2:
+        return {"alpha": 0.0, "text": "", "current_word": "", "progress": 0.0}
+
+    group_start = (active_index // 4) * 4
+    group = words[group_start : group_start + 4]
+    group_start_s = group[0].start_s
+    group_end_s = group[-1].end_s
+    progress = (t - group_start_s) / max(group_end_s - group_start_s, 0.01)
+    fade_in = smoothstep((t - group_start_s + 0.08) / 0.14)
+    fade_out = 1.0 - smoothstep((t - group_end_s) / 0.16)
+    return {
+        "alpha": round(fade_in * fade_out, 6),
+        "text": " ".join(word.word for word in group),
+        "current_word": words[active_index].word,
+        "progress": round(min(max(progress, 0.0), 1.0), 6),
+    }
 
 
 # fmt: off
@@ -171,6 +212,14 @@ def sample_program_frame(
         raise RuntimeError("VideoSpec must have context, hook, and program before rendering")
 
     ctx = spec.context
+    actual_t = t
+    # The motion program is authored once at 11 seconds, then time-warped to
+    # the reviewed story duration. This preserves smoothness while allowing
+    # narration-driven 9-14 second cuts.
+    t = actual_t * TOTAL_DURATION_S / spec.duration_s
+    loop_progress = (
+        smootherstep((actual_t - (spec.duration_s - 0.75)) / 0.75) if spec.story else 0.0
+    )
     dot_visible = t >= DOT_LAND_T - DOT_FADE_LEAD
     layout_progress = sample_scalar_track(LAYOUT_PROGRESS, t)
     tracer_wave = sine_wave(t, 0.9)
@@ -184,11 +233,7 @@ def sample_program_frame(
     halo_wave = sine_wave(t, 2.4)
     halo_alpha = halo_ramp * lerp(0.10, 0.22, halo_wave)
     halo_radius = lerp(14.0, 22.0, halo_wave)
-    count_progress = (
-        smootherstep((t - (DOT_LAND_T - DOT_FADE_LEAD)) / 1.3)
-        if dot_visible
-        else 0.0
-    )
+    count_progress = smootherstep((t - (DOT_LAND_T - DOT_FADE_LEAD)) / 1.3) if dot_visible else 0.0
 
     series = _prepare_render_series(spec.record.series, ctx.peak_year, ctx.peak_count)
     if series:
@@ -213,27 +258,29 @@ def sample_program_frame(
         1.0 - sample_scalar_track(SUPPORT_OUT, t)
     )
     footer_wave = sine_wave(t, 2.4, phase=0.5)
+    chart_alpha = sample_scalar_track(CHART_ALPHA, t)
+    diagnosis_alpha = sample_scalar_track(DIAGNOSIS_ALPHA, t) * (1.0 - 0.38 * layout_progress)
+    caption_state = _caption_state(spec, actual_t)
 
     return {
         "program": spec.program.value,
         "register": spec.hook.voice_register,
+        "story_kind": spec.story.story_kind.value if spec.story else "legacy",
+        "loop_progress": round(loop_progress, 6),
         "tier": spec.tier.value,
         "header": {
             "alpha": round(sample_scalar_track(HEADER_ALPHA, t), 6),
-            "label": _status_label(ctx),
+            "label": _status_label(ctx, spec),
             "name": ctx.name,
             "status": ctx.tier.value.upper(),
         },
         "diagnosis": {
-            "alpha": round(
-                sample_scalar_track(DIAGNOSIS_ALPHA, t) * (1.0 - 0.38 * layout_progress),
-                6,
-            ),
+            "alpha": round(diagnosis_alpha, 6),
             "headline": spec.hook.headline,
             "subhead": spec.hook.subhead,
         },
         "chart": {
-            "alpha": round(sample_scalar_track(CHART_ALPHA, t), 6),
+            "alpha": round(chart_alpha, 6),
             "draw_progress": round(chart_draw_progress, 6),
             "draw_duration_s": round(DOT_LAND_T - 0.3, 3),
             "tracer_alpha": round(tracer_alpha, 6),
@@ -287,9 +334,11 @@ def sample_program_frame(
         "footer": {
             "alpha": round(sample_scalar_track(FOOTER_ALPHA, t), 6),
             "site": "nobodynamed.com",
-            "cta": "Run your name",
+            "cta": "Share the name that surprised you",
+            "disclosure": "AI NARRATION" if spec.story else "",
             "dot_alpha": round(lerp(0.5, 1.0, footer_wave), 6),
             "dot_radius": round(lerp(9.0, 11.5, footer_wave), 6),
         },
+        "captions": caption_state,
         "debug_safe": debug_safe,
     }

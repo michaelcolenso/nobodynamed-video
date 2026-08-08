@@ -6,7 +6,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "tsx --test src/**/*.test.ts"
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "express": "4.19.2",

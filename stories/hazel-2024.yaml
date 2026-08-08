@@ -1,0 +1,40 @@
+id: hazel-2024
+name: Hazel
+sex: F
+story_kind: comeback
+thesis: Hazel fell out of fashion, then climbed back to within a quarter of its 1920 peak after a century.
+headline: This 104-year comeback is almost complete.
+subhead: 4,500 births then. 3,400 in 2024.
+takeaway: Hazel is within 25 percent of its century-old peak.
+support: An old name became current again.
+script_beats:
+  - kind: hook
+    text: This name came back from near extinction.
+  - kind: reveal
+    text: Hazel peaked at 4,500 births in 1920.
+  - kind: proof
+    text: A century later, 3,400 girls received it in 2024.
+  - kind: loop
+    text: Watch an old name become new again.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Hazel peaked at 4,500 female births in 1920 and returned to 3,400 in 2024.
+visual_anchors:
+  - 1920 peak badge
+  - mid-century trough
+  - emerald return stroke
+  - peak-to-present comparison
+social_caption: Hazel is completing a comeback that began more than a century ago.
+hashtags:
+  - '#Hazel'
+  - '#NameComeback'
+  - '#AIVoice'
+share_prompt: Which old name deserves this comeback next?
+target_duration_s: 11.5
+voice_instructions: Read with controlled lift and curiosity; emphasize a century later and 3,400, then let the final line carry a subtle smile.
+status: approved
+quality_score: 85
+approved_by: initial-pilot-plan
+approved_at: 2026-08-08T12:00:00Z

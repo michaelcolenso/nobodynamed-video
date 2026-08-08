@@ -12,10 +12,10 @@ def _filter_complex(cmd: list[str]) -> str:
     return cmd[cmd.index("-filter_complex") + 1]
 
 
-def test_build_ffmpeg_cmd_has_five_inputs() -> None:
+def test_build_ffmpeg_cmd_has_global_frames_and_silent_audio_inputs() -> None:
     cmd = build_ffmpeg_cmd(FRAMES, OUT)
-    # Four scene inputs + one audio input.
-    assert cmd.count("-i") == 5
+    assert cmd.count("-i") == 2
+    assert str(FRAMES / "frame_%04d.png") in cmd
 
 
 def test_build_ffmpeg_cmd_starts_with_ffmpeg() -> None:
@@ -24,9 +24,10 @@ def test_build_ffmpeg_cmd_starts_with_ffmpeg() -> None:
     assert cmd[1] == "-y"
 
 
-def test_filter_complex_concatenates_all_scenes() -> None:
+def test_filter_complex_uses_one_continuous_timeline() -> None:
     fc = _filter_complex(build_ffmpeg_cmd(FRAMES, OUT))
-    assert "concat=n=4:v=1:a=0" in fc
+    assert "concat=" not in fc
+    assert fc.startswith("[0:v]scale=")
 
 
 def test_filter_complex_has_no_xfade() -> None:
@@ -104,5 +105,21 @@ def test_build_ffmpeg_cmd_with_audio_bed() -> None:
     assert "fixtures/bed.wav" in cmd
     # TikTok normalizes to ≈ -14 LUFS; the bed should already sit there.
     assert "loudnorm=I=-14.0" in joined
+    assert "TP=-1.0" in joined
     assert cmd[cmd.index("-b:a") + 1] == "192k"
     assert cmd[cmd.index("-ar") + 1] == "48000"
+
+
+def test_build_ffmpeg_cmd_mixes_narration_over_optional_bed() -> None:
+    cmd = build_ffmpeg_cmd(
+        FRAMES,
+        OUT,
+        narration_path=Path("out/.cache/narration/voice.wav"),
+        audio_path=Path("fixtures/bed.wav"),
+        total_duration=12.5,
+    )
+    fc = _filter_complex(cmd)
+    assert "out/.cache/narration/voice.wav" in cmd
+    assert "volume=0.10" in fc
+    assert "amix=inputs=2" in fc
+    assert "atrim=0:12.5" in fc

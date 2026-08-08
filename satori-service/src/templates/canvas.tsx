@@ -64,13 +64,23 @@ interface FooterState {
   alpha: number;
   site: string;
   cta: string;
+  disclosure?: string;
   dot_alpha?: number;
   dot_radius?: number;
+}
+
+interface CaptionState {
+  alpha: number;
+  text: string;
+  current_word: string;
+  progress: number;
 }
 
 export interface CanvasProps {
   program: string;
   register: string;
+  story_kind?: "one_hit" | "cultural_rupture" | "long_decline" | "comeback" | "legacy";
+  loop_progress?: number;
   tier: Tier;
   header: HeaderState;
   diagnosis: DiagnosisState;
@@ -79,6 +89,7 @@ export interface CanvasProps {
   narrative: NarrativeState;
   comparison: ComparisonState;
   footer: FooterState;
+  captions?: CaptionState;
   debug_safe?: boolean;
 }
 
@@ -205,8 +216,7 @@ function computeSpeedCurve(
     const FLAT_BUDGET_CAP = 0.3;
     const FLAT_COST = 0.35;
     const SLOPE_WEIGHT = 10;
-    const RAMP_S = 0.35;
-    const SIGMA_S = 0.08;
+    const SIGMA_S = 0.16;
     const TICKS_PER_S = 120;
 
     const maxY = Math.max(...points.map((p) => p.y));
@@ -223,6 +233,12 @@ function computeSpeedCurve(
       .slice(storyStart + 1)
       .map((p, i) => Math.abs(p.y - points[storyStart + i].y));
     const maxDy = Math.max(...storyDy, 1);
+    const gaps = points
+      .slice(1)
+      .map((point, index) => point.x - points[index].x)
+      .filter((gap) => gap > 0);
+    const sortedGaps = [...gaps].sort((a, b) => a - b);
+    const typicalGap = sortedGaps[Math.floor(sortedGaps.length / 2)] ?? 1;
     const peakIndex = points.reduce(
       (best, point, index) => (point.y < points[best].y ? index : best),
       0,
@@ -250,7 +266,17 @@ function computeSpeedCurve(
       const peak = landmarkWeight(segment, peakIndex, 4, 3.2);
       const collapse = landmarkWeight(segment, steepestFallIndex, 3, 1.8);
       const recent = segment >= recentStart ? 1.45 : 1;
-      return slopeCost * firstAppearance * peak * collapse * recent;
+      // PR #27 adds dense render-only points around one-hit spikes. Treat that
+      // dense run as an authored beat, so it receives enough time to read as a
+      // climb and hold instead of being compressed into a single gesture.
+      const gap = points[segment + 1]?.x - points[segment]?.x;
+      const dense = gap !== undefined && gap < typicalGap * 0.5;
+      const denseNeighbor = [segment - 1, segment, segment + 1].some((candidate) => {
+        const candidateGap = points[candidate + 1]?.x - points[candidate]?.x;
+        return candidateGap !== undefined && candidateGap < typicalGap * 0.5;
+      });
+      const spikeBeat = dense || denseNeighbor ? 8.0 : 1;
+      return slopeCost * firstAppearance * peak * collapse * recent * spikeBeat;
     });
     const costSum = costs.reduce((a, b) => a + b, 0);
 
@@ -263,14 +289,11 @@ function computeSpeedCurve(
     const cumT: number[] = [0];
     for (let i = 0; i < totalSegments; i++) cumT.push(cumT[i] + segT[i]);
 
-    // Speed on a fine time grid, with smoothstep ramps at both ends.
-    const clamp01 = (x: number) => Math.min(Math.max(x, 0), 1);
-    const smoothstep = (x: number) => {
-      const u = clamp01(x);
-      return u * u * (3 - 2 * u);
-    };
+    // Sample the authored cumulative-time map directly. Integrating a
+    // piecewise speed curve and normalizing afterward can erase the intended
+    // budget of a dense spike; direct lookup keeps each landmark's duration.
     const K = Math.max(2, Math.ceil(drawDurationS * TICKS_PER_S));
-    const v = new Array<number>(K).fill(0);
+    const rawPos = new Array<number>(K);
     for (let k = 0; k < K; k++) {
       const tau = (k + 0.5) / TICKS_PER_S;
       let seg = totalSegments - 1;
@@ -280,15 +303,13 @@ function computeSpeedCurve(
           break;
         }
       }
-      const segSpeed = segT[seg] > 0 ? 1 / segT[seg] : 0;
-      v[k] =
-        smoothstep(tau / RAMP_S) *
-        smoothstep((drawDurationS - tau) / RAMP_S) *
-        segSpeed;
+      const segmentStart = cumT[seg];
+      const segmentDuration = segT[seg] || 1;
+      rawPos[k] = seg + Math.min(Math.max((tau - segmentStart) / segmentDuration, 0), 1);
     }
 
-    // Gaussian-smooth the speed curve (edge-padded), then integrate and
-    // normalize so the full draw covers every segment in drawDurationS.
+    // Smooth position lightly to remove velocity steps at year boundaries,
+    // then normalize the endpoints back to the exact chart domain.
     const sigma = SIGMA_S * TICKS_PER_S;
     const kr = Math.ceil(3 * sigma);
     const kernel: number[] = [];
@@ -298,18 +319,20 @@ function computeSpeedCurve(
       kernel.push(wgt);
       kSum += wgt;
     }
-    const pos = new Array<number>(K);
-    let run = 0;
+    const smoothedPos = new Array<number>(K);
     for (let k = 0; k < K; k++) {
       let acc = 0;
       for (let j = -kr; j <= kr; j++) {
         const idx = Math.min(Math.max(k + j, 0), K - 1);
-        acc += kernel[j + kr] * v[idx];
+        acc += kernel[j + kr] * rawPos[idx];
       }
-      run += acc / kSum;
-      pos[k] = run;
+      smoothedPos[k] = acc / kSum;
     }
-    const posTotal = pos[K - 1] || 1;
+    const startPos = smoothedPos[0] ?? 0;
+    const endPos = smoothedPos[K - 1] ?? totalSegments;
+    const span = Math.max(endPos - startPos, 1e-9);
+    const pos = smoothedPos.map((value) => ((value - startPos) / span) * totalSegments);
+    const posTotal = totalSegments;
 
     _speedCache = { pos, posTotal, totalSegments };
     return _speedCache;
@@ -447,8 +470,176 @@ function AxisLabel({ top, text }: { top: number; text: string }) {
   );
 }
 
+function DisclosureBadge({ text }: { text: string }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 124,
+        right: CANVAS.safe.x,
+        borderWidth: 1,
+        borderStyle: "solid",
+        borderColor: COLORS.rule,
+        color: COLORS.fade,
+        fontFamily: TYPE.body.family,
+        fontSize: 18,
+        letterSpacing: 2,
+        paddingTop: 8,
+        paddingBottom: 8,
+        paddingLeft: 12,
+        paddingRight: 12,
+        display: "flex",
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+function OpeningOverlay({
+  alpha,
+  accentColor,
+  tier,
+  header,
+  diagnosis,
+}: {
+  alpha: number;
+  accentColor: string;
+  tier: Tier;
+  header: HeaderState;
+  diagnosis: DiagnosisState;
+}) {
+  if (alpha <= 0) return null;
+  // Bring the returning hook to readable contrast slightly faster than the
+  // background wipe. A linear 50/50 crossfade made the midpoint muddy.
+  const contentAlpha = alpha * (2 - alpha);
+  return (
+    <>
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: CANVAS.w,
+          height: CANVAS.h,
+          backgroundColor: COLORS.bg,
+          opacity: alpha,
+          display: "flex",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: 118,
+          left: CANVAS.safe.x,
+          width: CANVAS.w - CANVAS.safe.x * 2,
+          opacity: contentAlpha,
+          flexDirection: "column",
+          display: "flex",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            left: -24,
+            top: 4,
+            width: 6,
+            height: 126,
+            backgroundColor: accentColor,
+            display: "flex",
+          }}
+        />
+        <div
+          style={{
+            fontFamily: TYPE.body.family,
+            fontSize: RAMP.body[4],
+            color: COLORS.fade,
+            letterSpacing: 2,
+            textTransform: "uppercase",
+            display: "flex",
+          }}
+        >
+          {header.label}
+        </div>
+        <div
+          style={{
+            marginTop: 18,
+            alignItems: "center",
+            justifyContent: "space-between",
+            display: "flex",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: TYPE.display.family,
+              fontWeight: TYPE.display.weight,
+              fontSize: RAMP.display[1],
+              color: COLORS.ink,
+              display: "flex",
+            }}
+          >
+            {header.name}
+          </div>
+          <TierBadge tier={tier} />
+        </div>
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          top: 330,
+          left: CANVAS.safe.x,
+          width: CANVAS.w - CANVAS.safe.x * 2,
+          opacity: contentAlpha,
+          flexDirection: "column",
+          display: "flex",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: TYPE.display.family,
+            fontWeight: TYPE.display.weight,
+            fontSize: RAMP.body[0],
+            color: COLORS.ink,
+            lineHeight: 1.08,
+            fontVariantNumeric: "tabular-nums",
+            display: "flex",
+          }}
+        >
+          {diagnosis.headline}
+        </div>
+        <div
+          style={{
+            fontFamily: TYPE.body.family,
+            fontSize: RAMP.body[3],
+            color: COLORS.fade,
+            lineHeight: 1.5,
+            marginTop: 22,
+            fontVariantNumeric: "tabular-nums",
+            display: "flex",
+          }}
+        >
+          {diagnosis.subhead}
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function Canvas(props: CanvasProps) {
-  const { tier, header, diagnosis, chart, stats, narrative, comparison, footer, debug_safe = false } = props;
+  const {
+    tier,
+    header,
+    diagnosis,
+    chart,
+    stats,
+    narrative,
+    comparison,
+    footer,
+    captions,
+    story_kind = "legacy",
+    loop_progress = 0,
+    debug_safe = false,
+  } = props;
 
   const filtered = chart.series.filter((point) => point.count >= 0);
   const minYear = filtered[0]?.year ?? chart.current_year;
@@ -492,8 +683,18 @@ export default function Canvas(props: CanvasProps) {
   // supporting line. It is only visible post-recompose (alpha follows
   // SUPPORT_ALPHA), so the expanded-layout value never renders.
   const comparisonTop = mix(1640, 1262, chart.layout_progress) + (comparison.offset_y ?? 0);
-  const dotColor =
-    tier === "rising" || tier === "resurrected" ? COLORS.emerald : COLORS.crimson;
+  const accentColor =
+    story_kind === "comeback"
+      ? COLORS.emerald
+      : story_kind === "one_hit" || story_kind === "long_decline"
+        ? COLORS.amber
+        : story_kind === "cultural_rupture"
+          ? COLORS.crimson
+          : tier === "rising" || tier === "resurrected"
+            ? COLORS.emerald
+            : COLORS.crimson;
+  const curveColor = story_kind === "legacy" ? COLORS.ink : accentColor;
+  const dotColor = accentColor;
   const peakX = toX(chart.peak_year);
   // Year the tracer is currently passing through — toX is linear in year, so
   // the inverse mapping from tracerX recovers it exactly.
@@ -595,6 +796,19 @@ export default function Canvas(props: CanvasProps) {
           width: CANVAS.w - CANVAS.safe.x * 2,
         }}
       >
+        {story_kind !== "legacy" && (
+          <div
+            style={{
+              position: "absolute",
+              left: -24,
+              top: 4,
+              width: 6,
+              height: 126,
+              backgroundColor: accentColor,
+              display: "flex",
+            }}
+          />
+        )}
         <div
           style={{
             fontFamily: TYPE.body.family,
@@ -805,7 +1019,7 @@ export default function Canvas(props: CanvasProps) {
             <linearGradient id="chartAreaGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={COLORS.ink} stopOpacity={0.3} />
               <stop offset="70%" stopColor={COLORS.ink} stopOpacity={0.05} />
-              <stop offset="100%" stopColor={COLORS.crimson} stopOpacity={0.1} />
+              <stop offset="100%" stopColor={accentColor} stopOpacity={0.16} />
             </linearGradient>
           </defs>
 
@@ -862,7 +1076,7 @@ export default function Canvas(props: CanvasProps) {
           <path
             d={pathD}
             fill="none"
-            stroke={COLORS.ink}
+            stroke={curveColor}
             strokeWidth={10}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -872,8 +1086,8 @@ export default function Canvas(props: CanvasProps) {
           <path
             d={pathD}
             fill="none"
-            stroke={COLORS.ink}
-            strokeWidth={3}
+            stroke={curveColor}
+            strokeWidth={4}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -1188,6 +1402,43 @@ export default function Canvas(props: CanvasProps) {
         </div>
       )}
 
+      {captions && captions.alpha > 0 && captions.text && (
+        <div
+          style={{
+            position: "absolute",
+            top: 1510,
+            left: CANVAS.safe.x,
+            width: CANVAS.w - CANVAS.safe.x * 2,
+            opacity: captions.alpha,
+            alignItems: "center",
+            justifyContent: "center",
+            display: "flex",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "rgba(20,17,14,0.90)",
+              borderWidth: 1,
+              borderStyle: "solid",
+              borderColor: accentColor,
+              paddingTop: 16,
+              paddingBottom: 18,
+              paddingLeft: 26,
+              paddingRight: 26,
+              fontFamily: TYPE.display.family,
+              fontWeight: TYPE.display.weight,
+              fontSize: RAMP.body[2],
+              lineHeight: 1.18,
+              color: COLORS.ink,
+              textAlign: "center",
+              display: "flex",
+            }}
+          >
+            {captions.text}
+          </div>
+        </div>
+      )}
+
       <div
         style={{
           position: "absolute",
@@ -1249,13 +1500,22 @@ export default function Canvas(props: CanvasProps) {
               width: (footer.dot_radius ?? 10) * 2,
               height: (footer.dot_radius ?? 10) * 2,
               borderRadius: footer.dot_radius ?? 10,
-              backgroundColor: COLORS.crimson,
+              backgroundColor: accentColor,
               opacity: footer.dot_alpha ?? 1.0,
               display: "flex",
             }}
           />
         </div>
       </div>
+
+      <OpeningOverlay
+        alpha={loop_progress}
+        accentColor={accentColor}
+        tier={tier}
+        header={header}
+        diagnosis={diagnosis}
+      />
+      {footer.disclosure && <DisclosureBadge text={footer.disclosure} />}
     </div>
   );
 }

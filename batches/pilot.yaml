@@ -1,0 +1,24 @@
+batch: pilot
+defaults:
+  fps: 30
+videos:
+  - id: kunta-2024
+    name: Kunta
+    sex: M
+    style: peak-year
+    story: stories/kunta-2024.yaml
+  - id: alexa-2024
+    name: Alexa
+    sex: F
+    style: cultural-collapse
+    story: stories/alexa-2024.yaml
+  - id: bertha-2024
+    name: Bertha
+    sex: F
+    style: extinction-watch
+    story: stories/bertha-2024.yaml
+  - id: hazel-2024
+    name: Hazel
+    sex: F
+    style: rising
+    story: stories/hazel-2024.yaml

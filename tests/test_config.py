@@ -13,6 +13,18 @@ def test_settings_use_explicit_d1_token() -> None:
     assert settings.get_d1_token() == "abc123"
 
 
+def test_workers_ai_account_id_uses_explicit_value() -> None:
+    settings = Settings(cloudflare_account_id=" account-id ")
+    assert settings.workers_ai_account_id() == "account-id"
+
+
+def test_workers_ai_account_id_can_be_inferred_from_d1_url() -> None:
+    settings = Settings(
+        d1_url="https://api.cloudflare.com/client/v4/accounts/account-id/d1/database/db/query"
+    )
+    assert settings.workers_ai_account_id() == "account-id"
+
+
 def test_settings_cache_wrangler_token(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = 0
 

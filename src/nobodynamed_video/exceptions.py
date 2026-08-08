@@ -27,3 +27,11 @@ class DataSourceError(RuntimeError):
 
 class HookResolutionError(RuntimeError):
     """Raised when no compatible editorial hook can be resolved."""
+
+
+class StoryQualityError(RuntimeError):
+    """Raised when an editorial story has not cleared the publish gate."""
+
+
+class NarrationError(RuntimeError):
+    """Raised when narration or word alignment cannot be produced safely."""

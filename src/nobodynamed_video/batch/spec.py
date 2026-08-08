@@ -17,8 +17,9 @@ from nobodynamed_video.data.ctx import (
 from nobodynamed_video.data.d1_source import D1Source
 from nobodynamed_video.data.hooks import load_hook_library, resolve_hook
 from nobodynamed_video.data.sqlite_source import SqliteSource
-from nobodynamed_video.exceptions import BlocklistedName
-from nobodynamed_video.models import Scene, VideoSpec
+from nobodynamed_video.editorial.story import evaluate_story, load_story
+from nobodynamed_video.exceptions import BlocklistedName, StoryQualityError
+from nobodynamed_video.models import ProgramType, Scene, StoryKind, StorySpec, VideoSpec
 from nobodynamed_video.render.frame_planner import SCENE_DURATIONS, SCENE_ORDER
 from nobodynamed_video.seed import spec_seed
 
@@ -27,7 +28,36 @@ _BLOCKLIST_PATH = Path("fixtures/blocklist.txt")
 # Hard character caps, enforced at load: every copy field sits in a fixed
 # layout band; overflow wraps into the chart or the TikTok caption zone.
 # Caps are ~2 lines at the field's font size inside the 920px safe width.
-COPY_CAPS = {"headline": 60, "subhead": 55, "narrative": 70, "support": 55}
+COPY_CAPS = {"headline": 60, "subhead": 70, "narrative": 80, "support": 70}
+
+_STORY_PROGRAMS = {
+    StoryKind.ONE_HIT: ProgramType.CASE_FILE,
+    StoryKind.CULTURAL_RUPTURE: ProgramType.CULTURAL_EVENT,
+    StoryKind.LONG_DECLINE: ProgramType.CASE_FILE,
+    StoryKind.COMEBACK: ProgramType.RETURN_NOTICE,
+}
+
+
+def _story_path(batch_path: Path, value: str) -> Path:
+    direct = Path(value)
+    if direct.exists():
+        return direct
+    relative = batch_path.parent / value
+    if relative.exists():
+        return relative
+    raise StoryQualityError(f"Story file not found: {value}")
+
+
+def _load_approved_story(batch_path: Path, entry: dict[str, Any]) -> StorySpec | None:
+    story_ref = entry.get("story")
+    if not story_ref:
+        return None
+    story = load_story(_story_path(batch_path, str(story_ref)))
+    evaluation = evaluate_story(story)
+    if not evaluation.publishable:
+        reasons = "; ".join(evaluation.blockers)
+        raise StoryQualityError(f"{story.id}: rejected by story gate — {reasons}")
+    return story
 
 
 def _validate_copy(
@@ -101,6 +131,12 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
         name: str = entry["name"]
         sex: str = entry["sex"]
         vid_id: str = entry.get("id", f"{name.lower()}-{latest_year}")
+        story = _load_approved_story(yaml_path, entry)
+        if story and (story.id != vid_id or story.name != name or story.sex != sex):
+            raise StoryQualityError(
+                f"{vid_id}: story identity does not match batch entry "
+                f"({story.id}, {story.name}, {story.sex})"
+            )
         style: str | None = entry.get("style")
         explicit_hook_id: str | None = entry.get("hook_id")
 
@@ -136,6 +172,25 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
         if support := entry.get("support"):
             context = context.model_copy(update={"supporting_text": support})
 
+        if story:
+            program = _STORY_PROGRAMS[story.story_kind]
+            hook = hook.model_copy(
+                update={
+                    "headline": story.headline,
+                    "subhead": story.subhead,
+                    "caption": story.social_caption,
+                    "pinned_comment": story.share_prompt,
+                    "voice_register": "documentary",
+                }
+            )
+            context = context.model_copy(
+                update={
+                    "program": program,
+                    "narrative_text": story.takeaway,
+                    "supporting_text": story.support,
+                }
+            )
+
         _validate_copy(
             vid_id,
             {
@@ -162,6 +217,8 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
                 program=context.program,
                 hook=hook,
                 context=context,
+                story=story,
+                duration_s=story.target_duration_s if story else 11.0,
             )
         )
 

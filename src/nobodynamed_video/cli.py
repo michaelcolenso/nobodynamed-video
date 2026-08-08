@@ -12,9 +12,24 @@ import click
 import typer
 from rich.console import Console
 
+from nobodynamed_video.analytics.retention import (
+    import_retention_csv,
+    write_retention_report,
+)
 from nobodynamed_video.batch.runner import run_batch
 from nobodynamed_video.batch.spec import load_specs
 from nobodynamed_video.config import get_settings
+from nobodynamed_video.data.d1_source import D1Source
+from nobodynamed_video.data.sqlite_source import SqliteSource
+from nobodynamed_video.editorial.story import (
+    approve_story,
+    draft_story,
+    evaluate_story,
+    load_story,
+    write_story,
+)
+from nobodynamed_video.exceptions import StoryQualityError
+from nobodynamed_video.models import StoryKind
 from nobodynamed_video.render.frame_planner import plan_frames
 from nobodynamed_video.render.satori_client import SatoriClient
 
@@ -28,6 +43,7 @@ def render(
     no_compose: bool = typer.Option(False, help="Render frames only, skip ffmpeg"),
     debug_safe: bool = typer.Option(False, help="Overlay TikTok safe-area guides"),
     audio: Optional[Path] = typer.Option(None, help="Optional audio bed (.wav/.mp3/.aac)"),
+    no_narration: bool = typer.Option(False, help="Skip AI narration for frame-only testing"),
     force: bool = typer.Option(False, help="Override blocklist"),
 ) -> None:
     """Render all videos defined in the YAML spec."""
@@ -43,6 +59,13 @@ def render(
             no_compose=no_compose,
             debug_safe=debug_safe,
             audio_path=audio,
+            narration_enabled=settings.narration_enabled and not no_narration,
+            cloudflare_account_id=settings.workers_ai_account_id(),
+            cloudflare_api_token=settings.cloudflare_api_token or settings.d1_token,
+            cloudflare_ai_base_url=settings.cloudflare_ai_base_url,
+            narration_model=settings.narration_model,
+            transcription_model=settings.transcription_model,
+            narration_voice=settings.narration_voice,
         )
 
     asyncio.run(_run())
@@ -53,6 +76,7 @@ def batch(
     spec: Path = typer.Argument(..., help="Path to batch YAML spec"),
     force: bool = typer.Option(False, help="Override blocklist"),
     audio: Optional[Path] = typer.Option(None, help="Optional audio bed"),
+    no_narration: bool = typer.Option(False, help="Skip AI narration"),
 ) -> None:
     """Render a full batch from YAML."""
     settings = get_settings()
@@ -65,6 +89,13 @@ def batch(
             out_dir=settings.out_dir,
             batch_name=spec.stem,
             audio_path=audio,
+            narration_enabled=settings.narration_enabled and not no_narration,
+            cloudflare_account_id=settings.workers_ai_account_id(),
+            cloudflare_api_token=settings.cloudflare_api_token or settings.d1_token,
+            cloudflare_ai_base_url=settings.cloudflare_ai_base_url,
+            narration_model=settings.narration_model,
+            transcription_model=settings.transcription_model,
+            narration_voice=settings.narration_voice,
         )
 
     asyncio.run(_run())
@@ -76,6 +107,7 @@ def preview(
     scene: str = typer.Option(..., help="Scene name: hook|reveal|narrative|cta"),
     frame: int = typer.Option(0, help="Frame index within the scene"),
     spec_file: Path = typer.Option(Path("batches/smoke.yaml"), help="Batch YAML spec file"),
+    open_viewer: bool = typer.Option(True, "--open/--no-open", help="Open the saved PNG"),
 ) -> None:
     """Render a single frame and open it in the system viewer."""
     settings = get_settings()
@@ -98,8 +130,9 @@ def preview(
                 out_path.write_bytes(png)
                 console.print(f"Saved: {out_path}")
                 # Open in system viewer.
-                opener = "open" if sys.platform == "darwin" else "xdg-open"
-                subprocess.run([opener, str(out_path)], check=False)
+                if open_viewer:
+                    opener = "open" if sys.platform == "darwin" else "xdg-open"
+                    subprocess.run([opener, str(out_path)], check=False)
                 return
 
         console.print(f"[red]Frame {frame} not found in scene '{scene}'[/red]")
@@ -136,6 +169,92 @@ def smoke() -> None:
 
 captions_app = typer.Typer(name="captions", help="Manage caption combination state.")
 app.add_typer(captions_app)
+
+story_app = typer.Typer(name="story", help="Propose, score, and approve editorial stories.")
+app.add_typer(story_app)
+
+analytics_app = typer.Typer(name="analytics", help="Import retention and report decisions.")
+app.add_typer(analytics_app)
+
+
+@analytics_app.command("import")
+def analytics_import(
+    csv_path: Path = typer.Argument(..., help="TikTok Studio per-video CSV export"),
+    db_path: Path = typer.Option(Path("state/retention.db"), help="Analytics database"),
+) -> None:
+    """Import one retention snapshot per exported video."""
+    count = import_retention_csv(csv_path, db_path)
+    console.print(f"Imported {count} retention row(s) into {db_path}")
+
+
+@analytics_app.command("report")
+def analytics_report(
+    db_path: Path = typer.Option(Path("state/retention.db"), help="Analytics database"),
+) -> None:
+    """Join latest retention to render manifests and recommend the next action."""
+    settings = get_settings()
+    json_path, markdown_path = write_retention_report(db_path, settings.out_dir)
+    console.print(f"JSON: {json_path}")
+    console.print(f"Report: {markdown_path}")
+
+
+def _print_story_evaluation(path: Path) -> bool:
+    evaluation = evaluate_story(load_story(path))
+    console.print(f"Score: [bold]{evaluation.score}/100[/bold]")
+    for component, score in evaluation.components.items():
+        console.print(f"  {component:<10} {score}")
+    for warning in evaluation.warnings:
+        console.print(f"[yellow]warning:[/yellow] {warning}")
+    for blocker in evaluation.blockers:
+        console.print(f"[red]blocker:[/red] {blocker}")
+    return evaluation.publishable
+
+
+@story_app.command("propose")
+def story_propose(
+    name: str = typer.Option(..., help="SSA name to inspect"),
+    sex: str = typer.Option(..., help="SSA sex: M or F"),
+    kind: StoryKind = typer.Option(..., help="Editorial story archetype"),
+    output: Optional[Path] = typer.Option(None, help="Draft YAML destination"),
+) -> None:
+    """Create an evidence-first draft for human editing and approval."""
+    settings = get_settings()
+    target = output or Path("stories") / f"{name.lower()}-{settings.latest_year}.yaml"
+
+    async def _run() -> None:
+        if settings.use_sqlite:
+            source: SqliteSource | D1Source = SqliteSource(settings.sqlite_fixture)
+        else:
+            source = D1Source(settings.d1_url, settings.get_d1_token())
+        record = await source.get_record(name, sex.upper(), settings.latest_year)
+        story = draft_story(record, kind, target.stem)
+        write_story(story, target)
+
+    asyncio.run(_run())
+    console.print(f"Drafted: {target}")
+    _print_story_evaluation(target)
+
+
+@story_app.command("score")
+def story_score(path: Path = typer.Argument(..., help="Story YAML to evaluate")) -> None:
+    """Show the deterministic publish score and all blockers."""
+    if not _print_story_evaluation(path):
+        raise typer.Exit(1)
+
+
+@story_app.command("approve")
+def story_approve(
+    path: Path = typer.Argument(..., help="Story YAML to approve"),
+    reviewer: str = typer.Option(..., help="Human reviewer name or handle"),
+) -> None:
+    """Record one-time approval after every evidence and copy gate passes."""
+    try:
+        approved = approve_story(load_story(path), reviewer)
+    except StoryQualityError as exc:
+        console.print(f"[red]Approval rejected:[/red] {exc}")
+        raise typer.Exit(1) from exc
+    write_story(approved, path)
+    console.print(f"[green]Approved:[/green] {path} ({approved.quality_score}/100)")
 
 
 @captions_app.command("stats")
