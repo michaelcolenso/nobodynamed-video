@@ -1,0 +1,40 @@
+id: bertha-2024
+name: Bertha
+sex: F
+story_kind: long_decline
+thesis: Bertha's 114-year decline compresses a full generational disappearance into one unmistakable curve.
+headline: This name took 114 years to disappear.
+subhead: 5,000 births in 1910. Nine in 2024.
+takeaway: Bertha did not crash; each generation used it less.
+support: A century-long fade to single digits.
+script_beats:
+  - kind: hook
+    text: This name took 114 years to vanish.
+  - kind: reveal
+    text: Bertha peaked at 5,000 births in 1910.
+  - kind: proof
+    text: By 2024, nine girls were named Bertha.
+  - kind: loop
+    text: Watch 114 years collapse.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Bertha peaked at 5,000 female births in 1910 and recorded nine in 2024.
+visual_anchors:
+  - 1910 peak plateau
+  - century ruler
+  - single-digit landing
+  - line folding into loop
+social_caption: Bertha's disappearance took 114 years and one relentless curve.
+hashtags:
+  - '#Bertha'
+  - '#NameHistory'
+  - '#AIVoice'
+share_prompt: Which familiar name is fading next?
+target_duration_s: 12.5
+voice_instructions: Read with quiet momentum rather than gloom; stress more than a century, 5,000, and nine, then make the final line feel inevitable.
+status: approved
+quality_score: 85
+approved_by: initial-pilot-plan
+approved_at: 2026-08-08T12:00:00Z

@@ -1,77 +1,68 @@
-# RUNBOOK.md — nobodynamed-video operational guide
+# Operations runbook
 
-## Daily render workflow
+## Daily workflow
 
-1. Ensure the Satori sidecar is running: `make satori` (in a separate terminal).
-2. Confirm preflight: `make doctor` — all checks must pass before rendering.
-3. Run the smoke test to confirm the pipeline is healthy: `make smoke`.
-4. Run the weekly batch: `make batch` or `uv run nbn batch batches/week-1.yaml`.
-5. Inspect `out/week-1.summary.json` for per-video render times and any failures.
-6. Upload resulting MP4 files from `out/` to TikTok manually.
-   **Add sound at upload time in the TikTok editor** — pick a trending
-   cinematic/suspense sound. The baked-in audio is a silent AAC track by
-   design: a native trending sound gets algorithmic lift and avoids licensing
-   risk, neither of which a baked-in track can provide. Keep the sound's
-   volume low enough that the visual pacing still leads.
+1. Start the sidecar in another terminal with `make satori`.
+2. Run `make doctor`.
+3. Score and review any new `stories/*.yaml` file.
+4. Record human approval with `nbn story approve`; never hand-edit a draft to `approved`.
+5. Run `make smoke`, inspect the MP4 and QC report, then run `make pilot` or the target batch.
+6. Upload the MP4 and add a low-volume native platform sound. Do not bake music into the
+   default master.
+7. Export per-video metrics, run `nbn analytics import <csv>`, then `nbn analytics report`.
 
----
+## Credential handling
 
-## How to update the LATEST_YEAR constant
+Cloudflare Workers AI powers narration and alignment. Put a token with Workers AI Read
+and Edit permissions in `CLOUDFLARE_API_TOKEN` in the gitignored `.env` file. Set
+`CLOUDFLARE_ACCOUNT_ID`, or let the pipeline infer it from `D1_URL`. Never put a real
+token in `.env.example`, a story, a batch file, a manifest, logs, or a commit.
 
-1. Open `src/nobodynamed_video/config.py`.
-2. Update the `LATEST_YEAR` field default value to the new year (e.g. `2025`).
-3. Update `.env.example` to reflect the new value.
-4. Re-run `make smoke` to confirm the pipeline resolves data correctly for the new year.
-5. Commit both `config.py` and `.env.example`.
+Use `--no-narration` only for frame/compositor diagnosis. A composed approved story without
+narration fails QC by design.
 
----
+## Story decisions
 
-## How to add a new scene template
+Use the retention report as an operating queue:
 
-1. Create the JSX template at `satori-service/src/templates/<scene-name>.tsx`.
-   Follow the pattern in `shared.tsx` for brand constants and prop types.
-2. Register the template name in `satori-service/src/server.ts` template dispatch map.
-3. Create the Python scene class at `src/nobodynamed_video/scenes/<scene-name>.py`,
-   implementing the `Scene` protocol (duration_s, frames_at, template_name, props_at).
-4. Add the scene to the pipeline in the relevant VideoSpec builder.
-5. Write tests in `tests/test_<scene-name>.py` covering props_at at key frame indices.
-6. Run `make smoke` to confirm end-to-end rendering works.
+- low two-second retention: rewrite the hook and opening visual
+- healthy opening but weak completion/watch ratio: reveal sooner or remove a middle beat
+- healthy completion but weak shares: preserve the premise and strengthen the final turn
+- healthy completion and shares after 1,000 views: scale that archetype
 
----
+Treat the initial thresholds as internal hypotheses. Recalculate after at least 20 posts
+with comparable runtimes and distribution.
 
-## How to debug a Satori 500
+## Debugging
 
-1. Check the Satori sidecar terminal for stack traces — it logs to stdout.
-2. Isolate the failing frame: `uv run nbn preview --scene <scene> --frame <n> --spec batches/smoke.yaml`.
-3. Confirm fonts loaded at boot: `curl http://localhost:3001/health` should return `{"status":"ok"}`.
-   If fonts are missing, place TTF files in `satori-service/fonts/` and restart the sidecar.
-4. Narrow the props: add `console.log(props)` in the failing template, re-run preview.
-5. Confirm the template name matches the dispatch map in `server.ts`.
-6. If the issue is a JSX runtime error, run `cd satori-service && pnpm build` to see TypeScript errors.
-7. If startup fails with `EADDRINUSE`, another process already owns the port.
-   Reuse the existing sidecar if `curl http://localhost:3001/health` returns `status=ok`,
-   otherwise stop the conflicting process or restart with `PORT=3002 make satori` and
-   `SATORI_URL=http://localhost:3002`.
+### Satori failure
 
----
+1. Check `GET /health` on the configured `SATORI_URL`.
+2. Run `npm run build` inside `satori-service`.
+3. Render one frame with `nbn preview`.
+4. If the port is occupied, reuse the healthy sidecar or choose another `PORT` and update
+   `SATORI_URL`.
 
-## How to bisect a golden-frame regression
+### Narration failure
 
-1. Run `make smoke` — it will report the first divergent frame and scene name.
-2. Use `git log --oneline` to identify the commit range when the regression appeared.
-3. Run `git bisect start` with the known-good and known-bad commits.
-4. At each bisect step, run `make smoke`; exit 0 means good, exit 1 means bad.
-5. The bisect will identify the commit. Inspect the diff for template or motion changes.
-6. Once fixed, delete the stale golden files in `fixtures/golden/<id>/` and re-run
-   `make smoke` once to re-bootstrap the golden hashes.
+1. Confirm only the presence of `CLOUDFLARE_API_TOKEN`; never print it.
+2. Check the account ID and Workers AI model settings in `.env`.
+3. Re-run the story score to ensure the script is within 24–36 words.
+4. Cached audio lives under `out/.cache/narration`; a changed script or voice naturally
+   creates a new cache key.
 
----
+### Data-source failure
 
-## How to rotate the D1 token
+The local fixture supports Alexa, Bertha, and Hazel but not Kunta. Use configured D1 access
+for Kunta or render the other pilots locally. D1 requires a URL and either an explicit token
+or a working Wrangler login.
 
-1. In the Cloudflare dashboard, create a new API token scoped to D1 read-only for the
-   nobodynamed database.
-2. Update `.env` (or your secrets manager) with the new `D1_TOKEN` value.
-3. Run `make doctor` to confirm D1 reachability with the new token.
-4. Revoke the old token in the Cloudflare dashboard.
-5. If using CI, update the `D1_TOKEN` secret in the CI environment as well.
+### Golden-frame change
+
+Golden hashes cover the first hook and reveal frames. Inspect visual changes before
+regenerating them; do not accept new hashes solely to clear a failure.
+
+## Annual SSA update
+
+Update `LATEST_YEAR`, refresh the SQLite/D1 data, revise evidence counts and story IDs,
+re-score every affected story, and obtain fresh human approval before rendering.

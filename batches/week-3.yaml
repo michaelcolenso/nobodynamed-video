@@ -8,7 +8,4 @@ videos:
     name: Kunta
     sex: M
     style: peak-year
-    headline: "A single week of TV named 215 boys in 1977."
-    subhead: "16 by 1979. Gone by 1981."
-    narrative: "Television created a name. The news cycle consumed it."
-    support: "Peak: 215. Now: 0."
+    story: stories/kunta-2024.yaml

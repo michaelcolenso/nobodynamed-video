@@ -1,4 +1,4 @@
-.PHONY: setup smoke render batch test lint typecheck doctor clean regen
+.PHONY: setup smoke smoke-frames pilot render batch test lint typecheck doctor clean regen
 
 setup:
 	uv sync
@@ -11,8 +11,14 @@ satori:
 smoke:
 	uv run nbn render --spec batches/smoke.yaml
 
+smoke-frames:
+	uv run nbn render --spec batches/smoke.yaml --no-compose --no-narration
+
+pilot:
+	uv run nbn batch batches/pilot.yaml
+
 batch:
-	uv run nbn batch batches/week-1.yaml
+	uv run nbn batch batches/pilot.yaml
 
 test:
 	uv run pytest -x -q

@@ -1,0 +1,48 @@
+id: kunta-2024
+name: Kunta
+sex: M
+story_kind: one_hit
+thesis: Kunta was created as an American baby-name event by Roots in 1977, then nearly disappeared within two years.
+headline: TV created this name in one week.
+subhead: 215 boys in 1977. Just 16 two years later.
+takeaway: Roots created a name almost as quickly as culture forgot it.
+support: A debut, a peak, and a disappearance.
+script_beats:
+  - kind: hook
+    text: One week of television created this name.
+  - kind: reveal
+    text: Roots aired in January 1977; 215 boys were named Kunta that year.
+  - kind: proof
+    text: Two years later, the count was 16.
+  - kind: loop
+    text: Watch one broadcast become a spike.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Kunta debuted and peaked with 215 male births in 1977, then fell to 16 in 1979.
+  - label: Nancy's Baby Names Roots analysis
+    url: https://www.nancy.cc/2012/04/24/baby-names-kizzy-kunta-kinte-levar/
+    kind: reporting
+    supports: Connects the 1977 Roots broadcast to Kunta's debut and reproduces annual SSA counts.
+  - label: Encyclopedia of Television Roots entry
+    url: https://www.tvencyclopedia.org/tv-encyclopedia-14/roots
+    kind: primary
+    supports: Establishes that the Roots miniseries aired on ABC in January 1977.
+visual_anchors:
+  - 1977 broadcast stamp
+  - vertical debut spike
+  - 1979 count collapse
+  - loop back to broadcast stamp
+social_caption: Roots turned Kunta into a one-year American naming event.
+hashtags:
+  - '#NameHistory'
+  - '#Roots1977'
+  - '#AIVoice'
+share_prompt: What other show changed a name overnight?
+target_duration_s: 10.0
+voice_instructions: Read like a precise culture-documentary narrator; start immediately, emphasize 1977 and 215, then leave a short beat before the loop line.
+status: approved
+quality_score: 100
+approved_by: initial-pilot-plan
+approved_at: 2026-08-08T12:00:00Z

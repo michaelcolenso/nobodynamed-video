@@ -4,6 +4,7 @@ export const COLORS = {
   bg:      "#14110E",
   ink:     "#E8E0D4",
   fade:    "#C9C4B5",
+  amber:   "#D89A3C",
   crimson: "#A21F1F",
   emerald: "#059669",
   rule:    "#2A2622",

@@ -44,6 +44,89 @@ class ProgramType(str, Enum):
     CULTURAL_EVENT = "cultural_event"
 
 
+class StoryKind(str, Enum):
+    """Editorial shapes that receive distinct pacing and visual treatment."""
+
+    ONE_HIT = "one_hit"
+    CULTURAL_RUPTURE = "cultural_rupture"
+    LONG_DECLINE = "long_decline"
+    COMEBACK = "comeback"
+
+
+class StoryStatus(str, Enum):
+    DRAFT = "draft"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
+class EvidenceKind(str, Enum):
+    SSA = "ssa"
+    PRIMARY = "primary"
+    REPORTING = "reporting"
+    ACADEMIC = "academic"
+
+
+class ScriptBeatKind(str, Enum):
+    HOOK = "hook"
+    REVEAL = "reveal"
+    PROOF = "proof"
+    TURN = "turn"
+    LOOP = "loop"
+
+
+class EvidenceSource(BaseModel):
+    label: str = Field(min_length=3, max_length=100)
+    url: str = Field(min_length=8, max_length=500)
+    kind: EvidenceKind
+    supports: str = Field(min_length=8, max_length=240)
+
+
+class ScriptBeat(BaseModel):
+    kind: ScriptBeatKind
+    text: str = Field(min_length=2, max_length=180)
+
+
+class StorySpec(BaseModel):
+    """A reviewed editorial premise, not merely a render configuration."""
+
+    id: str
+    name: str
+    sex: str = Field(pattern=r"^[MF]$")
+    story_kind: StoryKind
+    thesis: str = Field(min_length=12, max_length=180)
+    headline: str = Field(min_length=4, max_length=60)
+    subhead: str = Field(min_length=4, max_length=70)
+    takeaway: str = Field(min_length=8, max_length=80)
+    support: str = Field(min_length=4, max_length=70)
+    script_beats: list[ScriptBeat] = Field(min_length=3, max_length=6)
+    evidence: list[EvidenceSource] = Field(min_length=1)
+    visual_anchors: list[str] = Field(min_length=2, max_length=5)
+    social_caption: str = Field(min_length=8, max_length=130)
+    hashtags: list[str] = Field(min_length=2, max_length=4)
+    share_prompt: str = Field(min_length=8, max_length=100)
+    target_duration_s: float = Field(default=11.0, ge=9.0, le=14.0)
+    voice: str | None = Field(default=None, min_length=2, max_length=80)
+    voice_instructions: str = Field(min_length=12, max_length=300)
+    status: StoryStatus = StoryStatus.DRAFT
+    quality_score: int = Field(default=0, ge=0, le=100)
+    approved_by: str | None = None
+    approved_at: datetime | None = None
+
+    @property
+    def narration_text(self) -> str:
+        return " ".join(beat.text.strip() for beat in self.script_beats)
+
+    @property
+    def narration_word_count(self) -> int:
+        return len(self.narration_text.split())
+
+
+class WordTiming(BaseModel):
+    word: str
+    start_s: float = Field(ge=0)
+    end_s: float = Field(ge=0)
+
+
 class ResolvedCulturalEvent(BaseModel):
     name: str
     sex: str
@@ -119,6 +202,9 @@ class VideoSpec(BaseModel):
     program: ProgramType = ProgramType.CASE_FILE
     hook: ResolvedHook | None = None
     context: VideoContext | None = None
+    story: StorySpec | None = None
+    duration_s: float = Field(default=11.0, ge=9.0, le=14.0)
+    word_timings: list[WordTiming] = Field(default_factory=list)
 
 
 class RenderManifest(BaseModel):
@@ -138,3 +224,15 @@ class RenderManifest(BaseModel):
     caption: str | None = None
     pinned_comment: str | None = None
     hashtag_set: list[str] = Field(default_factory=list)
+    story_kind: str | None = None
+    story_score: int | None = None
+    story_thesis: str | None = None
+    script: str | None = None
+    word_timings: list[WordTiming] = Field(default_factory=list)
+    narration_provider: str | None = None
+    narration_model: str | None = None
+    narration_voice: str | None = None
+    narration_path: str | None = None
+    ai_voice_disclosure: str | None = None
+    loudness_target_lufs: float | None = None
+    true_peak_target_dbtp: float | None = None

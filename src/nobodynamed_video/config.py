@@ -1,6 +1,7 @@
 """Pydantic Settings for the nobodynamed video pipeline."""
 
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -22,12 +23,19 @@ class Settings(BaseSettings):
     font_dir: Path = Field(default=Path("./satori-service/fonts"))
     latest_year: int = Field(default=2024)
     log_level: str = Field(default="INFO")
+    cloudflare_account_id: str = Field(default="")
+    cloudflare_api_token: str = Field(default="")
+    cloudflare_ai_base_url: str = Field(default="https://api.cloudflare.com/client/v4")
+    narration_model: str = Field(default="@cf/deepgram/aura-2-en")
+    transcription_model: str = Field(default="@cf/openai/whisper-large-v3-turbo")
+    narration_voice: str = Field(default="luna")
+    narration_enabled: bool = Field(default=True)
 
     # SQLite fixture path used in dev/test when d1_url is empty.
     sqlite_fixture: Path = Field(default=Path("./fixtures/ssa.sqlite"))
     _resolved_d1_token: str | None = None
 
-    @field_validator("d1_url", "d1_token", mode="before")
+    @field_validator("d1_url", "d1_token", "cloudflare_api_token", mode="before")
     @classmethod
     def _strip_whitespace(cls, value: object) -> object:
         """Secrets pasted into CI UIs often carry stray newlines; a newline in
@@ -48,6 +56,13 @@ class Settings(BaseSettings):
             return self._resolved_d1_token
         self._resolved_d1_token = resolve_wrangler_auth_token()
         return self._resolved_d1_token
+
+    def workers_ai_account_id(self) -> str:
+        """Return the explicit account ID or infer it from the configured D1 URL."""
+        if self.cloudflare_account_id:
+            return self.cloudflare_account_id.strip()
+        match = re.search(r"/accounts/([^/]+)/", self.d1_url)
+        return match.group(1) if match else ""
 
 
 def resolve_wrangler_auth_token() -> str:

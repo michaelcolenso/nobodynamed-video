@@ -1,79 +1,95 @@
 # nobodynamed-video
 
-Agent-driven pipeline that turns SSA baby name records into 11-second 9:16 TikTok videos in the nobodynamed.com v3 brand system.
+An evidence-backed culture micro-documentary engine. It turns Social Security baby-name
+history into adaptive 9–14 second vertical videos with reviewed premises, documentary
+narration, word-timed captions, story-specific motion, and retention feedback.
 
-One command renders an MP4 ready for TikTok upload.
+The pipeline rejects weak or unapproved stories before it renders them.
 
 ## Quick start
 
 ```bash
-# 1. Install dependencies
 make setup
-
-# 2. Place fonts (required — Satori will not render without them)
-#    Copy SourceSerif4-Black.ttf and SourceSerif4-Regular.ttf to:
-#    satori-service/fonts/
-
-# 3. Configure environment
 cp .env.example .env
-# Edit .env with your D1_URL and D1_TOKEN
+# Add CLOUDFLARE_API_TOKEN to the gitignored .env.
 
-# 4. Start the Satori sidecar (leave running in a separate terminal)
-make satori
-# If :3001 is already in use, either reuse the running sidecar or:
-# PORT=3002 make satori
-# SATORI_URL=http://localhost:3002 make doctor
-
-# 5. Run preflight check
+make satori       # separate terminal
 make doctor
-
-# 6. Render the smoke test video
-make smoke
-# → out/bertha-2024.mp4
+make smoke        # Bertha long-decline pilot
 ```
+
+Approved stories use Cloudflare Workers AI Aura 2 English narration with the `luna`
+speaker and Workers AI Whisper Large V3 Turbo timing. Generated speech is cached by
+script, model, and voice. Every story video visibly discloses `AI NARRATION` and includes
+`#AIVoice` in its reviewed caption.
+
+## Editorial workflow
+
+```bash
+# Generate an evidence-first draft from SSA data.
+uv run nbn story propose --name Hazel --sex F --kind comeback
+
+# Inspect the deterministic 100-point gate.
+uv run nbn story score stories/hazel-2024.yaml
+
+# Record the one-time human approval. Rendering is automatic afterward.
+uv run nbn story approve stories/hazel-2024.yaml --reviewer <name>
+
+# Render the four-archetype pilot. Kunta requires the configured D1 source.
+uv run nbn batch batches/pilot.yaml
+```
+
+The gate requires a score of at least 75, a 24–36 word script, a short opening beat,
+a loop beat, SSA evidence, reviewed social copy, and approval metadata. A
+`cultural_rupture` additionally requires at least two non-SSA sources.
+
+The checked-in pilots cover:
+
+- `Kunta` — one-hit cultural spike
+- `Alexa` — cultural rupture
+- `Bertha` — long decline
+- `Hazel` — comeback
 
 ## Key commands
 
-| Command | Description |
+| Command | Purpose |
 |---|---|
-| `make setup` | Install Python + Node dependencies |
-| `make satori` | Start Node Satori sidecar on `:3001` (or `PORT=3002 make satori`) |
-| `make smoke` | Render Bertha 2024 (pipeline health check) |
-| `make batch` | Render all 14 videos in batches/week-1.yaml |
-| `make test` | Run pytest suite |
-| `make lint` | Ruff check + format check |
-| `make typecheck` | mypy --strict |
-| `make doctor` | Preflight: Node, ffmpeg, fonts, Satori, D1 |
-| `make clean` | Remove out/, caches |
+| `make smoke` | Render the narrated Bertha pilot |
+| `make smoke-frames` | Render frames without narration or composition |
+| `make pilot` | Render all four editorial archetypes |
+| `uv run nbn preview ...` | Render one inspection frame |
+| `uv run nbn analytics import export.csv` | Import per-video retention |
+| `uv run nbn analytics report` | Produce the next-action retention report |
+| `make test` | Run Python tests |
+| `make lint` | Run Ruff checks |
+| `make typecheck` | Run strict mypy |
 
-## Output
+## Outputs
 
-All renders go to `out/`. Each video gets a directory of PNG frames and a final MP4:
-
-```
+```text
 out/
   bertha-2024/
     frames/
-      hook_000.png ... hook_089.png
-      reveal_000.png ... reveal_179.png
-      narrative_000.png ... narrative_179.png
-      cta_000.png ... cta_089.png
+      frame_0000.png
+      frame_0001.png
+      ...
   bertha-2024.mp4
-  bertha-2024.json   ← RenderManifest with frame hashes + timing
+  bertha-2024.json
+  smoke.qc.html
 ```
 
-## Architecture
+The manifest records the approved thesis and score, script, word timestamps, narration
+model and voice, disclosure, adaptive duration, audio targets, frame hashes, render
+timings, and final social copy.
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the two-process design, data flow diagram, and scene timing.
+## Quality contract
 
-## Operations
+- 1080×1920 at 30 fps, H.264, BT.709 limited range, 10 Mbps master
+- one continuous global frame sequence; no scene crossfades or frozen tail
+- 9–14 seconds based on the reviewed target and actual narration length
+- narration mixed to -14 LUFS with a -1 dBTP target
+- no baked-in music by default; add a native platform sound after upload
+- QC derives frame and duration expectations from the manifest
 
-See [RUNBOOK.md](RUNBOOK.md) for daily workflow, token rotation, adding templates, and debugging.
-
-## Requirements
-
-- Python 3.12+ with `uv`
-- Node 20+ with `pnpm`
-- ffmpeg 6+
-- SourceSerif4-Black.ttf and SourceSerif4-Regular.ttf (place in `satori-service/fonts/`)
-- Cloudflare D1 token with read access to the nobodynamed database (or use local SQLite fixture)
+See [ARCHITECTURE.md](ARCHITECTURE.md) for internals and [RUNBOOK.md](RUNBOOK.md) for
+the operating workflow.

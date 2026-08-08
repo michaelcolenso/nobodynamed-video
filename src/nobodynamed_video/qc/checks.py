@@ -3,19 +3,17 @@
 from __future__ import annotations
 
 import json
+import re
 import struct
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-_EXPECTED_FRAMES = 330
 _EXPECTED_WIDTH = 1080
 _EXPECTED_HEIGHT = 1920
-_MIN_DURATION_S = 17.9
-# With straight concat composition the video stream must carry every frame:
-# 330 frames / 30 fps = 11.0 s exactly (xfade used to silently trim 0.6 s).
-_EXPECTED_STREAM_DURATION_S = 11.0
+_MIN_DURATION_S = 9.0
+_MAX_DURATION_S = 14.0
 _STREAM_DURATION_TOLERANCE_S = 0.05
 _EXPECTED_FPS = "30/1"
 _EXPECTED_COLOR = {
@@ -24,24 +22,12 @@ _EXPECTED_COLOR = {
     "color_transfer": "bt709",
     "color_range": "tv",
 }
-_SCENE_FRAME_COUNTS = {"hook": 90, "reveal": 180, "narrative": 180, "cta": 90}
 _FROZEN_CHECK_DEPTH = 10
 # Cover check: flag the first frame if ≥98% of pixels sit below luma 32
 # (limited range) — i.e. nothing but background. Frame 0 is the default
 # TikTok cover, so it must carry readable content.
 _COVER_BLACK_AMOUNT = 98
 _COVER_BLACK_THRESHOLD = 32
-
-KEYFRAME_NAMES = [
-    "hook_000.png",
-    "hook_045.png",
-    "reveal_000.png",
-    "reveal_090.png",
-    "narrative_000.png",
-    "narrative_090.png",
-    "cta_000.png",
-    "cta_089.png",
-]
 
 
 @dataclass
@@ -63,31 +49,30 @@ class QCResult:
     keyframe_paths: list[Path] = field(default_factory=list)
 
 
-def _check_frame_count(frames_dir: Path) -> list[QCIssue]:
+def _check_frame_count(frames_dir: Path, expected_frames: int) -> list[QCIssue]:
     count = len(list(frames_dir.glob("*.png")))
-    if count != _EXPECTED_FRAMES:
-        msg = f"expected {_EXPECTED_FRAMES} frames, found {count}"
+    if count != expected_frames:
+        msg = f"expected {expected_frames} frames, found {count}"
         return [QCIssue("error", "FRAME_COUNT", msg)]
     return []
 
 
-def _check_frozen_frames(sha256_frames: dict[str, str]) -> list[QCIssue]:
+def _check_frozen_frames(sha256_frames: dict[str, str], expected_frames: int) -> list[QCIssue]:
     issues: list[QCIssue] = []
-    for scene, total in _SCENE_FRAME_COUNTS.items():
-        depth = min(_FROZEN_CHECK_DEPTH, total - 1)
-        for i in range(depth):
-            a = sha256_frames.get(f"{scene}_{i:03d}.png")
-            b = sha256_frames.get(f"{scene}_{i + 1:03d}.png")
-            if a and b and a == b:
-                msg = f"{scene} frames {i} and {i + 1} are identical"
-                issues.append(QCIssue("warning", "FROZEN_FRAMES", msg))
+    depth = min(_FROZEN_CHECK_DEPTH, expected_frames - 1)
+    for i in range(depth):
+        a = sha256_frames.get(f"frame_{i:04d}.png")
+        b = sha256_frames.get(f"frame_{i + 1:04d}.png")
+        if a and b and a == b:
+            msg = f"opening frames {i} and {i + 1} are identical"
+            issues.append(QCIssue("warning", "FROZEN_FRAMES", msg))
     return issues
 
 
 def _check_dimensions(frames_dir: Path) -> list[QCIssue]:
-    sample = frames_dir / "hook_000.png"
+    sample = frames_dir / "frame_0000.png"
     if not sample.exists():
-        return [QCIssue("error", "BAD_DIMENSIONS", "hook_000.png missing")]
+        return [QCIssue("error", "BAD_DIMENSIONS", "frame_0000.png missing")]
     with sample.open("rb") as f:
         f.read(16)  # 8-byte PNG sig + 4-byte IHDR length + 4-byte "IHDR"
         width, height = struct.unpack(">II", f.read(8))
@@ -97,7 +82,7 @@ def _check_dimensions(frames_dir: Path) -> list[QCIssue]:
     return []
 
 
-def _check_mp4(mp4_path: Path) -> list[QCIssue]:
+def _check_mp4(mp4_path: Path, expected_frames: int, expected_duration_s: float) -> list[QCIssue]:
     if not mp4_path.exists():
         return [QCIssue("error", "MP4_INVALID", "MP4 file not found")]
     try:
@@ -145,8 +130,11 @@ def _check_mp4(mp4_path: Path) -> list[QCIssue]:
     fmt = data.get("format", {})
     fmt_duration = fmt.get("duration") if isinstance(fmt, dict) else None
     duration = float(str(fmt_duration if fmt_duration is not None else video.get("duration", 0)))
-    if duration < _MIN_DURATION_S:
+    if duration < _MIN_DURATION_S - _STREAM_DURATION_TOLERANCE_S:
         msg = f"duration {duration:.2f}s < {_MIN_DURATION_S}s"
+        issues.append(QCIssue("error", "MP4_INVALID", msg))
+    if duration > _MAX_DURATION_S + _STREAM_DURATION_TOLERANCE_S:
+        msg = f"duration {duration:.2f}s > {_MAX_DURATION_S}s"
         issues.append(QCIssue("error", "MP4_INVALID", msg))
 
     # Video stream duration — concat composition must carry all 540 frames to
@@ -154,16 +142,16 @@ def _check_mp4(mp4_path: Path) -> list[QCIssue]:
     # frozen tail padded out by the audio track.
     stream_duration = video.get("duration")
     if stream_duration is not None:
-        drift = abs(float(str(stream_duration)) - _EXPECTED_STREAM_DURATION_S)
+        drift = abs(float(str(stream_duration)) - expected_duration_s)
         if drift > _STREAM_DURATION_TOLERANCE_S:
             msg = (
                 f"video stream {float(str(stream_duration)):.2f}s != "
-                f"{_EXPECTED_STREAM_DURATION_S}s (frozen tail or dropped frames)"
+                f"{expected_duration_s}s (frozen tail or dropped frames)"
             )
             issues.append(QCIssue("error", "MP4_INVALID", msg))
     nb_frames = video.get("nb_frames")
-    if nb_frames is not None and str(nb_frames) != str(_EXPECTED_FRAMES):
-        msg = f"video stream has {nb_frames} frames, expected {_EXPECTED_FRAMES}"
+    if nb_frames is not None and str(nb_frames) != str(expected_frames):
+        msg = f"video stream has {nb_frames} frames, expected {expected_frames}"
         issues.append(QCIssue("error", "MP4_INVALID", msg))
 
     # Color metadata — untagged or mismatched tags shift the brand colors on
@@ -186,9 +174,9 @@ def _check_mp4(mp4_path: Path) -> list[QCIssue]:
 
 def _check_cover_frame(frames_dir: Path) -> list[QCIssue]:
     """Frame 0 is the default TikTok cover — it must not be (near-)black."""
-    cover = frames_dir / "hook_000.png"
+    cover = frames_dir / "frame_0000.png"
     if not cover.exists():
-        return [QCIssue("error", "BLACK_COVER", "hook_000.png missing")]
+        return [QCIssue("error", "BLACK_COVER", "frame_0000.png missing")]
     try:
         proc = subprocess.run(
             [
@@ -265,6 +253,84 @@ def _check_black_frames(mp4_path: Path) -> list[QCIssue]:
     return []
 
 
+def _check_audio_loudness(mp4_path: Path) -> list[QCIssue]:
+    """Measure the encoded narration master rather than trusting filter intent."""
+    try:
+        proc = subprocess.run(
+            [
+                "ffmpeg",
+                "-hide_banner",
+                "-nostats",
+                "-i",
+                str(mp4_path),
+                "-af",
+                "loudnorm=I=-14:LRA=7:TP=-1:print_format=json",
+                "-f",
+                "null",
+                "-",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=45,
+        )
+        matches = re.findall(r"\{\s*\"input_i\".*?\}", proc.stderr, flags=re.DOTALL)
+        if not matches:
+            raise ValueError("loudnorm summary missing")
+        measured = json.loads(matches[-1])
+        integrated = float(measured["input_i"])
+        true_peak = float(measured["input_tp"])
+    except Exception as exc:
+        return [QCIssue("warning", "AUDIO_LEVELS", f"loudness probe failed: {exc}")]
+
+    issues: list[QCIssue] = []
+    if abs(integrated - (-14.0)) > 1.5:
+        issues.append(
+            QCIssue(
+                "warning",
+                "AUDIO_LEVELS",
+                f"integrated loudness is {integrated:.1f} LUFS, target -14 LUFS",
+            )
+        )
+    if true_peak > -0.5:
+        issues.append(
+            QCIssue(
+                "warning",
+                "AUDIO_LEVELS",
+                f"true peak is {true_peak:.1f} dBTP, target at or below -1 dBTP",
+            )
+        )
+    return issues
+
+
+def _check_editorial_manifest(manifest: dict[str, object]) -> list[QCIssue]:
+    if not manifest.get("story_kind"):
+        return []
+    issues: list[QCIssue] = []
+    score = int(str(manifest.get("story_score") or 0))
+    if score < 75:
+        issues.append(QCIssue("error", "STORY_GATE", f"story score is {score}, expected 75+"))
+    if not manifest.get("script") or not manifest.get("word_timings"):
+        issues.append(QCIssue("error", "NARRATION", "script or word timings missing"))
+    if not manifest.get("narration_provider"):
+        issues.append(QCIssue("error", "NARRATION", "approved story has no narration provider"))
+    if manifest.get("ai_voice_disclosure") != "AI-generated narration":
+        issues.append(QCIssue("error", "AI_DISCLOSURE", "AI voice disclosure missing"))
+    return issues
+
+
+def _keyframe_names(frame_count: int) -> list[str]:
+    indices = {
+        0,
+        round(frame_count * 0.08),
+        round(frame_count * 0.35),
+        round(frame_count * 0.55),
+        round(frame_count * 0.75),
+        round(frame_count * 0.90),
+        max(frame_count - 1, 0),
+    }
+    return [f"frame_{index:04d}.png" for index in sorted(indices)]
+
+
 def run_all_checks(result: dict[str, object], out_dir: Path) -> QCResult:
     """Run all quality checks for a single succeeded, composed render result."""
     spec_id = str(result["id"])
@@ -273,23 +339,38 @@ def run_all_checks(result: dict[str, object], out_dir: Path) -> QCResult:
     manifest_path = out_dir / f"{spec_id}.json"
 
     sha256_frames: dict[str, str] = {}
+    manifest_data: dict[str, object] = {}
     if manifest_path.exists():
         try:
-            manifest_data = json.loads(manifest_path.read_text())
+            raw_manifest = json.loads(manifest_path.read_text())
+            if isinstance(raw_manifest, dict):
+                manifest_data = raw_manifest
             raw = manifest_data.get("sha256_frames", {})
             if isinstance(raw, dict):
                 sha256_frames = {str(k): str(v) for k, v in raw.items()}
         except Exception:
             pass
 
+    expected_frames = int(str(manifest_data.get("frame_count") or result.get("frames") or 0))
+    expected_duration = float(
+        str(manifest_data.get("duration_s") or result.get("duration_s") or 11.0)
+    )
+
     issues: list[QCIssue] = []
-    issues += _check_frame_count(frames_dir)
-    issues += _check_frozen_frames(sha256_frames)
+    issues += _check_frame_count(frames_dir, expected_frames)
+    issues += _check_frozen_frames(sha256_frames, expected_frames)
     issues += _check_dimensions(frames_dir)
     issues += _check_cover_frame(frames_dir)
-    issues += _check_mp4(mp4_path)
+    issues += _check_mp4(mp4_path, expected_frames, expected_duration)
     issues += _check_black_frames(mp4_path)
+    issues += _check_editorial_manifest(manifest_data)
+    if manifest_data.get("narration_provider"):
+        issues += _check_audio_loudness(mp4_path)
 
     passed = not any(i.severity == "error" for i in issues)
-    keyframe_paths = [frames_dir / name for name in KEYFRAME_NAMES if (frames_dir / name).exists()]
+    keyframe_paths = [
+        frames_dir / name
+        for name in _keyframe_names(expected_frames)
+        if (frames_dir / name).exists()
+    ]
     return QCResult(spec_id=spec_id, passed=passed, issues=issues, keyframe_paths=keyframe_paths)

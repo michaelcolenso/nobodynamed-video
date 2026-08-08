@@ -1,0 +1,48 @@
+id: alexa-2024
+name: Alexa
+sex: F
+story_kind: cultural_rupture
+thesis: Alexa peaked before Amazon Echo, then the girl's name fell as it became a household command.
+headline: A wake word broke this name.
+subhead: 6,117 births at peak. 349 now.
+takeaway: Amazon did not invent Alexa; it changed what the name meant.
+support: The decline steepened after Echo.
+script_beats:
+  - kind: hook
+    text: Amazon turned a girl's name into a command.
+  - kind: reveal
+    text: Alexa peaked at 6,117 births in 2006.
+  - kind: proof
+    text: After Echo launched, the curve fell to 349 by 2024.
+  - kind: loop
+    text: Watch the wake word bend the line.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Alexa peaked at 6,117 female births in 2006 and recorded 349 in 2024.
+  - label: Washington Post Alexa name reporting
+    url: https://www.washingtonpost.com/technology/interactive/2021/people-named-alexa-name-change-amazon/
+    kind: reporting
+    supports: Reports the name's decline and the lived effect of association with Amazon's assistant.
+  - label: Digital Trends SSA analysis
+    url: https://www.digitaltrends.com/home/amazon-echo-alexa-baby-girl-name/
+    kind: reporting
+    supports: Connects post-Echo SSA popularity changes to Amazon's choice of wake word.
+visual_anchors:
+  - 2006 peak badge
+  - 2014 Echo event line
+  - crimson post-launch collapse
+  - wake-word loop
+social_caption: Amazon turned Alexa from a girl's name into a household command.
+hashtags:
+  - '#Alexa'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Would you still name a child Alexa?
+target_duration_s: 11.0
+voice_instructions: Read as a restrained culture documentary; make Amazon and 349 land clearly, without sarcasm, then lower the final line into the loop.
+status: approved
+quality_score: 100
+approved_by: initial-pilot-plan
+approved_at: 2026-08-08T12:00:00Z

@@ -1,195 +1,90 @@
-# ARCHITECTURE.md — nobodynamed-video
+# Architecture
 
-## Overview
+## System shape
 
-nobodynamed-video is a two-process pipeline: a Python orchestrator and a Node.js Satori sidecar. They communicate over HTTP. Python drives all business logic, data access, scheduling, and ffmpeg orchestration. Node handles JSX-to-PNG rendering via Satori, which is identical to the renderer used on nobodynamed.com for OG images.
+The project has a Python editorial/render orchestrator and a Node Satori sidecar.
 
----
-
-## Two-process design
-
-```
-┌─────────────────────────────────────────────┐
-│  Python orchestrator (nbn CLI)              │
-│                                             │
-│  config.py → models.py                      │
-│       │                                     │
-│  data/source.py (DataSource protocol)       │
-│    ├── d1_source.py  (Cloudflare D1 HTTP)   │
-│    └── sqlite_source.py  (local fixture)    │
-│       │                                     │
-│  data/classifier.py  →  Tier enum           │
-│       │                                     │
-│  batch/spec.py  →  VideoSpec                │
-│       │                                     │
-│  scenes/*.py  →  Scene list                 │
-│       │                                     │
-│  render/frame_planner.py  →  FramePlan      │
-│  render/hyperframes.py   →  Scalar tracks   │
-│       │          │                          │
-│       │    render/satori_client.py ──────── │── HTTP POST :3001/render
-│       │                                     │
-│  render/golden.py  (hash comparison)        │
-│       │                                     │
-│  compose/ffmpeg.py  (subprocess ffmpeg)     │
-│  compose/audio.py   (optional bed mix)      │
-│  compose/manifest.py → RenderManifest JSON  │
-│                                             │
-└─────────────────────────────────────────────┘
+```text
+SSA SQLite or D1
+      │
+      ▼
+VideoContext ── StorySpec evidence and approval gate
+      │
+      ├── Workers AI Aura WAV ── Whisper V3 Turbo caption timing
+      │
+      ▼
+adaptive 9–14s motion program ── HTTP ── Satori PNG renderer
+      │                                      │
+      └──────── frame_%04d.png ◀─────────────┘
                          │
-              HTTP JSON (localhost:3001)
+                         ▼
+         ffmpeg H.264 + narrated AAC master
                          │
-┌─────────────────────────────────────────────┐
-│  Node.js Satori sidecar                     │
-│                                             │
-│  src/server.ts  (Express, POST /render)     │
-│  src/render.ts  (Satori → resvg → PNG)      │
-│  src/fonts.ts   (load TTF bytes at boot)    │
-│  src/templates/                             │
-│    ├── shared.tsx   (brand constants)       │
-│    ├── hook.tsx     (3s opening scene)      │
-│    ├── reveal.tsx   (6s name reveal)        │
-│    ├── narrative.tsx (6s data story)        │
-│    └── cta.tsx      (3s call to action)     │
-│                                             │
-│  fonts/                                     │
-│    ├── SourceSerif4-Black.ttf               │
-│    └── SourceSerif4-Regular.ttf             │
-└─────────────────────────────────────────────┘
+                         ▼
+              MP4 + manifest + QC report
+                         │
+                         ▼
+               retention decision report
 ```
 
----
+## Editorial contract
 
-## Data flow
+`StorySpec` is the unit of publication. It contains the archetype, thesis, display copy,
+24–36 word script, evidence, visual anchors, social copy, voice direction, score, and
+approval. The scorer uses inspectable signals across evidence, premise, hook, script,
+visual plan, and sharing. Rendering fails closed below 75 or without approval.
 
-```
-SSA D1 database (or local SQLite fixture)
-        │
-        ▼
-DataSource.fetch(name, sex)  →  list[YearCount]
-        │
-        ▼
-classifier.classify(counts)  →  Tier
-  (extinction-watch / cultural-collapse / declining /
-   stable / rising / resurrected)
-        │
-        ▼
-VideoSpec(id, name, sex, tier, counts, fps=30)
-        │
-        ▼
-Scene list:  [Hook(3s), Reveal(6s), Narrative(6s), CTA(3s)]
-        │
-        ▼
-FramePlanner.plan(spec, scenes)  →  list[FrameJob]
-  Each FrameJob: { scene, frame_index, t, template, props }
-  Motion-heavy scenes can sample declarative hyperframe tracks for
-  chart reveals, dot landings, and staged text fades.
-        │
-        ▼
-SatoriClient.render(template, props)  →  PNG bytes
-  (cached by SHA-256 of template+props)
-        │
-        ▼
-out/<id>/frames/<scene>_<NNN>.png
-        │
-        ▼
-ffmpeg concat (BT.709 limited-range conversion) + audio mux
-        │
-        ▼
-out/<id>.mp4  (1080×1920, 30fps, 330-frame/11.0s stream, H.264, AAC, faststart)
-        │
-        ▼
-RenderManifest → out/<id>.json
-  (frame hashes, render times, satori version, ffmpeg version)
+The four visual modes are `one_hit`, `cultural_rupture`, `long_decline`, and `comeback`.
+They change scene allocation, status language, and accent treatment while sharing one
+continuous canvas. Amber marks authored/long-history beats, crimson marks rupture and
+decline, and emerald marks return.
+
+## Narration and timing
+
+Cloudflare Workers AI Aura 2 English produces linear-16 WAV narration; Workers AI Whisper
+Large V3 Turbo returns transcription timing for the caption compositor. The normalizer
+accepts word data, segment timing, or WebVTT cues and falls back to duration-weighted
+script timing. The cache identity covers account, model, transcription model, voice, and
+exact script. No secret is written to a manifest.
+
+The reviewed target duration is expanded when narration plus a 0.85-second loop beat
+needs more room, capped at 14 seconds, then quantized to whole 30 fps frames. The 11-second
+motion program is smoothly time-warped to that runtime. In the final 0.75 seconds, chart,
+stats, narrative, and footer recede while the opening diagnosis returns, creating a
+purposeful loop seam.
+
+## Rendering and composition
+
+Python samples the shared-canvas program and writes a single global sequence:
+
+```text
+out/<spec-id>/frames/frame_0000.png ... frame_NNNN.png
 ```
 
----
+Each frame cache key includes the complete Satori source digest, template, and props, so
+template edits invalidate stale output while preserving cross-render reuse. The existing
+cluster-friendly Satori worker and smooth chart-speed work remain intact.
 
-## Scene timing
+ffmpeg receives one image sequence plus narration. Optional audio is mixed at 10% under
+the voice; the default has no music. The final audio target is -14 LUFS and -1 dBTP. PNG
+sRGB is explicitly converted to BT.709 limited-range YUV420p before the H.264 encode.
 
-```
- 0s       1s        4.5s        9.5s     11s
- ├─────────┼───────────┼───────────┼──────┤
- │  hook   │  reveal   │ narrative │ cta  │
- │  30 fr  │  105 fr   │  150 fr   │45 fr │
- └─────────┴───────────┴───────────┴──────┘
-       ↑ straight concat — no transitions
-```
+## Manifest and QC
 
-Total: 330 frames at 30fps = 11.00s, carried 1:1 into the video stream.
-Fixed 11s runtime for every video: completion rate is the metric that
-matters for this format, and a fixed length makes the series legible.
-The sequence is inverted from the original 18s cut: the chart starts
-drawing at t=0.3s UNDER the hook text rather than holding a static title
-card first; stat cards snap in at 5.2–6.0s, takeaway at 6.5s, endcard at
-9.5s with the chart still on screen.
+The manifest is the source of truth for frame count and duration. QC checks dimensions,
+cover legibility, adjacent opening motion, frame count, stream duration, codec, color
+metadata, black segments, audio presence and measured loudness, story score, narration
+timestamps, and the AI-voice disclosure.
 
-The four scenes are windows over one continuous shared-canvas program, so
-they are joined with a straight concat. (The original four-template design
-crossfaded scenes with 0.2s xfades; once the canvas became continuous, the
-xfades only ghosted the picture against itself and trimmed the video stream
-to 17.4s, leaving a frozen 0.6s tail in the 18.0s container.)
+## Retention loop
 
-Color: frames are full-range sRGB PNGs. Composition explicitly converts
-RGB→YUV with the BT.709 matrix and limited (tv) range, matching the stream
-tags — swscale's default BT.601 matrix visibly shifts the brand crimson
-toward orange when players decode with the tagged BT.709.
+`nbn analytics import` stores per-video snapshots in `state/retention.db`.
+`nbn analytics report` joins the latest snapshot to manifests and computes:
 
----
+- primary outcomes: completion rate, share rate, and watch-time ratio
+- drivers: two-second and midpoint retention when present
+- guardrails: at least 1,000 views before directional action and a QC-cleared manifest
 
-## HTTP interface (Python → Node)
-
-### POST /render
-
-Request body:
-```json
-{
-  "template": "hook",
-  "props": {
-    "name": "Bertha",
-    "tier": "extinction-watch",
-    "frame": 0,
-    "total_frames": 90
-  },
-  "width": 1080,
-  "height": 1920
-}
-```
-
-Response: PNG bytes (Content-Type: image/png)
-
-### GET /health
-
-Returns 200 `{"status": "ok", "satori_version": "0.10.13"}` when fonts are loaded.
-
----
-
-## Frame caching
-
-Frames are cached at `out/.cache/<sha256>.png` where the hash covers the serialized `(template, props)` pair. On a batch run, identical CTA scenes across all videos are rendered once and reused. This cuts batch render time by 30–50%.
-
----
-
-## Directory layout rationale
-
-- `src/nobodynamed_video/` — Python package (hatchling wheel target)
-- `satori-service/` — isolated Node process; owns all JSX and font concerns
-- `batches/` — YAML specs checked into git; reproducible batch definitions
-- `fixtures/` — golden frame hashes + test blocklist; versioned reference data
-- `out/` — gitignored render outputs
-- `scripts/` — one-off operational scripts (SSA fetch, fixture builder, doctor)
-- `tests/` — pytest unit + integration tests
-
----
-
-## Brand constants
-
-| Token | Value |
-|---|---|
-| Background | `#14110E` |
-| Headline font | Source Serif 4 Black |
-| Body font | Source Serif 4 Regular |
-| Accent (crimson) | `#A21F1F` |
-| Faded gray | `#C9C4B5` |
-| Canvas | 1080 × 1920 px (9:16) |
-| Frame rate | 30 fps |
+Initial rules are deliberately provisional: 45% completion, 70% watch ratio, and 1.5%
+share rate. Recalibrate them after 20 comparable posts rather than importing generic
+creator benchmarks into a distinct format.

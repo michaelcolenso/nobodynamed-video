@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from nobodynamed_video.models import RenderManifest
+from nobodynamed_video.models import RenderManifest, WordTiming
 
 
 def write_manifest(manifest: RenderManifest, out_dir: Path) -> Path:
@@ -31,6 +31,18 @@ def build_manifest(
     caption: str | None = None,
     pinned_comment: str | None = None,
     hashtag_set: list[str] | None = None,
+    story_kind: str | None = None,
+    story_score: int | None = None,
+    story_thesis: str | None = None,
+    script: str | None = None,
+    word_timings: list[WordTiming] | None = None,
+    narration_provider: str | None = None,
+    narration_model: str | None = None,
+    narration_voice: str | None = None,
+    narration_path: str | None = None,
+    ai_voice_disclosure: str | None = None,
+    loudness_target_lufs: float | None = None,
+    true_peak_target_dbtp: float | None = None,
 ) -> RenderManifest:
     """Build a RenderManifest from render outputs."""
     return RenderManifest(
@@ -50,4 +62,16 @@ def build_manifest(
         caption=caption,
         pinned_comment=pinned_comment,
         hashtag_set=hashtag_set or [],
+        story_kind=story_kind,
+        story_score=story_score,
+        story_thesis=story_thesis,
+        script=script,
+        word_timings=word_timings or [],
+        narration_provider=narration_provider,
+        narration_model=narration_model,
+        narration_voice=narration_voice,
+        narration_path=narration_path,
+        ai_voice_disclosure=ai_voice_disclosure,
+        loudness_target_lufs=loudness_target_lufs,
+        true_peak_target_dbtp=true_peak_target_dbtp,
     )

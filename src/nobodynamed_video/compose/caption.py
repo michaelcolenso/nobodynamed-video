@@ -8,7 +8,7 @@ from typing import Any
 
 from nobodynamed_video.compose.lexicon import CaptionFrame, Lexicon, _render_simple
 from nobodynamed_video.compose.state import CombinationState
-from nobodynamed_video.models import ResolvedHook, VideoContext
+from nobodynamed_video.models import ResolvedHook, StorySpec, VideoContext
 
 
 class CaptionExhausted(Exception):
@@ -22,6 +22,22 @@ class ComposedCaption:
     caption: str
     pinned_comment: str
     hashtag_set: list[str] = field(default_factory=list)
+
+
+def compose_story_caption(story: StorySpec) -> ComposedCaption:
+    """Use reviewed story copy verbatim; never inject mood adjectives."""
+    body = story.social_caption.strip()
+    if body[-1:] not in ".!?":
+        body += "."
+    normalized_tags = [tag if tag.startswith("#") else f"#{tag}" for tag in story.hashtags]
+    caption = f"{body} {' '.join(normalized_tags)}"
+    if len(caption) > 150:
+        raise CaptionExhausted(f"Reviewed story caption exceeds 150 chars: {story.id}")
+    return ComposedCaption(
+        caption=caption,
+        pinned_comment=story.share_prompt,
+        hashtag_set=[tag.removeprefix("#") for tag in normalized_tags],
+    )
 
 
 def combo_hash(tags: list[str]) -> str:
