@@ -106,6 +106,8 @@ def evaluate_story(story: StorySpec, *, require_approval: bool = True) -> StoryE
         blockers.append("social caption must be one sentence")
     if not all(tag.startswith("#") and " " not in tag for tag in story.hashtags):
         blockers.append("hashtags must start with # and contain no spaces")
+    if "#AIVoice" not in story.hashtags:
+        blockers.append("hashtags must include #AIVoice — every approved story is narrated")
     if not any(source.kind == EvidenceKind.SSA for source in story.evidence):
         blockers.append("story must cite SSA data")
 

@@ -137,9 +137,9 @@ def _check_mp4(mp4_path: Path, expected_frames: int, expected_duration_s: float)
         msg = f"duration {duration:.2f}s > {_MAX_DURATION_S}s"
         issues.append(QCIssue("error", "MP4_INVALID", msg))
 
-    # Video stream duration — concat composition must carry all 540 frames to
-    # exactly 18.0 s; a short stream means trimmed/overlapped frames and a
-    # frozen tail padded out by the audio track.
+    # Video stream duration — the encode must carry every planned frame out
+    # to the manifest's adaptive duration; a short stream means trimmed or
+    # overlapped frames and a frozen tail padded out by the audio track.
     stream_duration = video.get("duration")
     if stream_duration is not None:
         drift = abs(float(str(stream_duration)) - expected_duration_s)

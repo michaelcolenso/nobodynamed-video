@@ -1,20 +1,37 @@
 # Handoff — nobodynamed-video
 
-**As of:** 2026-07-27 · **HEAD:** `9cf9e35` (main) · **Status:** operational, week-3 batch rendering in CI
+**As of:** 2026-08-16 · **HEAD:** `main` (PR #28, "Improve editorial storytelling and narration") · **Status:** operational; editorial gate + AI narration pipeline live, CI batch job repointed at `batches/pilot.yaml` (see §1)
 
-Pipeline that turns SSA baby-name data (Cloudflare D1 `name-vitals`) into 11-second 9:16 TikTok videos: Python planner → Satori/TS sidecar renders 1080×1920 PNG frames → ffmpeg → H.264/AAC MP4.
+Pipeline that turns SSA baby-name data (Cloudflare D1 `name-vitals`) into evidence-gated,
+narrated 9–16 vertical TikTok videos: Python planner → Cloudflare Workers AI narration +
+alignment → Satori/TS sidecar renders 1080×1920 PNG frames → ffmpeg → H.264/AAC MP4. See
+README.md and ARCHITECTURE.md for the current editorial/render contract — this file is
+agent-to-agent operating notes, not the spec of record, and drifts between refactors.
 
 ---
 
 ## 1. Current State
 
-- **Live batch:** `batches/week-3.yaml` — 8 "One-Hit Wonder" names (Kunta, Arsenio, Moesha, Jkwon, Bethzy, Neymar, Khaleesi, Renesmee) with curated per-name copy. CI renders it on every push to main and publishes MP4s to the `videos` branch.
-- **Last three commits** (all chart-motion work, newest first):
-  - `9cf9e35` — Fluid draw: time-domain speed design (current motion system, see §4)
-  - `fa00211` — Speed-based flatline pacing (FLAT_PACE_YPS=100) — superseded by 9cf9e35's smoothing
-  - `ca8c4dc` — Two-phase draw pacing, dropped sine easing
-- **Video spec:** 1080×1920 @ 30fps, exactly 11.000s, 10 Mbps CBR H.264, silent AAC track (add trending sound in TikTok editor at upload — deliberate, see §8).
-- **Checks green:** mypy strict (40 files), ruff format+check, 139 pytest tests.
+- **Editorial gate is now the unit of publication.** Every video with a `story:` field in
+  its batch entry must pass `editorial/story.py`'s 100-point, 75-minimum gate and carry
+  human approval metadata before it renders; approved stories get Cloudflare Workers AI
+  Aura narration + Whisper alignment and an adaptive 9–14s runtime
+  (`compose/narration.adaptive_duration`). Non-story batch entries keep the legacy fixed
+  11.0s / hand-curated-copy path.
+- **Checked-in stories:** `stories/{kunta,alexa,bertha,hazel}-2024.yaml`, rendered by
+  `batches/pilot.yaml` (the four-archetype set README calls "the checked-in pilots").
+- **`batches/week-3.yaml` is stale/inconsistent with the above:** it was reduced to a
+  single Kunta entry (no `story:` field — old-style copy overrides) while tuning chart
+  timing, with a comment promising to "restore the full week-3 list after validation."
+  That restoration never happened, and the other 7 names (Arsenio, Moesha, Jkwon, Bethzy,
+  Neymar, Khaleesi, Renesmee) have no StorySpec files, so they can't simply be pasted back
+  without either being run through the new gate or accepted as ungated legacy content.
+  CI's `batch` job used to glob `batches/week-*.yaml` and silently publish just this
+  scratch Kunta entry to the public `videos` branch; it's now repointed at
+  `batches/pilot.yaml` (2026-08-16). Restoring the other 7 names as real, gated content
+  is still an open editorial decision, not a mechanical fix.
+- **Checks green:** mypy strict (45 files), ruff format+check, 197 pytest tests, 3 Node
+  (`satori-service`) tests.
 
 ## 2. Architecture Map
 
@@ -25,12 +42,20 @@ Pipeline that turns SSA baby-name data (Cloudflare D1 `name-vitals`) into 11-sec
 | `satori-service/src/templates/canvas.tsx` | The single shared render template; `smoothPathD()` = chart draw math |
 | `src/nobodynamed_video/data/classifier.py` | Deterministic badge tiers (EXTINCT/RESURRECTED/CRITICAL/RISING/DECLINING/STABLE) |
 | `src/nobodynamed_video/data/d1_source.py`, `sqlite_source.py` | Name series fetch; both zero-fill suppressed years |
-| `src/nobodynamed_video/batch/spec.py` | Batch YAML loader; per-name copy overrides; COPY_CAPS + cause-leak lint |
-| `src/nobodynamed_video/qc/checks.py` | Post-encode QC (330 frames, 11.0s, resolution) |
+| `src/nobodynamed_video/batch/spec.py` | Batch YAML loader; resolves `story:` refs through the gate, per-name copy overrides; COPY_CAPS + cause-leak lint |
+| `src/nobodynamed_video/editorial/story.py` | `score_story`/`evaluate_story`/`approve_story` — the 100-point, 75-minimum publish gate |
+| `src/nobodynamed_video/compose/narration.py` | Cloudflare Workers AI Aura narration + Whisper alignment, cached by script/model/voice; `adaptive_duration()` |
+| `src/nobodynamed_video/analytics/retention.py` | Retention CSV import + next-action report (`nbn analytics import/report`) |
+| `src/nobodynamed_video/qc/checks.py` | Post-encode QC — frame/duration expectations now derive from the manifest, not hardcoded 330/11.0s |
 | `src/nobodynamed_video/render/golden.py` | Golden-frame QC (write-if-missing, fail-on-mismatch) |
-| `.github/workflows/ci.yaml` | check job (ruff/mypy/pytest) + batch job (renders `batches/week-*.yaml` → `videos` branch) |
+| `.github/workflows/ci.yaml` | check job (ruff/mypy/pytest) + batch job (renders `batches/pilot.yaml` → `videos` branch) |
 
-## 3. Timing System (11s fixed)
+## 3. Timing System (11s fixed — non-story batch entries only)
+
+For approved `StorySpec` videos, duration is adaptive (9–14s, narration length + a 0.85s
+loop beat, quantized to whole frames) — see `compose/narration.adaptive_duration()` and
+`render/frame_planner.scene_frame_counts()`. The fixed-11s breakdown below still applies
+to the legacy hand-curated-copy path (no `story:` field).
 
 ```
 t=0.0   header/diagnosis already readable (cover frame rule)
@@ -77,8 +102,8 @@ cp -r satori-service /home/kimi/nbn/ && cd /home/kimi/nbn/satori-service && pnpm
 node dist/server.js &   # sidecar on :3001
 
 # Run
-nbn preview --spec-id kunta-2024 --scene reveal --frame 30 --spec-file batches/week-3.yaml
-nbn batch batches/week-3.yaml
+nbn preview --spec-id kunta-2024 --scene reveal --frame 30 --spec-file batches/pilot.yaml
+nbn batch batches/pilot.yaml
 
 # Before EVERY push (learned the hard way ×2):
 mypy --strict src && ruff format --check src tests && ruff check src tests && pytest -x -q

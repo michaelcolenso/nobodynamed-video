@@ -8,9 +8,10 @@ from typing import Any
 from nobodynamed_video.models import StoryKind, VideoSpec
 from nobodynamed_video.render.programs import sample_program_frame
 
-# Fixed 11.0s runtime for every video: completion rate is the metric that
-# matters for this format, and a fixed length makes the series legible.
-# Names with better stories earn a second video, not a longer one.
+# 11.0s default runtime for non-story batches (kept fixed so that series
+# stays legible for completion-rate comparisons). Approved StorySpec videos
+# instead scale within the 9-14s editorial envelope — see
+# scene_frame_counts() below and compose/narration.adaptive_duration().
 SCENE_DURATIONS: dict[str, float] = {
     "hook": 1.0,
     "reveal": 3.5,
