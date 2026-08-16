@@ -338,7 +338,7 @@ function computeSpeedCurve(
     return _speedCache;
   }
 
-  function smoothPathD(
+  export function smoothPathD(
     points: Array<{ x: number; y: number }>,
     drawProgress: number,
     drawDurationS: number = 4.2,
