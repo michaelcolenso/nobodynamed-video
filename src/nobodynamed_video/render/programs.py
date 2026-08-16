@@ -29,6 +29,8 @@ ONE_HIT_RISE_RATIO = 0.60
 ONE_HIT_RISE_STEPS = 12
 ONE_HIT_HOLD_STEPS = 6
 ONE_HIT_HOLD_YEAR_SPAN = 0.20
+ONE_HIT_FALL_RATIO = 0.60
+ONE_HIT_FALL_STEPS = 8
 
 
 @dataclass(frozen=True)
@@ -191,14 +193,37 @@ def _prepare_render_series(
                 lerp(previous.count, peak.count, smootherstep(progress)),
             )
         )
+    hold_end_year = peak.year
     for step in range(1, ONE_HIT_HOLD_STEPS + 1):
-        expanded.append(
-            RenderPoint(
-                peak.year + ONE_HIT_HOLD_YEAR_SPAN * step / ONE_HIT_HOLD_STEPS,
-                peak.count,
-            )
-        )
-    expanded.extend(points[peak_index + 1 :])
+        hold_end_year = peak.year + ONE_HIT_HOLD_YEAR_SPAN * step / ONE_HIT_HOLD_STEPS
+        expanded.append(RenderPoint(hold_end_year, peak.count))
+
+    # The rise gets eased sub-steps above; without a matching treatment the
+    # immediate post-peak collapse stays one raw segment carrying the whole
+    # drop. That segment's |dy| then dwarfs every rise sub-step's, becomes
+    # the render's maxDy, and stacks with the chart's own spike/collapse
+    # timing weights (canvas.tsx computeSpeedCurve) to claim a wildly
+    # disproportionate share of the draw — the tracer stalls on the fall,
+    # then snaps through several subsequent years in under a frame. Ease the
+    # fall in the same render-only style as the rise to keep both sides of
+    # the spike smooth.
+    rest = points[peak_index + 1 :]
+    if rest:
+        landing = rest[0]
+        fall_gap = landing.year - peak.year
+        fall_ratio = (peak.count - landing.count) / max(peak.count, 1.0)
+        if 0 < fall_gap <= 1.01 and fall_ratio >= ONE_HIT_FALL_RATIO:
+            for step in range(1, ONE_HIT_FALL_STEPS + 1):
+                progress = step / ONE_HIT_FALL_STEPS
+                expanded.append(
+                    RenderPoint(
+                        lerp(hold_end_year, landing.year, progress),
+                        lerp(peak.count, landing.count, smootherstep(progress)),
+                    )
+                )
+            rest = rest[1:]
+
+    expanded.extend(rest)
     return expanded
 # fmt: on
 

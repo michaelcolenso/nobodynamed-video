@@ -85,17 +85,26 @@ jobs:
           done
           curl -sf http://localhost:3001/health || { echo "satori sidecar failed to start"; exit 1; }
 
-      - name: Discover and render batches
+      - name: Render pilot batch
+        # batches/pilot.yaml is the current gated, editorial-approved release set
+        # (README's "checked-in pilots"). batches/week-3.yaml is excluded here: it
+        # was reduced to a single scratch Kunta entry for chart-timing iteration
+        # (see its own header comment and HANDOFF.md §1) and never carried the
+        # editorial approval the rest of this pipeline now requires — restoring
+        # it needs an explicit editorial decision, not an automatic CI render.
         run: |
-          for batch in batches/week-*.yaml; do
-            echo "::group::Rendering $batch"
-            uv run nbn batch "$batch"
-            echo "::endgroup::"
-          done
+          echo "::group::Rendering batches/pilot.yaml"
+          uv run nbn batch batches/pilot.yaml
+          echo "::endgroup::"
         env:
           SATORI_URL: "http://localhost:3001"
           D1_URL: ${{ secrets.D1_URL }}
           D1_TOKEN: ${{ secrets.D1_TOKEN }}
+          # Every entry in pilot.yaml carries a story:, so this render requires
+          # Workers AI narration. There's no separate CLOUDFLARE_API_TOKEN secret
+          # here — config.py falls back to D1_TOKEN when it's unset (cli.py:64,94),
+          # so D1_TOKEN must be scoped for both D1 and Workers AI. If narration
+          # calls start failing with 401s, that's the first thing to check.
 
       - name: Upload rendered videos
         if: always()
