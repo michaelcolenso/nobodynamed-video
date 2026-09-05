@@ -21,9 +21,21 @@ jobs:
         with:
           python-version: "3.12"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: astral-sh/setup-uv@v4
 
       - run: uv sync
+
+      - name: Install sidecar dependencies
+        working-directory: satori-service
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
         run: |
@@ -35,6 +47,10 @@ jobs:
 
       - name: Test
         run: uv run pytest -x -q
+
+      - name: Test and typecheck sidecar
+        working-directory: satori-service
+        run: pnpm test && pnpm build
 
   batch:
     name: Render batches

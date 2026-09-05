@@ -9,12 +9,14 @@ Fetches the full series for a name in a single query to stay within
 Cloudflare's ~50 req/s rate limit.
 """
 
+import json
 from typing import cast
 
 import httpx
 
+from nobodynamed_video.data.records import build_name_record
 from nobodynamed_video.exceptions import DataSourceError
-from nobodynamed_video.models import NameRecord, YearCount
+from nobodynamed_video.models import NameRecord
 
 
 class D1Source:
@@ -40,41 +42,19 @@ class D1Source:
             ),
             [name, sex, year],
         )
-        if not rows:
-            raise DataSourceError(f"No D1 data for name={name!r} sex={sex!r} year<={year}")
-
-        series = [
-            YearCount(
-                year=int(cast(int | str, r["year"])),
-                count=int(cast(int | str, r["count"])),
+        try:
+            normalized_rows = (
+                (int(cast(int | str, row["year"])), int(cast(int | str, row["count"])))
+                for row in rows
             )
-            for r in rows
-        ]
-        nonzero = [yc for yc in series if yc.count > 0]
-        if not nonzero:
-            raise DataSourceError(f"All counts zero in D1 for name={name!r} sex={sex!r}")
-
-        peak = max(nonzero, key=lambda yc: yc.count)
-
-        # SSA suppresses counts under 5, so a name absent from recent years is
-        # effectively at zero there. Zero-fill the gap and anchor "current" to
-        # the requested reference year — otherwise a name that vanished in 2000
-        # reports current=(2000, 6), the classifier can never mark it EXTINCT,
-        # and the chart claims "6 births in 2024".
-        last_year = series[-1].year
-        if last_year < year:
-            series.extend(YearCount(year=y, count=0) for y in range(last_year + 1, year + 1))
-        current = series[-1]
-
-        return NameRecord(
-            name=name,
-            sex=sex,
-            series=series,
-            peak_year=peak.year,
-            peak_count=peak.count,
-            current_year=current.year,
-            current_count=current.count,
-        )
+            return build_name_record(
+                name=name,
+                sex=sex,
+                reference_year=year,
+                rows=normalized_rows,
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise DataSourceError(f"D1 returned invalid SSA rows: {exc}") from exc
 
     async def query_rows(self, sql: str, params: list[object]) -> list[dict[str, object]]:
         payload = {"sql": sql, "params": params}
@@ -86,16 +66,30 @@ class D1Source:
             except httpx.HTTPError as exc:
                 raise DataSourceError(f"D1 request failed: {exc}") from exc
 
-        body = resp.json()
+        try:
+            body = resp.json()
+        except json.JSONDecodeError as exc:
+            raise DataSourceError("D1 returned a non-JSON response") from exc
+        if not isinstance(body, dict):
+            raise DataSourceError("D1 returned an invalid response envelope")
         if not body.get("success"):
             errors = body.get("errors", [])
             raise DataSourceError(f"D1 query error: {errors}")
-        return list(body["result"][0].get("results", []))
+        result = body.get("result")
+        if not isinstance(result, list) or not result or not isinstance(result[0], dict):
+            raise DataSourceError("D1 response is missing a query result")
+        rows = result[0].get("results")
+        if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+            raise DataSourceError("D1 query result contains invalid rows")
+        return cast(list[dict[str, object]], rows)
 
     async def get_rank(self, name: str, sex: str, year: int) -> int:
         rows = await self.query_rows(
             (
-                "SELECT 1 + COUNT(*) AS rank "
+                "SELECT CASE WHEN EXISTS ("
+                "  SELECT 1 FROM names AS n3 JOIN name_years AS ny3 ON ny3.name_id = n3.id "
+                "  WHERE n3.name_lower = lower(?3) AND n3.sex = ?1 AND ny3.year = ?2"
+                ") THEN 1 + COUNT(*) ELSE 9999 END AS rank "
                 "FROM names AS n2 "
                 "JOIN name_years AS ny2 ON ny2.name_id = n2.id "
                 "WHERE n2.sex = ?1 AND ny2.year = ?2 AND ny2.count > ("

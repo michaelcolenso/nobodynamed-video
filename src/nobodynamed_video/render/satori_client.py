@@ -2,7 +2,7 @@
 
 Wraps httpx.AsyncClient with:
 - Connect timeout: 2 s
-- Read timeout: 10 s
+- Read timeout: 30 s (a cold, full 1880-present chart is CPU-heavy)
 - 3 retries with exponential backoff (1 s, 2 s, 4 s)
 - Concurrency semaphore: 8 in-flight requests
 """
@@ -20,7 +20,7 @@ from nobodynamed_video.exceptions import FrameRenderFailed, SatoriUnavailable
 log = logging.getLogger(__name__)
 
 _CONNECT_TIMEOUT = 2.0
-_READ_TIMEOUT = 10.0
+_READ_TIMEOUT = 30.0
 _MAX_RETRIES = 3
 _CONCURRENCY = 8
 _BACKOFF_BASE = 1.0
