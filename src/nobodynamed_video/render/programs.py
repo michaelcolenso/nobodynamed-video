@@ -89,6 +89,7 @@ EVENT_ALPHA = (
     Hyperframe(RECOMPOSE_END_T + 1.9, 1.0),
 )
 STAT_ALPHA = (Hyperframe(6.7, 0.0, smootherstep), Hyperframe(7.5, 1.0))
+INTRO_SETTLE = (Hyperframe(0.0, 0.0, ease_out_cubic), Hyperframe(0.85, 1.0))
 
 
 def _status_label(ctx: VideoContext, spec: VideoSpec) -> str:
@@ -284,6 +285,7 @@ def sample_program_frame(
     )
     footer_wave = sine_wave(t, 2.4, phase=0.5)
     chart_alpha = sample_scalar_track(CHART_ALPHA, t)
+    intro_settle = sample_scalar_track(INTRO_SETTLE, t)
     diagnosis_alpha = sample_scalar_track(DIAGNOSIS_ALPHA, t) * (1.0 - 0.38 * layout_progress)
     caption_state = _caption_state(spec, actual_t)
 
@@ -298,14 +300,21 @@ def sample_program_frame(
             "label": _status_label(ctx, spec),
             "name": ctx.name,
             "status": ctx.tier.value.upper(),
+            "accent_progress": round(intro_settle, 6),
         },
         "diagnosis": {
             "alpha": round(diagnosis_alpha, 6),
             "headline": spec.hook.headline,
             "subhead": spec.hook.subhead,
+            # A tiny upward settle keeps the default cover fully readable but
+            # makes frame zero visibly alive. Unlike opacity, this does not
+            # sacrifice thumbnail contrast.
+            "offset_y": round(lerp(0.0, -10.0, intro_settle), 6),
         },
         "chart": {
             "alpha": round(chart_alpha, 6),
+            "entrance_offset_y": round((1.0 - chart_alpha) * 24.0, 6),
+            "grid_alpha": round(smootherstep((t - 0.35) / 0.5), 6),
             "draw_progress": round(chart_draw_progress, 6),
             "draw_duration_s": round(DOT_LAND_T - 0.3, 3),
             "tracer_alpha": round(tracer_alpha, 6),
@@ -335,18 +344,21 @@ def sample_program_frame(
             "peak_count": ctx.peak_count,
             "count_value": round(spec.record.current_count * count_progress),
             "peak_annotation_alpha": round(peak_annotation_alpha, 6),
+            "peak_annotation_scale": round(lerp(0.92, 1.0, peak_raw), 6),
         },
         "stats": {
             "alpha": round(sample_scalar_track(STAT_ALPHA, t), 6),
             "cards": chart_cards,
             "card_alphas": card_alphas,
             "card_offsets": card_offsets,
+            "card_scales": [round(lerp(0.94, 1.0, alpha), 6) for alpha in card_alphas],
         },
         "narrative": {
             "alpha": round(narrative_alpha, 6),
             "support_alpha": round(support_alpha, 6),
             "offset_y": round((1.0 - narrative_alpha) * 28.0, 6),
             "support_offset_y": round((1.0 - support_alpha) * 20.0, 6),
+            "rule_progress": round(narrative_alpha, 6),
             "text": ctx.narrative_text,
             "supporting_text": ctx.supporting_text,
         },

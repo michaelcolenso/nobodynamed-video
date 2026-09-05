@@ -91,5 +91,10 @@ timings, and final social copy.
 - no baked-in music by default; add a native platform sound after upload
 - QC derives frame and duration expectations from the manifest
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for internals and [RUNBOOK.md](RUNBOOK.md) for
-the operating workflow.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for internals, [RUNBOOK.md](RUNBOOK.md) for
+the operating workflow, and [the repository audit](docs/REPOSITORY_AUDIT.md) for the
+current risk assessment and improvement roadmap.
+
+Animation contributors should also read the
+[animation and timing system](docs/ANIMATION_TIMING.md) before changing hyperframes or chart
+pacing.

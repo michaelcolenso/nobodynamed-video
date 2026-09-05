@@ -5,16 +5,20 @@ interface HeaderState {
   label: string;
   name: string;
   status: string;
+  accent_progress?: number;
 }
 
 interface DiagnosisState {
   alpha: number;
   headline: string;
   subhead: string;
+  offset_y?: number;
 }
 
 interface ChartState {
   alpha: number;
+  entrance_offset_y?: number;
+  grid_alpha?: number;
   draw_progress: number;
   draw_duration_s: number;
   tracer_alpha?: number;
@@ -35,6 +39,7 @@ interface ChartState {
   peak_year: number;
   peak_count: number;
   count_value: number;
+  peak_annotation_scale?: number;
 }
 
 interface StatsState {
@@ -42,6 +47,7 @@ interface StatsState {
   cards: Array<{ label: string; value: string; tone: string }>;
   card_alphas: number[];
   card_offsets?: number[];
+  card_scales?: number[];
 }
 
 interface NarrativeState {
@@ -49,6 +55,7 @@ interface NarrativeState {
   support_alpha: number;
   offset_y?: number;
   support_offset_y?: number;
+  rule_progress?: number;
   text: string;
   supporting_text?: string | null;
 }
@@ -803,7 +810,7 @@ export default function Canvas(props: CanvasProps) {
               left: -24,
               top: 4,
               width: 6,
-              height: 126,
+              height: 126 * (header.accent_progress ?? 1),
               backgroundColor: accentColor,
               display: "flex",
             }}
@@ -854,6 +861,7 @@ export default function Canvas(props: CanvasProps) {
           display: "flex",
           flexDirection: "column",
           width: CANVAS.w - CANVAS.safe.x * 2,
+          transform: `translateY(${diagnosis.offset_y ?? 0}px)`,
         }}
       >
         <div
@@ -892,6 +900,7 @@ export default function Canvas(props: CanvasProps) {
           width: chartWidth,
           height: chartHeight,
           opacity: chart.alpha,
+          transform: `translateY(${chart.entrance_offset_y ?? 0}px)`,
           display: "flex",
         }}
       >
@@ -1023,43 +1032,47 @@ export default function Canvas(props: CanvasProps) {
             </linearGradient>
           </defs>
 
-          {/* Grid lines */}
-          <line
-            x1={0}
-            y1={chartHeight * 0.25}
-            x2={chartWidth}
-            y2={chartHeight * 0.25}
-            stroke={COLORS.rule}
-            strokeWidth={1}
-            strokeDasharray="4 4"
-          />
-          <line
-            x1={0}
-            y1={chartHeight * 0.5}
-            x2={chartWidth}
-            y2={chartHeight * 0.5}
-            stroke={COLORS.rule}
-            strokeWidth={1}
-            strokeDasharray="4 4"
-          />
-          <line
-            x1={0}
-            y1={chartHeight * 0.75}
-            x2={chartWidth}
-            y2={chartHeight * 0.75}
-            stroke={COLORS.rule}
-            strokeWidth={1}
-            strokeDasharray="4 4"
-          />
-          <line
-            x1={0}
-            y1={0}
-            x2={chartWidth}
-            y2={0}
-            stroke={COLORS.rule}
-            strokeWidth={1}
-            strokeDasharray="4 4"
-          />
+          {/* The grid resolves a fraction after the chart container. Grouping
+              the rules gives the opening a photographic "focus pull" instead
+              of presenting every layer at once. */}
+          <g opacity={chart.grid_alpha ?? 1}>
+            <line
+              x1={0}
+              y1={chartHeight * 0.25}
+              x2={chartWidth}
+              y2={chartHeight * 0.25}
+              stroke={COLORS.rule}
+              strokeWidth={1}
+              strokeDasharray="4 4"
+            />
+            <line
+              x1={0}
+              y1={chartHeight * 0.5}
+              x2={chartWidth}
+              y2={chartHeight * 0.5}
+              stroke={COLORS.rule}
+              strokeWidth={1}
+              strokeDasharray="4 4"
+            />
+            <line
+              x1={0}
+              y1={chartHeight * 0.75}
+              x2={chartWidth}
+              y2={chartHeight * 0.75}
+              stroke={COLORS.rule}
+              strokeWidth={1}
+              strokeDasharray="4 4"
+            />
+            <line
+              x1={0}
+              y1={0}
+              x2={chartWidth}
+              y2={0}
+              stroke={COLORS.rule}
+              strokeWidth={1}
+              strokeDasharray="4 4"
+            />
+          </g>
 
           {/* Fading gradient area under the chart line */}
           {pathAreaD && (
@@ -1129,6 +1142,7 @@ export default function Canvas(props: CanvasProps) {
                 top: toY(chart.peak_count) + 50,
                 width: 320,
                 opacity: peakAnnotationAlpha,
+                transform: `scale(${chart.peak_annotation_scale ?? 1})`,
                 display: "flex",
                 justifyContent: "center",
               }}
@@ -1261,6 +1275,7 @@ export default function Canvas(props: CanvasProps) {
             style={{
               opacity: stats.card_alphas?.[index] ?? stats.alpha,
               marginTop: stats.card_offsets?.[index] ?? 0,
+              transform: `scale(${stats.card_scales?.[index] ?? 1})`,
               display: "flex",
             }}
           >
@@ -1324,7 +1339,9 @@ export default function Canvas(props: CanvasProps) {
       >
         <div
           style={{
-            width: CANVAS.w - CANVAS.safe.x * 2,
+            width:
+              (CANVAS.w - CANVAS.safe.x * 2) *
+              (narrative.rule_progress ?? 1),
             height: 1,
             backgroundColor: COLORS.rule,
             marginBottom: 26,

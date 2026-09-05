@@ -77,6 +77,7 @@ ALPHA_CHANNELS = [
     ("footer", "alpha"),
     ("footer", "dot_alpha"),
     ("diagnosis", "alpha"),
+    ("chart", "grid_alpha"),
 ]
 
 
@@ -97,6 +98,8 @@ def test_alpha_channels_never_pop(path: tuple[str, ...]) -> None:
         (("footer", "dot_radius"), 0.5, None),
         (("narrative", "offset_y"), 4.0, None),
         (("narrative", "support_offset_y"), 3.0, None),
+        (("diagnosis", "offset_y"), 2.0, None),
+        (("chart", "entrance_offset_y"), 4.0, None),
     ],
     ids=lambda p: "/".join(p) if isinstance(p, tuple) else str(p),
 )
@@ -117,6 +120,48 @@ def test_stat_cards_stagger_without_popping() -> None:
         assert _max_delta(alphas) <= 0.15
         assert alphas[0] == 0.0
         assert alphas[-1] == pytest.approx(1.0)
+
+
+def test_stat_cards_settle_in_as_they_stagger() -> None:
+    spec = make_bertha_spec()
+    for index in range(3):
+        scales = [
+            sample_program_frame(spec, idx / FPS)["stats"]["card_scales"][index]
+            for idx in range(total_frame_count(FPS))
+        ]
+        assert all(0.94 <= value <= 1.0 for value in scales)
+        assert scales[-1] == 1.0
+        assert _max_delta(scales) <= 0.02
+
+
+def test_opening_cover_moves_without_sacrificing_contrast() -> None:
+    """The hook stays opaque while its position visibly settles immediately."""
+    spec = make_bertha_spec()
+    frames = [sample_program_frame(spec, idx / FPS) for idx in range(4)]
+
+    assert all(frame["diagnosis"]["alpha"] == 1.0 for frame in frames)
+    offsets = [frame["diagnosis"]["offset_y"] for frame in frames]
+    assert offsets[0] == 0.0
+    assert offsets == sorted(offsets, reverse=True)
+    assert len(set(offsets)) == len(offsets)
+
+
+def test_motion_beats_have_deliberate_separation() -> None:
+    """Focus, journey, landing, evidence, and CTA must not arrive together."""
+    spec = make_bertha_spec()
+
+    focus = sample_program_frame(spec, 0.85)
+    journey = sample_program_frame(spec, 3.0)
+    landing = sample_program_frame(spec, 6.2)
+    evidence = sample_program_frame(spec, 8.4)
+    cta = sample_program_frame(spec, 10.2)
+
+    assert focus["chart"]["grid_alpha"] == 1.0
+    assert 0.0 < journey["chart"]["draw_progress"] < 1.0
+    assert landing["chart"]["dot_alpha"] > landing["chart"]["tracer_alpha"]
+    assert evidence["stats"]["card_alphas"][0] == 1.0
+    assert evidence["narrative"]["alpha"] > 0.0
+    assert cta["footer"]["alpha"] == 1.0
 
 
 def test_tracer_hands_over_to_the_landing_dot() -> None:

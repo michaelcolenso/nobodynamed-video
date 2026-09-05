@@ -25,8 +25,8 @@ nbn = "nobodynamed_video.cli:app"
 [tool.hatch.build.targets.wheel]
 packages = ["src/nobodynamed_video"]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest==8.2.2",
     "pytest-asyncio==0.23.7",
     "pytest-httpx==0.30.0",
