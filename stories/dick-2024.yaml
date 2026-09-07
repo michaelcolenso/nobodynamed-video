@@ -1,0 +1,47 @@
+id: dick-2024
+name: Dick
+sex: M
+story_kind: long_decline
+thesis: Dick was a standard name for a century, then slang made it unwearable and
+  it left the record in 2005.
+headline: This nickname became unwearable.
+subhead: 1,131 births in 1934. Off the record by 2005.
+takeaway: A classic nickname lost to its own double meaning.
+support: Peak 1934. Out of the top 1,000 by 1969.
+script_beats:
+  - kind: hook
+    text: Every Richard in America once answered to this.
+  - kind: reveal
+    text: Dick counted 1,131 births in 1934.
+  - kind: proof
+    text: By 2005, it left the record entirely.
+  - kind: loop
+    text: Watch a nickname retire.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Dick peaked at 1,131 male births in 1934 and last appeared in SSA records
+      in 2005.
+  - label: Wikipedia, Dick (nickname)
+    url: https://en.wikipedia.org/wiki/Dick_(nickname)
+    kind: reporting
+    supports: Documents the nickname's drastic decline from slang association and
+      its exit from the top 1,000 by 1969.
+visual_anchors:
+  - 1934 peak badge
+  - post-1969 off-list marker
+  - 2005 final dot
+social_caption: Dick was a completely standard American name — until it wasn't.
+hashtags:
+  - '#Dick'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Which old nickname is gone for good?
+target_duration_s: 10.5
+voice_instructions: Read deadpan; the humor is inherent, so play it straight and let
+  1,131 and 2005 land.
+status: approved
+quality_score: 88
+approved_by: michaelcolenso
+approved_at: '2026-09-07T02:46:38.699995Z'
