@@ -120,7 +120,7 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
     if settings.use_sqlite:
         source: SqliteSource | D1Source = SqliteSource(settings.sqlite_fixture)
     else:
-        source = D1Source(settings.d1_url, settings.get_d1_token())
+        source = D1Source(settings.d1_url, settings.get_d1_token(), timeout=30.0)
 
     specs: list[VideoSpec] = []
     latest_year = settings.latest_year
