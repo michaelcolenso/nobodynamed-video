@@ -1,0 +1,43 @@
+id: gay-2024
+name: Gay
+sex: F
+story_kind: long_decline
+thesis: Gay was a steady mid-century name until the word's meaning shifted, and it
+  left the record after 1982.
+headline: A word changed. This name vanished.
+subhead: 682 births in 1959. Gone since 1982.
+takeaway: Language moved, and a name could not follow.
+support: Peak 1959. Last on record 1982.
+script_beats:
+  - kind: hook
+    text: The dictionary retired this name.
+  - kind: reveal
+    text: Gay counted 682 births in 1959.
+  - kind: proof
+    text: As the word's meaning shifted, the name left the record in 1982.
+  - kind: loop
+    text: Watch language move a name.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Gay peaked at 682 female births in 1959 and last appeared in SSA records
+      in 1982.
+visual_anchors:
+  - 1959 peak badge
+  - long sixties slide
+  - 1982 exit marker
+social_caption: Gay was an ordinary name for a century, until the word changed around
+  it.
+hashtags:
+  - '#Gay'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Which names did language leave behind?
+target_duration_s: 11.0
+voice_instructions: Read gently and anthropologically; this is about language drift,
+  not judgment, and the loop should feel wistful.
+status: approved
+quality_score: 80
+approved_by: michaelcolenso
+approved_at: '2026-09-07T02:46:38.111074Z'

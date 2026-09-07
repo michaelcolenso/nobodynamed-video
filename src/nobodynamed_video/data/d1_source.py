@@ -9,6 +9,7 @@ Fetches the full series for a name in a single query to stay within
 Cloudflare's ~50 req/s rate limit.
 """
 
+import asyncio
 import json
 from typing import cast
 
@@ -59,12 +60,21 @@ class D1Source:
     async def query_rows(self, sql: str, params: list[object]) -> list[dict[str, object]]:
         payload = {"sql": sql, "params": params}
 
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
+        resp: httpx.Response | None = None
+        last_exc: httpx.HTTPError | None = None
+        for attempt in range(4):
             try:
-                resp = await client.post(self._url, json=payload, headers=self._headers)
-                resp.raise_for_status()
+                async with httpx.AsyncClient(timeout=self._timeout) as client:
+                    resp = await client.post(self._url, json=payload, headers=self._headers)
+                    resp.raise_for_status()
+                break
             except httpx.HTTPError as exc:
-                raise DataSourceError(f"D1 request failed: {exc}") from exc
+                last_exc = exc
+                if attempt < 3:
+                    await asyncio.sleep(1.5 * (attempt + 1))
+        else:
+            raise DataSourceError(f"D1 request failed: {last_exc}") from last_exc
+        assert resp is not None
 
         try:
             body = resp.json()

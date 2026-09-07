@@ -1,0 +1,54 @@
+batch: controversial-ten
+defaults:
+  fps: 30
+videos:
+  - id: brandon-2024
+    name: Brandon
+    sex: M
+    style: cultural-collapse
+    story: stories/brandon-2024.yaml
+  - id: katrina-2024
+    name: Katrina
+    sex: F
+    style: cultural-collapse
+    story: stories/katrina-2024.yaml
+  - id: caitlyn-2024
+    name: Caitlyn
+    sex: F
+    style: cultural-collapse
+    story: stories/caitlyn-2024.yaml
+  - id: siri-2024
+    name: Siri
+    sex: F
+    style: cultural-collapse
+    story: stories/siri-2024.yaml
+  - id: osama-2024
+    name: Osama
+    sex: M
+    style: declining
+    story: stories/osama-2024.yaml
+  - id: gay-2024
+    name: Gay
+    sex: F
+    style: declining
+    story: stories/gay-2024.yaml
+  - id: dick-2024
+    name: Dick
+    sex: M
+    style: declining
+    story: stories/dick-2024.yaml
+  - id: nevaeh-2024
+    name: Nevaeh
+    sex: F
+    style: peak-year
+    story: stories/nevaeh-2024.yaml
+  - id: messiah-2024
+    name: Messiah
+    sex: M
+    style: peak-year
+    story: stories/messiah-2024.yaml
+  - id: lucifer-2024
+    name: Lucifer
+    sex: M
+    style: peak-year
+    story: stories/lucifer-2024.yaml

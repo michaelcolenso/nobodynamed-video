@@ -1,0 +1,42 @@
+id: arsenio-2024
+name: Arsenio
+sex: M
+story_kind: one_hit
+thesis: Arsenio peaked at 397 births in 1989 at the height of the talk show, then fell back to a trickle.
+headline: This name peaked the year TV loved him.
+subhead: 397 births in 1989. 16 in 2024.
+takeaway: Arsenio rose with one talk show and faded when it signed off.
+support: Peak 1989. Back to a trickle after the finale.
+script_beats:
+- kind: hook
+  text: A talk show made this name for one year.
+- kind: reveal
+  text: Arsenio peaked at 397 births in 1989.
+- kind: proof
+  text: When the show ended, the name fell to 16 by 2024.
+- kind: loop
+  text: Watch fame switch off.
+evidence:
+- label: Social Security baby-name data
+  url: https://www.ssa.gov/oact/babynames/
+  kind: ssa
+  supports: Arsenio peaked at 397 male births in 1989 and fell to 16 by 2024.
+- label: The Arsenio Hall Show run dates
+  url: https://en.wikipedia.org/wiki/Arsenio_Hall
+  kind: reference
+  supports: The Arsenio Hall Show aired 1989-1994, bracketing the name's entire peak.
+visual_anchors:
+- 1989 peak badge
+- 1994 finale marker
+- post-show fade
+social_caption: Arsenio is the purest one-hit wonder in baby-name data.
+hashtags:
+- '#Arsenio'
+- '#OneHitWonder'
+- '#AIVoice'
+share_prompt: Which TV name should we chart next?
+target_duration_s: 13.3
+voice_instructions: Light and a little affectionate; a one-hit wonder, not a tragedy.
+status: approved
+quality_score: 93
+approved_by: michaelcolenso

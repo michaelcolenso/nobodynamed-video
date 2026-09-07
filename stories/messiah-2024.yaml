@@ -1,0 +1,54 @@
+id: messiah-2024
+name: Messiah
+sex: M
+story_kind: one_hit
+thesis: Messiah survived a courtroom order and kept rising to over two thousand births
+  a year.
+headline: A judge banned it. Parents ignored her.
+subhead: 974 births in 2013. 2,231 by 2021.
+takeaway: The name a court tried to change became more popular than ever.
+support: The 2013 order was reversed on appeal.
+script_beats:
+  - kind: hook
+    text: A judge ordered this name changed.
+  - kind: reveal
+    text: Messiah counted 974 births in 2013.
+  - kind: proof
+    text: By 2021, over two thousand boys a year.
+  - kind: loop
+    text: Watch a name win.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Messiah recorded 974 male births in 2013 and peaked at 2,231 in 2021.
+  - label: NPR on the Tennessee ruling
+    url:
+      https://www.npr.org/sections/thetwo-way/2013/08/12/211348996/judge-orders-babys-name-changed-from-messiah
+    kind: reporting
+    supports: Documents the 2013 order to change baby Messiah's name and the name's
+      rise into the SSA top 400.
+  - label: Christian Science Monitor on the case
+    url:
+      https://www.csmonitor.com/Arts-Culture/Family/2013/0812/Messiah-baby-name-Make-it-Martin-instead-judge-says
+    kind: reporting
+    supports: Reports the ruling, the backlash, and Messiah ranking fourth among fastest-rising
+      names in 2012.
+visual_anchors:
+  - 2013 courtroom marker
+  - post-ruling climb
+  - 2021 peak badge
+social_caption: A judge ordered a baby's name changed — America named two thousand
+  boys Messiah a year anyway.
+hashtags:
+  - '#Messiah'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Should any name be off-limits by law?
+target_duration_s: 11.0
+voice_instructions: Read as a straight legal brief; the absurdity carries itself,
+  so keep 974 and two thousand dry.
+status: approved
+quality_score: 90
+approved_by: michaelcolenso
+approved_at: '2026-09-07T02:46:39.878212Z'

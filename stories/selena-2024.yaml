@@ -1,0 +1,39 @@
+id: selena-2024
+name: Selena
+sex: F
+story_kind: one_hit
+thesis: Selena quadrupled to a peak of 3,825 births in 1995, the year the singer was killed.
+headline: This name quadrupled in a single year.
+subhead: 918 births in 1994. 3,825 in 1995.
+takeaway: Grief quadrupled Selena in one year, and the name never really left.
+support: Peak 1995. Elevated ever since.
+script_beats:
+- kind: hook
+  text: One tragedy quadrupled this name.
+- kind: reveal
+  text: Selena had nine hundred births back in 1994.
+- kind: proof
+  text: The next year, nearly four thousand.
+- kind: loop
+  text: Watch grief move the data.
+evidence:
+- label: Social Security baby-name data
+  url: https://www.ssa.gov/oact/babynames/
+  kind: ssa
+  supports: Selena recorded 918 female births in 1994 and 3,825 in 1995, the year Selena Quintanilla was
+    killed.
+visual_anchors:
+- 1994 baseline
+- 1995 spike edge
+- lasting plateau
+social_caption: The year Selena died, her name quadrupled — and it never really left.
+hashtags:
+- '#Selena'
+- '#NameData'
+- '#AIVoice'
+share_prompt: Which artist moved baby names the most?
+target_duration_s: 10.8
+voice_instructions: Reverent; this is a grief story, so keep it gentle.
+status: approved
+quality_score: 93
+approved_by: michaelcolenso

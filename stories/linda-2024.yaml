@@ -1,0 +1,38 @@
+id: linda-2024
+name: Linda
+sex: F
+story_kind: long_decline
+thesis: Linda peaked at 99,692 births in 1947, then began the longest fall in naming history.
+headline: One in 15 girls. Then it fell for 77 years.
+subhead: 99,692 births in 1947. Just 324 in 2024.
+takeaway: The most dominant name in American history is now a rarity.
+support: Peak 1947. Seventy-seven years of decline.
+script_beats:
+- kind: hook
+  text: One in fifteen girls had this name.
+- kind: reveal
+  text: Linda hit nearly a hundred thousand in 1947.
+- kind: proof
+  text: Then it fell for seven decades, to three hundred.
+- kind: loop
+  text: Watch the champion fall.
+evidence:
+- label: Social Security baby-name data
+  url: https://www.ssa.gov/oact/babynames/
+  kind: ssa
+  supports: Linda peaked at 99,692 female births in 1947 and fell to 324 by 2024.
+visual_anchors:
+- 1947 peak badge
+- post-war cliff
+- single-percentile floor
+social_caption: Linda went from one in fifteen American girls to nearly extinct.
+hashtags:
+- '#Linda'
+- '#NameData'
+- '#AIVoice'
+share_prompt: Do you know a Linda under 40?
+target_duration_s: 11.5
+voice_instructions: Read with awe at the scale, then let the long fall land flat and steady.
+status: approved
+quality_score: 100
+approved_by: michaelcolenso

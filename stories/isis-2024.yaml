@@ -1,0 +1,48 @@
+id: isis-2024
+name: Isis
+sex: F
+story_kind: cultural_rupture
+thesis: Isis fell 90 percent in the three years after 2013, then quietly started to return.
+headline: This name fell 90%, then crept back.
+subhead: 501 births in 2013. 53 by 2016. 230 in 2024.
+takeaway: The news drove Isis off the charts; a decade later it is quietly returning.
+support: Peak 2013. Cliff by 2016. Slow recovery since.
+script_beats:
+- kind: hook
+  text: News killed this name. It came back.
+- kind: reveal
+  text: Isis counted 501 births in 2013.
+- kind: proof
+  text: By 2016, just 53. By 2024, 230.
+- kind: loop
+  text: Watch a name refuse to die.
+evidence:
+- label: Social Security baby-name data
+  url: https://www.ssa.gov/oact/babynames/
+  kind: ssa
+  supports: Isis recorded 501 female births in 2013, 53 in 2016, and 230 in 2024.
+- label: SFGate on Isis leaving the top 1,000
+  url: https://www.sfgate.com/mommyfiles/article/Isis-baby-names-Social-Security-top-list-7422610.php
+  kind: reporting
+  supports: Documents Isis dropping off the SSA top 1,000 in 2015 after 15 years mid-list, with Wattenberg
+    calling news-driven elimination rare.
+- label: Quartz on the fastest-falling names
+  url: https://qz.com/868244/the-baby-name-isis-is-one-of-the-fastest-falling-names-of-all-time
+  kind: reporting
+  supports: 'Cites Wattenberg: publicity usually makes names rise; Isis is a rare exception.'
+visual_anchors:
+- 2013 peak badge
+- 2014 event line
+- 2016 floor
+- recovery slope
+social_caption: Isis fell 90% in three years — and now it's quietly coming back.
+hashtags:
+- '#Isis'
+- '#NameData'
+- '#AIVoice'
+share_prompt: Can a name ever outrun the news?
+target_duration_s: 13.6
+voice_instructions: Solemn on the fall, quietly hopeful on the return; never name the group.
+status: approved
+quality_score: 100
+approved_by: michaelcolenso

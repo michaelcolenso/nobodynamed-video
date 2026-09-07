@@ -1,0 +1,55 @@
+id: katrina-2024
+name: Katrina
+sex: F
+story_kind: cultural_rupture
+thesis: Katrina was a solid top-100 name until the storm, then fell 62 percent in
+  two years and never returned.
+headline: One storm retired this name.
+subhead: 3,397 births at peak. 128 in 2024.
+takeaway: Katrina crossed the threshold where publicity turns toxic.
+support: Peak 1980. The slide became a cliff after the storm.
+script_beats:
+  - kind: hook
+    text: One storm rewrote this name.
+  - kind: reveal
+    text: Katrina drew 1,328 births the year it hit.
+  - kind: proof
+    text: Two years later, just 505.
+  - kind: loop
+    text: Watch the storm cross the chart.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Katrina recorded 1,328 female births in 2005, 505 in 2007, and 128 in
+      2024.
+  - label: NBC News, ten years after the storm
+    url:
+      https://www.nbcnews.com/storyline/hurricane-katrina-anniversary/whats-name-social-effect-hurricane-katrina-n407991
+    kind: reporting
+    supports: Reports the name's steady fade after 2005 and that it went unused in
+      Louisiana birth records after 2006.
+  - label: AP on the post-storm drop
+    url:
+      https://www.dispatch.com/story/news/2007/05/11/social-security-report-parents-drop/24072635007/
+    kind: reporting
+    supports: Documents Katrina sinking to its lowest SSA rank since the 1950s in
+      the year after the hurricane.
+visual_anchors:
+  - 1980 peak badge
+  - 2005 event line
+  - two-year cliff
+  - post-2007 low plateau
+social_caption: Katrina was a top-100 name until one storm rewrote what it meant.
+hashtags:
+  - '#Katrina'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Can a name ever recover from a disaster?
+target_duration_s: 11.5
+voice_instructions: Read with documentary restraint; let 1,328 and 505 land plainly,
+  and keep the loop quiet.
+status: approved
+quality_score: 100
+approved_by: michaelcolenso
+approved_at: '2026-09-07T03:08:13.237577Z'

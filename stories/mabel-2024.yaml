@@ -1,0 +1,39 @@
+id: mabel-2024
+name: Mabel
+sex: F
+story_kind: comeback
+thesis: Mabel peaked in 1915, spent fifty years near zero, then returned to 1,385 births by 2024.
+headline: This 145-year-old name is back.
+subhead: 3,683 births in 1915. 60 in 1970. 1,385 in 2024.
+takeaway: Mabel slept for half a century and woke up fashionable.
+support: Peak 1915. Near zero by 1970. Full revival now.
+script_beats:
+- kind: hook
+  text: Your great-grandmother's name is cool again.
+- kind: reveal
+  text: Mabel peaked in 1915, then nearly vanished.
+- kind: proof
+  text: From sixty births a year to 1,385.
+- kind: loop
+  text: Watch the vintage revival.
+evidence:
+- label: Social Security baby-name data
+  url: https://www.ssa.gov/oact/babynames/
+  kind: ssa
+  supports: Mabel recorded 3,683 female births in 1915, bottomed at 60 in 1970, and returned to 1,385
+    by 2024.
+visual_anchors:
+- 1915 peak badge
+- 1970 trough marker
+- hockey-stick revival
+social_caption: Mabel flatlined for fifty years — now it's a full vintage comeback.
+hashtags:
+- '#Mabel'
+- '#NameComeback'
+- '#AIVoice'
+share_prompt: Which vintage name comes back next?
+target_duration_s: 13.1
+voice_instructions: Playful and warm; the comeback should feel like good news.
+status: approved
+quality_score: 93
+approved_by: michaelcolenso

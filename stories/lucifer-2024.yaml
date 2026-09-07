@@ -1,0 +1,51 @@
+id: lucifer-2024
+name: Lucifer
+sex: M
+story_kind: one_hit
+thesis: Lucifer is rejected by registrars abroad but rose fourteenfold in American
+  records over a decade.
+headline: Banned in New Zealand. Rising in America.
+subhead: 5 births in 2012. 70 by 2021.
+takeaway: The most forbidden name in the data is growing.
+support: First appeared 2002. Peak 2021.
+script_beats:
+  - kind: hook
+    text: Some countries ban this name outright.
+  - kind: reveal
+    text: Lucifer counted five births in 2012.
+  - kind: proof
+    text: By 2021, seventy, a fourteenfold rise in a decade.
+  - kind: loop
+    text: Watch the forbidden name rise.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Lucifer recorded 5 male births in 2012 and peaked at 70 in 2021.
+  - label: HuffPost on New Zealand's banned names
+    url: https://www.huffpost.com/entry/new-zealand-banned-baby-names_n_3202017
+    kind: reporting
+    supports: Documents New Zealand's registrar rejecting Lucifer among its banned
+      baby names.
+  - label: NZ Herald on the 2025 declined list
+    url:
+      https://www.nzherald.co.nz/nz/politics/declined-baby-names-of-2025-lucifer-king-cannabis-strains-make-the-list/PCJ4RZUDLZDURO46A4E54XNCPU/
+    kind: reporting
+    supports: Confirms Lucifer remains on New Zealand's declined-names list in 2025.
+visual_anchors:
+  - invisible pre-2002 baseline
+  - steady forbidden climb
+  - 2021 peak badge
+social_caption: Lucifer is banned in New Zealand — and quietly rising in America.
+hashtags:
+  - '#Lucifer'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Should governments get veto power over names?
+target_duration_s: 10.5
+voice_instructions: Read cool and transgressive-lite; let five and seventy do the
+  provoking, no theatrics needed.
+status: approved
+quality_score: 95
+approved_by: michaelcolenso
+approved_at: '2026-09-07T02:46:40.477940Z'

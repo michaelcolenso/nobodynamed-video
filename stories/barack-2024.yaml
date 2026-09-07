@@ -1,0 +1,38 @@
+id: barack-2024
+name: Barack
+sex: M
+story_kind: one_hit
+thesis: Barack appeared in 2007, peaked at 71 births in 2009, then fell back to single digits.
+headline: America elected him. Nobody took the name.
+subhead: 71 births in 2009. Just 7 in 2024.
+takeaway: Two elections produced a five-year blip, then Barack vanished again.
+support: Debut 2007. Peak 2009. Single digits now.
+script_beats:
+- kind: hook
+  text: Two elections couldn't make this name popular.
+- kind: reveal
+  text: Barack debuted with five boys in 2007.
+- kind: proof
+  text: It peaked at 71, then fell back to seven.
+- kind: loop
+  text: Watch history skip a name.
+evidence:
+- label: Social Security baby-name data
+  url: https://www.ssa.gov/oact/babynames/
+  kind: ssa
+  supports: Barack debuted with 5 male births in 2007, peaked at 71 in 2009, and fell to 7 by 2024.
+visual_anchors:
+- 2007 debut dot
+- 2009 peak badge
+- return to single digits
+social_caption: America elected Barack Obama twice — and still wouldn't name a baby Barack.
+hashtags:
+- '#Barack'
+- '#NameData'
+- '#AIVoice'
+share_prompt: Why don't presidential names catch on?
+target_duration_s: 12.9
+voice_instructions: Wry but neutral; the irony is in the data, not the politics.
+status: approved
+quality_score: 95
+approved_by: michaelcolenso
