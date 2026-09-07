@@ -1,0 +1,53 @@
+id: siri-2024
+name: Siri
+sex: F
+story_kind: cultural_rupture
+thesis: Siri was a rare Scandinavian name until a phone feature turned it into a command,
+  and births collapsed.
+headline: One update erased this name.
+subhead: 120 births at peak. 20 a few years later.
+takeaway: Siri went from name to feature in one product cycle.
+support: Peak 2009. Collapse after the launch.
+script_beats:
+  - kind: hook
+    text: A phone update erased this name.
+  - kind: reveal
+    text: Siri counted 120 births at its 2009 peak.
+  - kind: proof
+    text: By 2017, twenty. The assistant won.
+  - kind: loop
+    text: Watch a product eat a name.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Siri peaked at 120 female births in 2009 and fell to 20 by 2017.
+  - label: Vox on the assistant names
+    url:
+      https://www.vox.com/2018/5/13/17345722/alexa-amazon-echo-baby-name-girls-apple-siri
+    kind: reporting
+    supports: Documents Siri peaking at 120 births in 2009 and falling to 20 by 2017,
+      via Philip Cohen's SSA analysis.
+  - label: Mashable on Cohen's analysis
+    url: https://mashable.com/article/alexa-name-popularity-amazon
+    kind: reporting
+    supports: Confirms Siri's decline alongside Alexa's after the voice assistants
+      launched.
+visual_anchors:
+  - 2009 peak badge
+  - 2011 event line
+  - post-launch cliff
+  - single-digit floor
+social_caption: Apple put Siri in every pocket — and the name nearly vanished.
+hashtags:
+  - '#Siri'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Would a voice assistant stop you from using a name?
+target_duration_s: 11.0
+voice_instructions: Read with light irony but no snark; make 120 and twenty the whole
+  story.
+status: approved
+quality_score: 95
+approved_by: michaelcolenso
+approved_at: '2026-09-07T02:46:36.935172Z'

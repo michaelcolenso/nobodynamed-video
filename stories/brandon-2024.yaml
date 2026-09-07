@@ -1,0 +1,54 @@
+id: brandon-2024
+name: Brandon
+sex: M
+story_kind: cultural_rupture
+thesis: Brandon peaked as the number six boys' name in 1992, then a viral chant accelerated
+  its fall.
+headline: A stadium slogan broke this name.
+subhead: 29,628 births in 1992. 1,562 in 2024.
+takeaway: A top-ten name met a slogan and hit record lows.
+support: Peak 1992. Fastest slide of the chant era.
+script_beats:
+  - kind: hook
+    text: A slogan turned this name toxic.
+  - kind: reveal
+    text: Brandon was a top-ten boys' name.
+  - kind: proof
+    text: Then one chant sent it to record lows.
+  - kind: loop
+    text: Watch a slogan move a name.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Brandon peaked at 29,628 male births in 1992 and fell to 1,562 by 2024.
+  - label: HuffPost on Brandon's accelerating decline
+    url:
+      https://www.huffpost.com/entry/baby-name-brandon-decline_l_65443a4ee4b0cde80b8c56c5
+    kind: reporting
+    supports: Reports Brandon fell 30 places from 2021 to 2022, its lowest SSA ranking
+      since 1969, amid the political slogan.
+  - label: FamilyEducation on 2022 decliners
+    url:
+      https://www.familyeducation.com/naming-trends/bye-karen-and-brandon-why-baby-names-declined-in-popularity-in-2022
+    kind: reporting
+    supports: Documents Brandon's sharp 2022 drop and the slogan's origin at an Alabama
+      NASCAR race.
+visual_anchors:
+  - 1992 number-six peak badge
+  - long plateau slide
+  - post-2021 acceleration
+  - lowest-since-1969 marker
+social_caption: A top-ten boys' name met a stadium chant — and fell to record lows.
+hashtags:
+  - '#Brandon'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Which political name should we chart next?
+target_duration_s: 12.0
+voice_instructions: Read flat and factual; make number six and 1969 carry the weight
+  without any partisan edge.
+status: approved
+quality_score: 100
+approved_by: michaelcolenso
+approved_at: '2026-09-07T03:15:35.426658Z'

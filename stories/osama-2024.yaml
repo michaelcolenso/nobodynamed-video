@@ -1,0 +1,41 @@
+id: osama-2024
+name: Osama
+sex: M
+story_kind: long_decline
+thesis: Osama fell 71 percent in a single year after 2001 and never rose again.
+headline: This name fell 71% in one year.
+subhead: 38 births one year. 11 the next.
+takeaway: Some names fall in a single year and stay down.
+support: Peak 1999. Single digits after 2001.
+script_beats:
+  - kind: hook
+    text: This name fell seventy percent in a year.
+  - kind: reveal
+    text: Osama counted 38 births in 2001.
+  - kind: proof
+    text: The next year, 11. Single digits ever since.
+  - kind: loop
+    text: Watch a name go quiet.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Osama recorded 38 male births in 2001, 11 in 2002, and single-digit
+      counts thereafter.
+visual_anchors:
+  - 1999 peak badge
+  - 2001 to 2002 drop edge
+  - single-digit floor
+social_caption: In one year, the name Osama fell 71% in America — and never rose again.
+hashtags:
+  - '#Osama'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: What does it take for a name to disappear?
+target_duration_s: 10.5
+voice_instructions: Read with maximum restraint; a quiet data obituary, no editorializing,
+  and a soft loop.
+status: approved
+quality_score: 85
+approved_by: michaelcolenso
+approved_at: '2026-09-07T02:46:37.525196Z'

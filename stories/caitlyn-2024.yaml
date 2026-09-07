@@ -1,0 +1,55 @@
+id: caitlyn-2024
+name: Caitlyn
+sex: F
+story_kind: cultural_rupture
+thesis: Caitlyn fell 64 percent in two years, the biggest drop of any American name
+  in 2016.
+headline: The biggest drop of 2016.
+subhead: 692 births in 2014. 249 by 2016.
+takeaway: The four Caitlyn spellings led the national decline list together.
+support: Peak 1998. Steepest fall of 2016.
+script_beats:
+  - kind: hook
+    text: No name fell faster in 2016.
+  - kind: reveal
+    text: Caitlyn counted 692 births in 2014.
+  - kind: proof
+    text: Two years later, just 249 births.
+  - kind: loop
+    text: Watch the fastest fall on record.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Caitlyn recorded 692 female births in 2014, 494 in 2015, and 249 in
+      2016.
+  - label: NBC News on the 2016 SSA list
+    url:
+      https://www.nbcnews.com/feature/nbc-out/don-t-call-me-caitlyn-baby-name-plunges-popularity-n758841
+    kind: reporting
+    supports: Reports Caitlyn plummeted more than any other baby name in 2016, with
+      all four spellings leading the decline list.
+  - label: CBS/AP on the biggest droppers
+    url:
+      https://www.cbsnews.com/news/caitlyn-baby-name-unpopular-social-security-administration-list/
+    kind: reporting
+    supports: Confirms the four Caitlyn variants dropped the most of any names on
+      the 2016 SSA list.
+visual_anchors:
+  - 1998 peak badge
+  - 2015 event line
+  - two-year −64% cliff
+  - post-2016 low plateau
+social_caption: In 2016, no baby name in America fell further than Caitlyn.
+hashtags:
+  - '#Caitlyn'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Why do parents avoid controversial names?
+target_duration_s: 11.5
+voice_instructions: Read neutral and precise; this is a data story about name avoidance,
+  so let the numbers carry everything.
+status: approved
+quality_score: 100
+approved_by: michaelcolenso
+approved_at: '2026-09-07T03:08:43.138129Z'
