@@ -21,5 +21,12 @@
     "react": "18.3.1",
     "tsx": "4.15.7",
     "typescript": "5.4.5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@resvg/resvg-js",
+      "yoga-layout"
+    ]
   }
 }
