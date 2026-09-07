@@ -1,0 +1,44 @@
+id: farrah-2024
+name: Farrah
+sex: F
+story_kind: one_hit
+thesis: Farrah peaked at 1,515 births in 1977, faded, then rose again the year after Farrah Fawcett died.
+headline: This name spiked twice, 33 years apart.
+subhead: 1,515 births in 1977. A ghost return in 2010.
+takeaway: 'Farrah is a two-spike name: one for the show, one for the goodbye.'
+support: Peak 1977. Second rise in 2010.
+script_beats:
+- kind: hook
+  text: A TV angel made this name explode.
+- kind: reveal
+  text: Farrah jumped to 1,515 births in 1977.
+- kind: proof
+  text: It faded, then doubled the year she died.
+- kind: loop
+  text: Watch the spike strike twice.
+evidence:
+- label: Social Security baby-name data
+  url: https://www.ssa.gov/oact/babynames/
+  kind: ssa
+  supports: Farrah peaked at 1,515 female births in 1977 and doubled in 2010, the year after Farrah Fawcett
+    died.
+- label: Hilary Parker's SSA fad-name analysis
+  url: https://hilaryparker.com/2013/01/30/hilary-the-most-poisoned-baby-name-in-us-history/
+  kind: analysis
+  supports: Documents Farrah's 1976-77 debut spike on Charlie's Angels and its 2009-10 return after Fawcett's
+    death.
+visual_anchors:
+- 1977 peak badge
+- 1976 event line
+- 2010 ghost spike
+social_caption: Farrah spiked for Charlie's Angels — and spiked again the year after she died.
+hashtags:
+- '#Farrah'
+- '#NameData'
+- '#AIVoice'
+share_prompt: Which celebrity name should we chart next?
+target_duration_s: 12.4
+voice_instructions: Warm and nostalgic; let the second spike carry the emotion.
+status: approved
+quality_score: 100
+approved_by: michaelcolenso

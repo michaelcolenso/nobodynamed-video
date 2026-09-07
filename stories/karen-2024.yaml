@@ -1,0 +1,49 @@
+id: karen-2024
+name: Karen
+sex: F
+story_kind: cultural_rupture
+thesis: Karen peaked at 40,591 births in 1957, then fell into a meme-driven cliff after 2019.
+headline: This name became an insult. Watch it fall.
+subhead: 40,591 births in 1957. 186 in 2024.
+takeaway: Karen was already fading; the meme turned a slope into a cliff.
+support: Peak 1957. Lowest rank since the 1920s.
+script_beats:
+- kind: hook
+  text: The internet turned this name into a meme.
+- kind: reveal
+  text: Karen once drew forty thousand births a year.
+- kind: proof
+  text: By 2024, just one hundred eighty-six.
+- kind: loop
+  text: Watch the meme eat the name.
+evidence:
+- label: Social Security baby-name data
+  url: https://www.ssa.gov/oact/babynames/
+  kind: ssa
+  supports: Karen peaked at 40,591 female births in 1957 and fell to 186 by 2024, with the steepest drops
+    after 2018.
+- label: HuffPost on the 2020 Karen drop
+  url: https://www.huffpost.com/entry/karen-baby-name-2020_l_60af11dde4b0a256831bce5e
+  kind: reporting
+  supports: Karen fell 171 spots in 2020 to its lowest rank since 1927, with the meme cited as the likely
+    accelerant.
+- label: NPR on the Karen decline
+  url: https://www.npr.org/2021/06/02/1002368944/the-name-karen-drops-significantly-on-a-list-of-popular-baby-names
+  kind: reporting
+  supports: Documents the name falling 171 spots on the SSA list in a single year.
+visual_anchors:
+- 1957 peak badge
+- 2018 event line
+- post-meme cliff
+- century-low floor
+social_caption: Karen went from a top-three girls' name to a meme and a century low.
+hashtags:
+- '#Karen'
+- '#NameData'
+- '#AIVoice'
+share_prompt: Would you name a baby Karen today?
+target_duration_s: 11.0
+voice_instructions: Straight and factual; let the cliff speak, no meme impersonation.
+status: approved
+quality_score: 100
+approved_by: michaelcolenso

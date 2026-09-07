@@ -1,0 +1,54 @@
+batch: ten-fascinating
+defaults:
+  fps: 30
+videos:
+  - id: linda-2024
+    name: Linda
+    sex: F
+    style: extinction-watch
+    story: stories/linda-2024.yaml
+  - id: farrah-2024
+    name: Farrah
+    sex: F
+    style: peak-year
+    story: stories/farrah-2024.yaml
+  - id: karen-2024
+    name: Karen
+    sex: F
+    style: cultural-collapse
+    story: stories/karen-2024.yaml
+  - id: hillary-2024
+    name: Hillary
+    sex: F
+    style: cultural-collapse
+    story: stories/hillary-2024.yaml
+  - id: isis-2024
+    name: Isis
+    sex: F
+    style: rising
+    story: stories/isis-2024.yaml
+  - id: mabel-2024
+    name: Mabel
+    sex: F
+    style: peak-year
+    story: stories/mabel-2024.yaml
+  - id: selena-2024
+    name: Selena
+    sex: F
+    style: peak-year
+    story: stories/selena-2024.yaml
+  - id: arsenio-2024
+    name: Arsenio
+    sex: M
+    style: peak-year
+    story: stories/arsenio-2024.yaml
+  - id: kobe-2024
+    name: Kobe
+    sex: M
+    style: rising
+    story: stories/kobe-2024.yaml
+  - id: barack-2024
+    name: Barack
+    sex: M
+    style: peak-year
+    story: stories/barack-2024.yaml

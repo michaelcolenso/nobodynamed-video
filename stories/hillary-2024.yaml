@@ -1,0 +1,44 @@
+id: hillary-2024
+name: Hillary
+sex: F
+story_kind: cultural_rupture
+thesis: Hillary peaked at 2,520 births in 1992, then fell 84 percent within two years.
+headline: This name lost 84% in two years.
+subhead: 2,520 births in 1992. 409 by 1994.
+takeaway: Hillary is the fastest fall of any established name in SSA records.
+support: Peak 1992. Off the top 1,000 by 2009.
+script_beats:
+- kind: hook
+  text: America elected a president, then ditched this name.
+- kind: reveal
+  text: Hillary peaked at 2,520 births in 1992.
+- kind: proof
+  text: Two years later, it had fallen 84 percent.
+- kind: loop
+  text: Watch the name hit the wall.
+evidence:
+- label: Social Security baby-name data
+  url: https://www.ssa.gov/oact/babynames/
+  kind: ssa
+  supports: Hillary peaked at 2,520 female births in 1992 and fell to 409 by 1994, an 84 percent two-year
+    drop.
+- label: Hilary Parker's poisoned-name analysis
+  url: https://hilaryparker.com/2013/01/30/hilary-the-most-poisoned-baby-name-in-us-history/
+  kind: analysis
+  supports: Ranks Hilary/Hillary as the most rapidly poisoned established names in SSA history, with the
+    fall beginning in 1992.
+visual_anchors:
+- 1992 peak badge
+- two-year cliff edge
+- 2009 exit marker
+social_caption: Data researchers crowned Hillary the most poisoned baby name in US history.
+hashtags:
+- '#Hillary'
+- '#NameData'
+- '#AIVoice'
+share_prompt: Which political name should we chart next?
+target_duration_s: 13.4
+voice_instructions: Neutral and documentary; this is a data record, not a political take.
+status: approved
+quality_score: 100
+approved_by: michaelcolenso
