@@ -225,7 +225,7 @@ def story_propose(
         if settings.use_sqlite:
             source: SqliteSource | D1Source = SqliteSource(settings.sqlite_fixture)
         else:
-            source = D1Source(settings.d1_url, settings.get_d1_token())
+            source = D1Source(settings.d1_url, settings.get_d1_token(), timeout=30.0)
         record = await source.get_record(name, sex.upper(), settings.latest_year)
         story = draft_story(record, kind, target.stem)
         write_story(story, target)
