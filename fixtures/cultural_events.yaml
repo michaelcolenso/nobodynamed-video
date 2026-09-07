@@ -152,21 +152,33 @@ events:
       - "a stadium chant"
     review_notes: "Politically loaded. Frame as cultural phenomenon, not partisan. The chant's origin is the documented event."
 
+  - name: Caitlyn
+    sex: F
+    killing_event: "a public transition"
+    event_year: 2015
+    collapse_year: 2016
+    confidence: high
+    evidence: "692 births (2014) -> 494 (2015) -> 249 (2016), a 64% two-year loss. SSA confirmed Caitlyn variants were the four biggest droppers of 2016; Wattenberg: 'Now it is suddenly controversial' (NBC, CBS/AP, May 2017)."
+    phrasing_options:
+      - "a public transition"
+      - "one announcement"
+    review_notes: "Neutral framing only. The story is name-avoidance of controversy, per Wattenberg's documented analysis, not commentary on the person."
+
   # ---------------------------------------------------------------------------
   # MEDIUM CONFIDENCE — clear cultural story, decline visible, causation inferred
   # ---------------------------------------------------------------------------
 
   - name: Siri
     sex: F
-    killing_event: "Apple"
+    killing_event: "a phone assistant"
     event_year: 2011
-    collapse_year: 2012
+    collapse_year: 2013
     confidence: medium
-    evidence: "120 births in 2013 dropped to ~20 by 2017 per University of Maryland analysis (Digital Trends, 2018). Small absolute numbers; large percentage drop."
+    evidence: "120 births at 2009 peak -> 108 (2012) -> 42 (2013) -> 20 (2017). Documented by Philip Cohen (U. Maryland) via Vox/Recode 2018 alongside the Alexa analysis."
     phrasing_options:
-      - "Apple"
+      - "a phone assistant"
       - "a voice assistant"
-    review_notes: "Verify SSA data for Siri specifically — absolute counts may be too low to use the count-up animation effectively."
+    review_notes: "Peak predates the 2011 launch; frame as accelerated decline, not creation of the trend."
 
   - name: Cortana
     sex: F
