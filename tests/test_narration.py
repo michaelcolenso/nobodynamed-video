@@ -178,6 +178,7 @@ def test_narration_provider_rejects_missing_cloudflare_credentials(tmp_path: Pat
 
 def test_adaptive_duration_preserves_target_and_reserves_loop() -> None:
     story = load_story(Path("stories/kunta-2024.yaml"))
+    story = story.model_copy(update={"target_duration_s": 10.0})
     assert adaptive_duration(story, 8.0) == 10.0
     assert adaptive_duration(story, 10.0) == 10.85
     with pytest.raises(NarrationError, match="14s"):

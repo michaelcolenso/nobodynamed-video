@@ -2,47 +2,57 @@ id: kunta-2024
 name: Kunta
 sex: M
 story_kind: one_hit
-thesis: Kunta was created as an American baby-name event by Roots in 1977, then nearly disappeared within two years.
-headline: TV created this name in one week.
-subhead: 215 boys in 1977. Just 16 two years later.
-takeaway: Roots created a name almost as quickly as culture forgot it.
-support: A debut, a peak, and a disappearance.
+thesis: Kunta's American naming peak coincided with Roots in 1977, followed by a sharp
+  decline.
+headline: The Roots year, in names.
+subhead: 215 boys in 1977. Sixteen in 1979.
+takeaway: A name carried by a story about ancestry and enslavement.
+support: Later records exist; this name did not disappear.
 script_beats:
-  - kind: hook
-    text: One week of television created this name.
-  - kind: reveal
-    text: Roots aired in January 1977; 215 boys were named Kunta that year.
-  - kind: proof
-    text: Two years later, the count was 16.
-  - kind: loop
-    text: Watch one broadcast become a spike.
+- kind: hook
+  text: Roots brought Kunta Kinte to television.
+- kind: reveal
+  text: In 1977, 215 American boys were named Kunta.
+- kind: proof
+  text: Two years later, sixteen.
+- kind: loop
+  text: A cultural moment appears in the records.
 evidence:
-  - label: Social Security baby-name data
-    url: https://www.ssa.gov/oact/babynames/
-    kind: ssa
-    supports: Kunta debuted and peaked with 215 male births in 1977, then fell to 16 in 1979.
-  - label: Nancy's Baby Names Roots analysis
-    url: https://www.nancy.cc/2012/04/24/baby-names-kizzy-kunta-kinte-levar/
-    kind: reporting
-    supports: Connects the 1977 Roots broadcast to Kunta's debut and reproduces annual SSA counts.
-  - label: Encyclopedia of Television Roots entry
-    url: https://www.tvencyclopedia.org/tv-encyclopedia-14/roots
-    kind: primary
-    supports: Establishes that the Roots miniseries aired on ABC in January 1977.
+- label: SSA national data, complete 2025 release
+  url: https://www.ssa.gov/oact/babynames/limits.html
+  kind: ssa
+  supports: Annual national name/sex counts; exact claims and full series are bound
+    to the accompanying archive-derived snapshot.
+- label: Museum of Broadcast Communications, Roots
+  url: https://www.tvencyclopedia.org/tv-encyclopedia-14/roots
+  kind: reporting
+  supports: Roots aired in January 1977 and follows Kunta Kinte and his descendants
+    through enslavement and family history.
 visual_anchors:
-  - 1977 broadcast stamp
-  - vertical debut spike
-  - 1979 count collapse
-  - loop back to broadcast stamp
-social_caption: Roots turned Kunta into a one-year American naming event.
+- name and premise
+- labeled annual-count curve
+- peak and recent observations
+social_caption: 'Kunta name history: the Roots year in American records.'
 hashtags:
-  - '#NameHistory'
-  - '#Roots1977'
-  - '#AIVoice'
-share_prompt: What other show changed a name overnight?
-target_duration_s: 10.0
-voice_instructions: Read like a precise culture-documentary narrator; start immediately, emphasize 1977 and 215, then leave a short beat before the loop line.
-status: approved
-quality_score: 100
-approved_by: initial-pilot-plan
-approved_at: 2026-08-08T12:00:00Z
+- '#Kunta'
+- '#NameData'
+- '#AIVoice'
+share_prompt: Which cultural naming story deserves a closer look?
+target_duration_s: 12.5
+voice_instructions: Use a precise, conversational documentary delivery. Read years
+  naturally; pause briefly after the name. No theatrical gloom. Check the actual audio
+  before release.
+status: draft
+quality_score: 88
+data_snapshot: data/ssa-2025/kunta-m.json
+data_sha256: f6070b34d0163bf436b205441aa84017e4a4f9380033f980c4c766cc0be29214
+count_claims:
+- year: 1977
+  count: 215
+- year: 1979
+  count: 16
+- year: 1999
+  count: 5
+- year: 2000
+  count: 6
+- year: 2025

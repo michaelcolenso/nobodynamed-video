@@ -48,7 +48,5 @@ share_prompt: Which political name should we chart next?
 target_duration_s: 12.0
 voice_instructions: Read flat and factual; make number six and 1969 carry the weight
   without any partisan edge.
-status: approved
-quality_score: 100
-approved_by: michaelcolenso
-approved_at: '2026-09-07T03:15:35.426658Z'
+status: draft
+quality_score: 0

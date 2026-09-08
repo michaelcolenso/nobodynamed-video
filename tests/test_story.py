@@ -9,11 +9,14 @@ from nobodynamed_video.models import StoryStatus
 STORIES = Path("stories")
 
 
-def test_all_pilot_stories_clear_publish_gate() -> None:
-    for path in sorted(STORIES.glob("*.yaml")):
-        evaluation = evaluate_story(load_story(path))
-        assert evaluation.publishable, (path, evaluation.blockers)
-        assert evaluation.score >= 75
+def test_story_library_is_valid_but_unreviewed_stories_are_not_released() -> None:
+    for path in sorted(STORIES.rglob("*.yaml")):
+        story = load_story(path)
+        evaluation = evaluate_story(story)
+        if story.status == StoryStatus.APPROVED:
+            assert evaluation.publishable, (path, evaluation.blockers)
+        else:
+            assert not evaluation.publishable
 
 
 def test_draft_story_is_rejected_even_when_copy_is_strong() -> None:

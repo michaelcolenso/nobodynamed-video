@@ -35,7 +35,5 @@ share_prompt: What does it take for a name to disappear?
 target_duration_s: 10.5
 voice_instructions: Read with maximum restraint; a quiet data obituary, no editorializing,
   and a soft loop.
-status: approved
-quality_score: 85
-approved_by: michaelcolenso
-approved_at: '2026-09-07T02:46:37.525196Z'
+status: draft
+quality_score: 0

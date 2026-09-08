@@ -24,7 +24,7 @@ evidence:
     died.
 - label: Hilary Parker's SSA fad-name analysis
   url: https://hilaryparker.com/2013/01/30/hilary-the-most-poisoned-baby-name-in-us-history/
-  kind: analysis
+  kind: reporting
   supports: Documents Farrah's 1976-77 debut spike on Charlie's Angels and its 2009-10 return after Fawcett's
     death.
 visual_anchors:
@@ -39,6 +39,5 @@ hashtags:
 share_prompt: Which celebrity name should we chart next?
 target_duration_s: 12.4
 voice_instructions: Warm and nostalgic; let the second spike carry the emotion.
-status: approved
-quality_score: 100
-approved_by: michaelcolenso
+status: draft
+quality_score: 0

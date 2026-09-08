@@ -41,7 +41,5 @@ share_prompt: Which old nickname is gone for good?
 target_duration_s: 10.5
 voice_instructions: Read deadpan; the humor is inherent, so play it straight and let
   1,131 and 2005 land.
-status: approved
-quality_score: 88
-approved_by: michaelcolenso
-approved_at: '2026-09-07T02:46:38.699995Z'
+status: draft
+quality_score: 0

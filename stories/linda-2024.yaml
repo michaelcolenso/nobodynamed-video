@@ -33,6 +33,5 @@ hashtags:
 share_prompt: Do you know a Linda under 40?
 target_duration_s: 11.5
 voice_instructions: Read with awe at the scale, then let the long fall land flat and steady.
-status: approved
-quality_score: 100
-approved_by: michaelcolenso
+status: draft
+quality_score: 0

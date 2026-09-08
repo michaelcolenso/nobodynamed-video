@@ -273,6 +273,17 @@ def sample_program_frame(
     peak_annotation_alpha = peak_raw * (1.0 - layout_progress)
 
     chart_cards = _stats_cards(ctx)
+    current_reported = spec.record.series[-1].reported
+    if spec.story:
+        chart_cards = [
+            {"label": "Peak year", "value": str(ctx.peak_year), "tone": "fade"},
+            {"label": "Peak count", "value": f"{ctx.peak_count:,}", "tone": "ink"},
+            {
+                "label": str(ctx.current_year),
+                "value": f"{ctx.current_count:,}" if current_reported else "<5",
+                "tone": "crimson",
+            },
+        ]
     card_stagger_s = 0.15
     card_alphas = [
         round(sample_scalar_track(STAT_ALPHA, t - card_stagger_s * index), 6)
@@ -300,6 +311,9 @@ def sample_program_frame(
             "label": _status_label(ctx, spec),
             "name": ctx.name,
             "status": ctx.tier.value.upper(),
+            "status_override": ("BELOW THRESHOLD" if not current_reported else "NAME HISTORY")
+            if spec.story
+            else None,
             "accent_progress": round(intro_settle, 6),
         },
         "diagnosis": {
@@ -343,6 +357,10 @@ def sample_program_frame(
             "peak_year": ctx.peak_year,
             "peak_count": ctx.peak_count,
             "count_value": round(spec.record.current_count * count_progress),
+            "count_display": "<5" if spec.story and not current_reported else None,
+            "source_note": "SSA national counts / gaps <5 shown at baseline"
+            if spec.story
+            else None,
             "peak_annotation_alpha": round(peak_annotation_alpha, 6),
             "peak_annotation_scale": round(lerp(0.92, 1.0, peak_raw), 6),
         },
@@ -363,7 +381,7 @@ def sample_program_frame(
             "supporting_text": ctx.supporting_text,
         },
         "comparison": {
-            "alpha": round(support_alpha, 6),
+            "alpha": 0.0 if spec.story else round(support_alpha, 6),
             "offset_y": round((1.0 - support_alpha) * 20.0, 6),
             "label": "Reference",
             "name": ctx.comparison_name,
@@ -371,7 +389,9 @@ def sample_program_frame(
         "footer": {
             "alpha": round(sample_scalar_track(FOOTER_ALPHA, t), 6),
             "site": "nobodynamed.com",
-            "cta": "Share the name that surprised you",
+            "cta": "Follow for the history behind names"
+            if spec.story
+            else "Share the name that surprised you",
             "disclosure": "AI NARRATION" if spec.story else "",
             "dot_alpha": round(lerp(0.5, 1.0, footer_wave), 6),
             "dot_radius": round(lerp(9.0, 11.5, footer_wave), 6),

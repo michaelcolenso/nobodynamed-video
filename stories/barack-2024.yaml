@@ -33,6 +33,5 @@ hashtags:
 share_prompt: Why don't presidential names catch on?
 target_duration_s: 12.9
 voice_instructions: Wry but neutral; the irony is in the data, not the politics.
-status: approved
-quality_score: 95
-approved_by: michaelcolenso
+status: draft
+quality_score: 0

@@ -1,0 +1,48 @@
+id: jennifer-2025
+name: Jennifer
+sex: F
+story_kind: long_decline
+thesis: Jennifer's enormous 1972 peak helps explain a generational name, before a
+  long decline.
+headline: Jennifer had a generation.
+subhead: 63,600 girls in 1972. 501 in 2025.
+takeaway: A once-common classroom name became much rarer.
+support: Birth cohorts explain familiarity, not your age.
+script_beats:
+  - kind: hook
+    text: Jennifer had a generation.
+  - kind: reveal
+    text: Its peak came in 1972, with over sixty thousand girls.
+  - kind: proof
+    text: By 2025, the count was 501.
+  - kind: loop
+    text: The classroom memory has a curve.
+evidence:
+  - label: SSA national data, complete 2025 release
+    url: https://www.ssa.gov/oact/babynames/limits.html
+    kind: ssa
+    supports: Annual national name/sex counts; exact claims and full series are bound
+      to the accompanying archive-derived snapshot.
+visual_anchors:
+  - name and premise
+  - labeled annual-count curve
+  - peak and recent observations
+social_caption: 'Jennifer name popularity: the curve behind a generation.'
+hashtags:
+  - '#Jennifer'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Which name appeared again and again in your class?
+target_duration_s: 12.5
+voice_instructions: Use a precise, conversational documentary delivery. Read years
+  naturally; pause briefly after the name. No theatrical gloom. Check the actual audio
+  before release.
+status: draft
+quality_score: 80
+data_snapshot: data/ssa-2025/jennifer-f.json
+data_sha256: 5c68c277d77f9ab92973cc4605ccfd448c6de65a500f1f5868505412e780476e
+count_claims:
+  - year: 1972
+    count: 63600
+  - year: 2025
+    count: 501

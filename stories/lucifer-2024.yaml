@@ -45,7 +45,5 @@ share_prompt: Should governments get veto power over names?
 target_duration_s: 10.5
 voice_instructions: Read cool and transgressive-lite; let five and seventy do the
   provoking, no theatrics needed.
-status: approved
-quality_score: 95
-approved_by: michaelcolenso
-approved_at: '2026-09-07T02:46:40.477940Z'
+status: draft
+quality_score: 0

@@ -43,6 +43,5 @@ hashtags:
 share_prompt: Can a name ever outrun the news?
 target_duration_s: 13.6
 voice_instructions: Solemn on the fall, quietly hopeful on the return; never name the group.
-status: approved
-quality_score: 100
-approved_by: michaelcolenso
+status: draft
+quality_score: 0

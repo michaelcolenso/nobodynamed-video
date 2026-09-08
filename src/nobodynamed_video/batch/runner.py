@@ -28,6 +28,9 @@ from nobodynamed_video.compose.narration import (
     adaptive_duration,
 )
 from nobodynamed_video.compose.state import CombinationState
+from nobodynamed_video.data.snapshot import SnapshotSource, verified_snapshot
+from nobodynamed_video.editorial.story import evaluate_story
+from nobodynamed_video.exceptions import StoryQualityError
 from nobodynamed_video.models import VideoSpec
 from nobodynamed_video.qc.checks import run_all_checks
 from nobodynamed_video.qc.report import build_qc_report
@@ -71,6 +74,16 @@ async def render_spec(
     narration_provider: NarrationProvider | None = None,
 ) -> dict[str, object]:
     """Render one VideoSpec: frames → caption → ffmpeg → manifest."""
+    if spec.story:
+        evaluation = evaluate_story(spec.story)
+        if not evaluation.publishable:
+            raise StoryQualityError("; ".join(evaluation.blockers))
+        snapshot = verified_snapshot(spec.story)
+        expected_record = await SnapshotSource(snapshot).get_record(
+            spec.story.name, spec.story.sex, snapshot.latest_year
+        )
+        if spec.record != expected_record:
+            raise StoryQualityError("render record differs from the approved SSA snapshot")
     narration: NarrationArtifact | None = None
     runtime_spec = spec
     if spec.story and narration_provider and not no_compose:
@@ -136,7 +149,7 @@ async def render_spec(
             pinned_comment = composed.pinned_comment
             hashtag_set = composed.hashtag_set
         except CaptionExhausted as exc:
-            console.print(f"[yellow]⚠[/yellow]  {spec.id}: caption exhausted — {exc}")
+            raise StoryQualityError(f"{spec.id}: caption failed: {exc}") from exc
 
     out_dir.mkdir(parents=True, exist_ok=True)
     mp4_path = out_dir / f"{spec.id}.mp4"
@@ -188,6 +201,10 @@ async def render_spec(
         true_peak_target_dbtp=-1.0 if narration else None,
     )
     write_manifest(manifest, out_dir)
+    if spec.story:
+        (out_dir / f"{spec.id}.story.json").write_text(spec.story.model_dump_json(indent=2) + "\n")
+        snapshot_path = Path(str(spec.story.data_snapshot))
+        (out_dir / f"{spec.id}.source.json").write_bytes(snapshot_path.read_bytes())
 
     return {
         "id": spec.id,
@@ -293,11 +310,17 @@ async def run_batch(
         report_path = build_qc_report(batch_name, qc_results, out_dir)
         console.print(f"[cyan]QC report:[/cyan] {report_path}")
 
+    qc_failed = [qc.spec_id for qc in qc_results if not qc.passed]
+    release_files = [
+        str(r["id"]) for r in results if r.get("composed") and str(r["id"]) not in qc_failed
+    ]
     summary = {
         "batch": batch_name,
         "total": len(specs),
-        "succeeded": len(results),
-        "failed": len(errors),
+        "succeeded": len(results) - len(qc_failed),
+        "failed": len(errors) + len(qc_failed),
+        "qc_failed": qc_failed,
+        "release_ids": release_files if not errors and not qc_failed else [],
         "results": results,
         "errors": [{"id": sid, "error": f"{type(exc).__name__}: {exc}"} for sid, exc in errors],
     }
@@ -305,5 +328,5 @@ async def run_batch(
     summary_json = json.dumps(summary, indent=2, default=str) + "\n"
     (out_dir / f"{batch_name}.summary.json").write_text(summary_json)
 
-    if errors:
-        raise SystemExit(f"{len(errors)} video(s) failed in batch '{batch_name}'")
+    if errors or qc_failed:
+        raise SystemExit(f"{len(errors) + len(qc_failed)} video(s) failed in batch '{batch_name}'")

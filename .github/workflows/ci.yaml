@@ -101,26 +101,21 @@ jobs:
           done
           curl -sf http://localhost:3001/health || { echo "satori sidecar failed to start"; exit 1; }
 
-      - name: Render pilot batch
-        # batches/pilot.yaml is the current gated, editorial-approved release set
-        # (README's "checked-in pilots"). batches/week-3.yaml is excluded here: it
-        # was reduced to a single scratch Kunta entry for chart-timing iteration
-        # (see its own header comment and HANDOFF.md §1) and never carried the
-        # editorial approval the rest of this pipeline now requires — restoring
-        # it needs an explicit editorial decision, not an automatic CI render.
+      - name: Render verified launch batch
+        # Each story must have fresh human approval bound to its current content.
+        # Pending drafts fail before narration or frames; never auto-approve in CI.
         run: |
-          echo "::group::Rendering batches/pilot.yaml"
-          uv run nbn batch batches/pilot.yaml
+          echo "::group::Rendering batches/launch-six.yaml"
+          uv run nbn batch batches/launch-six.yaml
           echo "::endgroup::"
         env:
           SATORI_URL: "http://localhost:3001"
           D1_URL: ${{ secrets.D1_URL }}
           D1_TOKEN: ${{ secrets.D1_TOKEN }}
-          # Every entry in pilot.yaml carries a story:, so this render requires
-          # Workers AI narration. There's no separate CLOUDFLARE_API_TOKEN secret
-          # here — config.py falls back to D1_TOKEN when it's unset (cli.py:64,94),
-          # so D1_TOKEN must be scoped for both D1 and Workers AI. If narration
-          # calls start failing with 401s, that's the first thing to check.
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # Existing D1 token fallback remains available in cli.py. A D1-only
+          # token cannot perform Workers AI narration; no scope is assumed here.
 
       - name: Upload rendered videos
         if: always()
@@ -131,24 +126,22 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
+      - name: Stage verified release
+        if: success()
+        run: uv run python -m nobodynamed_video.release out/launch-six.summary.json out/release
+
       - name: Publish videos to 'videos' branch
         if: success()
         run: |
-          shopt -s nullglob
-          mp4s=(out/*.mp4)
-          if [ ${#mp4s[@]} -eq 0 ]; then
-            echo "No rendered videos to publish; skipping."
-            exit 0
-          fi
+          publish_dir="$(mktemp -d)"
+          cp out/release/* "$publish_dir/"
+          cd "$publish_dir"
+          git init
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout --orphan videos-publish
-          git rm -rf . > /dev/null 2>&1 || true
-          cp out/*.mp4 .
-          cp out/*.summary.json . 2>/dev/null || true
-          git add -A
-          git commit -m "Rendered videos from ${{ github.sha }}"
-          git push -f origin HEAD:videos
+          git add -- *.mp4 *.json
+          git commit -m "Verified videos from ${{ github.sha }}"
+          git -c "http.https://github.com/.extraheader=$(git -C "$GITHUB_WORKSPACE" config --get http.https://github.com/.extraheader)" push -f "https://github.com/${{ github.repository }}.git" HEAD:videos
 
       - name: Summary
         if: always()

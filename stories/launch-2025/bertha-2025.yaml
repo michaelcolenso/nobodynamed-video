@@ -1,4 +1,4 @@
-id: bertha-2024
+id: bertha-2025
 name: Bertha
 sex: F
 story_kind: long_decline
@@ -9,29 +9,29 @@ subhead: 'Peak: 5,051 in 1918. Latest: 30 in 2025.'
 takeaway: Rare does not mean gone.
 support: Annual records, not a count of living people.
 script_beats:
-- kind: hook
-  text: Bertha is rare. Still here.
-- kind: reveal
-  text: It peaked more than a century ago.
-- kind: proof
-  text: Thirty girls received the name in 2025.
-- kind: loop
-  text: A decline is not a disappearance.
+  - kind: hook
+    text: Bertha is rare. Still here.
+  - kind: reveal
+    text: It peaked more than a century ago.
+  - kind: proof
+    text: Thirty girls received the name in 2025.
+  - kind: loop
+    text: A decline is not a disappearance.
 evidence:
-- label: SSA national data, complete 2025 release
-  url: https://www.ssa.gov/oact/babynames/limits.html
-  kind: ssa
-  supports: Annual national name/sex counts; exact claims and full series are bound
-    to the accompanying archive-derived snapshot.
+  - label: SSA national data, complete 2025 release
+    url: https://www.ssa.gov/oact/babynames/limits.html
+    kind: ssa
+    supports: Annual national name/sex counts; exact claims and full series are bound
+      to the accompanying archive-derived snapshot.
 visual_anchors:
-- name and premise
-- labeled annual-count curve
-- peak and recent observations
+  - name and premise
+  - labeled annual-count curve
+  - peak and recent observations
 social_caption: 'Bertha name history: rare does not mean gone.'
 hashtags:
-- '#Bertha'
-- '#NameData'
-- '#AIVoice'
+  - '#Bertha'
+  - '#NameData'
+  - '#AIVoice'
 share_prompt: Who in your family carried this name?
 target_duration_s: 12.5
 voice_instructions: Use a precise, conversational documentary delivery. Read years
@@ -42,9 +42,9 @@ quality_score: 80
 data_snapshot: data/ssa-2025/bertha-f.json
 data_sha256: b5014dabaf82da34fc99d12f54e2e3369fb6ce332112adab675471f234f09f95
 count_claims:
-- year: 1918
-  count: 5051
-- year: 2024
-  count: 29
-- year: 2025
-  count: 30
+  - year: 1918
+    count: 5051
+  - year: 2024
+    count: 29
+  - year: 2025
+    count: 30
