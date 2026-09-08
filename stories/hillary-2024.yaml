@@ -24,7 +24,7 @@ evidence:
     drop.
 - label: Hilary Parker's poisoned-name analysis
   url: https://hilaryparker.com/2013/01/30/hilary-the-most-poisoned-baby-name-in-us-history/
-  kind: analysis
+  kind: reporting
   supports: Ranks Hilary/Hillary as the most rapidly poisoned established names in SSA history, with the
     fall beginning in 1992.
 visual_anchors:
@@ -39,6 +39,5 @@ hashtags:
 share_prompt: Which political name should we chart next?
 target_duration_s: 13.4
 voice_instructions: Neutral and documentary; this is a data record, not a political take.
-status: approved
-quality_score: 100
-approved_by: michaelcolenso
+status: draft
+quality_score: 0

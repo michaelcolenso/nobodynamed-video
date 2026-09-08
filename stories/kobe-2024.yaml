@@ -28,7 +28,7 @@ evidence:
     death.
 - label: Philip Cohen on Kobe and Gianna
   url: https://familyinequality.wordpress.com/2021/06/25/during-the-pandemic-year-of-2020-thousands-of-us-parents-named-their-babies-kobe-and-gianna/
-  kind: analysis
+  kind: reporting
   supports: Shows Kobe had the greatest popularity increase of any US name in 2020.
 visual_anchors:
 - 2019 baseline
@@ -42,6 +42,5 @@ hashtags:
 share_prompt: Which tribute name surprised you most?
 target_duration_s: 13.6
 voice_instructions: Respectful and restrained; a tribute, not a spectacle.
-status: approved
-quality_score: 93
-approved_by: michaelcolenso
+status: draft
+quality_score: 0

@@ -34,6 +34,5 @@ hashtags:
 share_prompt: Which vintage name comes back next?
 target_duration_s: 13.1
 voice_instructions: Playful and warm; the comeback should feel like good news.
-status: approved
-quality_score: 93
-approved_by: michaelcolenso
+status: draft
+quality_score: 0

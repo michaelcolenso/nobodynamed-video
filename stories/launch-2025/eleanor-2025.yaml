@@ -1,0 +1,50 @@
+id: eleanor-2025
+name: Eleanor
+sex: F
+story_kind: comeback
+thesis: Eleanor's comeback approaches its earlier raw-count peak after generations
+  of lower use.
+headline: Eleanor crossed generations.
+subhead: 8,497 in 1920. 7,649 in 2025.
+takeaway: The old name returned to modern birth records in force.
+support: Annual counts; not equal shares of births.
+script_beats:
+  - kind: hook
+    text: Eleanor crossed generations.
+  - kind: reveal
+    text: Its earlier high point was in 1920.
+  - kind: proof
+    text: More than seven thousand girls received it in 2025.
+  - kind: loop
+    text: An old name found another generation.
+evidence:
+  - label: SSA national data, complete 2025 release
+    url: https://www.ssa.gov/oact/babynames/limits.html
+    kind: ssa
+    supports: Annual national name/sex counts; exact claims and full series are bound
+      to the accompanying archive-derived snapshot.
+visual_anchors:
+  - name and premise
+  - labeled annual-count curve
+  - peak and recent observations
+social_caption: 'Eleanor name history: an old name finds another generation.'
+hashtags:
+  - '#Eleanor'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Would you bring this name into a new generation?
+target_duration_s: 12.5
+voice_instructions: Use a precise, conversational documentary delivery. Read years
+  naturally; pause briefly after the name. No theatrical gloom. Check the actual audio
+  before release.
+status: draft
+quality_score: 80
+data_snapshot: data/ssa-2025/eleanor-f.json
+data_sha256: 8a0e56ddddae96e7bce83f804c3d386db112b42c42c260e0929e97da7db72859
+count_claims:
+  - year: 1920
+    count: 8497
+  - year: 2024
+    count: 7147
+  - year: 2025
+    count: 7649

@@ -41,7 +41,7 @@ def build_name_record(
         raise DataSourceError(f"All counts are zero for name={name!r} sex={sex!r}")
 
     series = [
-        YearCount(year=year, count=counts.get(year, 0))
+        YearCount(year=year, count=counts.get(year, 0), reported=year in counts)
         for year in range(SSA_FIRST_YEAR, reference_year + 1)
     ]
     peak = max(series, key=lambda point: point.count)

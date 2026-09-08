@@ -34,6 +34,5 @@ hashtags:
 share_prompt: Which artist moved baby names the most?
 target_duration_s: 10.8
 voice_instructions: Reverent; this is a grief story, so keep it gentle.
-status: approved
-quality_score: 93
-approved_by: michaelcolenso
+status: draft
+quality_score: 0

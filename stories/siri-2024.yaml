@@ -47,7 +47,5 @@ share_prompt: Would a voice assistant stop you from using a name?
 target_duration_s: 11.0
 voice_instructions: Read with light irony but no snark; make 120 and twenty the whole
   story.
-status: approved
-quality_score: 95
-approved_by: michaelcolenso
-approved_at: '2026-09-07T02:46:36.935172Z'
+status: draft
+quality_score: 0

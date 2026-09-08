@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 import struct
 import subprocess
@@ -280,9 +281,11 @@ def _check_audio_loudness(mp4_path: Path) -> list[QCIssue]:
         integrated = float(measured["input_i"])
         true_peak = float(measured["input_tp"])
     except Exception as exc:
-        return [QCIssue("warning", "AUDIO_LEVELS", f"loudness probe failed: {exc}")]
+        return [QCIssue("error", "AUDIO_LEVELS", f"loudness probe failed: {exc}")]
 
     issues: list[QCIssue] = []
+    if not math.isfinite(integrated) or not math.isfinite(true_peak) or integrated < -40:
+        return [QCIssue("error", "SILENT_NARRATION", "narration is silent or inaudible")]
     if abs(integrated - (-14.0)) > 1.5:
         issues.append(
             QCIssue(
@@ -357,6 +360,8 @@ def run_all_checks(result: dict[str, object], out_dir: Path) -> QCResult:
     )
 
     issues: list[QCIssue] = []
+    if not manifest_data:
+        issues.append(QCIssue("error", "MANIFEST", "missing or invalid render manifest"))
     issues += _check_frame_count(frames_dir, expected_frames)
     issues += _check_frozen_frames(sha256_frames, expected_frames)
     issues += _check_dimensions(frames_dir)

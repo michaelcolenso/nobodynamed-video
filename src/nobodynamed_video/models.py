@@ -19,6 +19,7 @@ class Tier(str, Enum):
 class YearCount(BaseModel):
     year: int = Field(ge=1880, le=2100)
     count: int = Field(ge=0)
+    reported: bool = True
 
 
 class NameRecord(BaseModel):
@@ -86,6 +87,11 @@ class ScriptBeat(BaseModel):
     text: str = Field(min_length=2, max_length=180)
 
 
+class CountClaim(BaseModel):
+    year: int = Field(ge=1880, le=2100)
+    count: int | None = Field(default=None, ge=5)
+
+
 class StorySpec(BaseModel):
     """A reviewed editorial premise, not merely a render configuration."""
 
@@ -111,6 +117,10 @@ class StorySpec(BaseModel):
     quality_score: int = Field(default=0, ge=0, le=100)
     approved_by: str | None = None
     approved_at: datetime | None = None
+    approved_content_sha256: str | None = None
+    data_snapshot: str | None = None
+    data_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    count_claims: list[CountClaim] = Field(default_factory=list)
 
     @property
     def narration_text(self) -> str:

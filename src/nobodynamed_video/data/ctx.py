@@ -10,6 +10,7 @@ from ruamel.yaml import YAML
 from nobodynamed_video.data.d1_source import D1Source
 from nobodynamed_video.data.hooks import pillar_to_program
 from nobodynamed_video.data.narratives import select_narrative
+from nobodynamed_video.data.snapshot import SnapshotSource
 from nobodynamed_video.data.sqlite_source import SqliteSource
 from nobodynamed_video.models import (
     NameRecord,
@@ -160,7 +161,7 @@ def _resolve_event(
 
 
 async def build_base_context(
-    source: SqliteSource | D1Source,
+    source: SqliteSource | D1Source | SnapshotSource,
     record: NameRecord,
     tier: Tier,
     current_year: int,

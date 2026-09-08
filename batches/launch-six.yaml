@@ -1,0 +1,28 @@
+batch: launch-six
+defaults:
+  fps: 30
+videos:
+- id: alexa-2025
+  name: Alexa
+  sex: F
+  story: stories/launch-2025/alexa-2025.yaml
+- id: hazel-2025
+  name: Hazel
+  sex: F
+  story: stories/launch-2025/hazel-2025.yaml
+- id: bertha-2025
+  name: Bertha
+  sex: F
+  story: stories/launch-2025/bertha-2025.yaml
+- id: kunta-2025
+  name: Kunta
+  sex: M
+  story: stories/launch-2025/kunta-2025.yaml
+- id: jennifer-2025
+  name: Jennifer
+  sex: F
+  story: stories/launch-2025/jennifer-2025.yaml
+- id: eleanor-2025
+  name: Eleanor
+  sex: F
+  story: stories/launch-2025/eleanor-2025.yaml

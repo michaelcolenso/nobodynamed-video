@@ -53,9 +53,10 @@ with comparable runtimes and distribution.
 
 ### Data-source failure
 
-The local fixture supports Alexa, Bertha, and Hazel but not Kunta. Use configured D1 access
-for Kunta or render the other pilots locally. D1 requires a URL and either an explicit token
-or a working Wrangler login.
+Launch stories use checksummed official SSA snapshots in `data/ssa-2025/`; they never use
+the illustrative SQLite fixture. A missing/changed snapshot or mismatched count claim blocks
+rendering. Legacy non-story batches may still use SQLite or D1. D1 requires a URL and either
+an explicit token or a working Wrangler login.
 
 ### Golden-frame change
 
@@ -66,3 +67,26 @@ regenerating them; do not accept new hashes solely to clear a failure.
 
 Update `LATEST_YEAR`, refresh the SQLite/D1 data, revise evidence counts and story IDs,
 re-score every affected story, and obtain fresh human approval before rendering.
+
+## Verified six-video launch (2025 data)
+
+Review `docs/LAUNCH_SIX_REVIEW.md` and the six files in `stories/launch-2025/`.
+They are intentionally drafts. Existing approvals were removed from legacy scripts because
+those scripts do not carry the required verified data bindings. The old pilot commands
+therefore reject drafts; use the new launch batch after human review.
+
+1. Refresh snapshots when needed: download the complete official SSA `names.zip`, then run
+   `uv run python scripts/fetch_ssa.py /path/to/names.zip --year 2025 --out data/ssa-2025`.
+   A refresh changes snapshot bytes; update story hashes/claims and obtain fresh approval.
+2. After explicit human approval, use `uv run nbn story approve <story-path> --reviewer <reviewer>`
+   for each approved story. Never insert approval metadata to bypass review.
+3. Start Satori and configure Workers AI credentials as described above. D1 is unnecessary
+   for these snapshot-backed stories.
+4. Run `uv run nbn batch batches/launch-six.yaml`. Inspect the six MP4s and QC reports.
+5. Run `uv run python -m nobodynamed_video.release out/launch-six.summary.json out/release`
+   only after a fully successful batch. The destination must be empty.
+
+Missing narration, silence, failed QC, missing provenance and partial batches block release.
+The main-branch workflow renders only this explicit batch and stages its MP4, manifest,
+story and source sidecars; stale files from earlier runs cannot enter that publication.
+GitHub's `videos` branch is an artifact destination, not a TikTok upload.

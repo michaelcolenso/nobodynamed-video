@@ -1,0 +1,58 @@
+id: kunta-2025
+name: Kunta
+sex: M
+story_kind: one_hit
+thesis: Kunta's American naming peak coincided with Roots in 1977, followed by a sharp
+  decline.
+headline: The Roots year, in names.
+subhead: 215 boys in 1977. Sixteen in 1979.
+takeaway: A name carried by a story about ancestry and enslavement.
+support: Later records exist; this name did not disappear.
+script_beats:
+  - kind: hook
+    text: Roots brought Kunta Kinte to television.
+  - kind: reveal
+    text: In 1977, 215 American boys were named Kunta.
+  - kind: proof
+    text: Two years later, sixteen.
+  - kind: loop
+    text: A cultural moment appears in the records.
+evidence:
+  - label: SSA national data, complete 2025 release
+    url: https://www.ssa.gov/oact/babynames/limits.html
+    kind: ssa
+    supports: Annual national name/sex counts; exact claims and full series are bound
+      to the accompanying archive-derived snapshot.
+  - label: Museum of Broadcast Communications, Roots
+    url: https://www.tvencyclopedia.org/tv-encyclopedia-14/roots
+    kind: reporting
+    supports: Roots aired in January 1977 and follows Kunta Kinte and his descendants
+      through enslavement and family history.
+visual_anchors:
+  - name and premise
+  - labeled annual-count curve
+  - peak and recent observations
+social_caption: 'Kunta name history: the Roots year in American records.'
+hashtags:
+  - '#Kunta'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Which cultural naming story deserves a closer look?
+target_duration_s: 12.5
+voice_instructions: Use a precise, conversational documentary delivery. Read years
+  naturally; pause briefly after the name. No theatrical gloom. Check the actual audio
+  before release.
+status: draft
+quality_score: 88
+data_snapshot: data/ssa-2025/kunta-m.json
+data_sha256: f6070b34d0163bf436b205441aa84017e4a4f9380033f980c4c766cc0be29214
+count_claims:
+  - year: 1977
+    count: 215
+  - year: 1979
+    count: 16
+  - year: 1999
+    count: 5
+  - year: 2000
+    count: 6
+  - year: 2025

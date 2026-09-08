@@ -48,7 +48,5 @@ share_prompt: Should any name be off-limits by law?
 target_duration_s: 11.0
 voice_instructions: Read as a straight legal brief; the absurdity carries itself,
   so keep 974 and two thousand dry.
-status: approved
-quality_score: 90
-approved_by: michaelcolenso
-approved_at: '2026-09-07T02:46:39.878212Z'
+status: draft
+quality_score: 0

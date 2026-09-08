@@ -44,6 +44,5 @@ hashtags:
 share_prompt: Would you name a baby Karen today?
 target_duration_s: 11.0
 voice_instructions: Straight and factual; let the cliff speak, no meme impersonation.
-status: approved
-quality_score: 100
-approved_by: michaelcolenso
+status: draft
+quality_score: 0

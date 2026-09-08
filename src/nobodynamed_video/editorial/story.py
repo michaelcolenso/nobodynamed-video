@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from datetime import UTC, datetime
 from pathlib import Path
@@ -10,6 +12,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 from ruamel.yaml import YAML
 
+from nobodynamed_video.data.snapshot import verified_snapshot
 from nobodynamed_video.exceptions import StoryQualityError
 from nobodynamed_video.models import (
     EvidenceKind,
@@ -81,6 +84,13 @@ def score_story(story: StorySpec) -> tuple[int, dict[str, int]]:
     return sum(components.values()), components
 
 
+def approval_digest(story: StorySpec) -> str:
+    payload = story.model_dump(
+        mode="json", exclude={"status", "approved_by", "approved_at", "approved_content_sha256"}
+    )
+    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+
+
 def evaluate_story(story: StorySpec, *, require_approval: bool = True) -> StoryEvaluation:
     score, components = score_story(story)
     blockers: list[str] = []
@@ -126,11 +136,24 @@ def evaluate_story(story: StorySpec, *, require_approval: bool = True) -> StoryE
         blockers.append(
             f"stored quality score {story.quality_score} does not match computed {score}"
         )
+    try:
+        verified_snapshot(story)
+    except StoryQualityError as exc:
+        blockers.append(str(exc))
+    caption = story.social_caption.rstrip()
+    if caption[-1:] not in ".!?":
+        caption += "."
+    if len(caption + " " + " ".join(story.hashtags)) > 150:
+        blockers.append("caption including hashtags exceeds 150 characters")
+    if not {tag.lower() for tag in story.hashtags} & {"#namedata", "#ssadata", "#namehistory"}:
+        blockers.append("caption requires a relevant core name-data/history tag")
     if require_approval:
         if story.status != StoryStatus.APPROVED:
             blockers.append("story has not been approved")
         if not story.approved_by or story.approved_at is None:
             blockers.append("approval metadata is incomplete")
+        if story.approved_content_sha256 != approval_digest(story):
+            blockers.append("approval does not cover the current story content")
 
     if len(story.headline) > 45:
         warnings.append("headline is valid but loses the short-hook score")
@@ -165,6 +188,8 @@ def write_story(story: StorySpec, path: Path) -> Path:
 
 def approve_story(story: StorySpec, reviewer: str) -> StorySpec:
     """Approve only after every non-approval publish gate clears."""
+    if not reviewer.strip():
+        raise StoryQualityError("reviewer must not be blank")
     score, _ = score_story(story)
     candidate = story.model_copy(update={"quality_score": score})
     evaluation = evaluate_story(candidate, require_approval=False)
@@ -175,6 +200,7 @@ def approve_story(story: StorySpec, reviewer: str) -> StorySpec:
             "status": StoryStatus.APPROVED,
             "approved_by": reviewer.strip(),
             "approved_at": datetime.now(tz=UTC),
+            "approved_content_sha256": approval_digest(candidate),
         }
     )
 

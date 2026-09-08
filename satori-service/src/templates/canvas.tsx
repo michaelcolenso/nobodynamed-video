@@ -5,6 +5,7 @@ interface HeaderState {
   label: string;
   name: string;
   status: string;
+  status_override?: string | null;
   accent_progress?: number;
 }
 
@@ -39,6 +40,8 @@ interface ChartState {
   peak_year: number;
   peak_count: number;
   count_value: number;
+  count_display?: string | null;
+  source_note?: string | null;
   peak_annotation_scale?: number;
 }
 
@@ -587,7 +590,9 @@ function OpeningOverlay({
           >
             {header.name}
           </div>
-          <TierBadge tier={tier} />
+          {header.status_override ? (
+            <span style={{ display: "flex", fontSize: 22, color: COLORS.fade, letterSpacing: 1 }}>{header.status_override}</span>
+          ) : <TierBadge tier={tier} />}
         </div>
       </div>
       <div
@@ -848,7 +853,9 @@ export default function Canvas(props: CanvasProps) {
           >
             {header.name}
           </div>
-          <TierBadge tier={tier} />
+          {header.status_override ? (
+            <span style={{ display: "flex", fontSize: 22, color: COLORS.fade, letterSpacing: 1 }}>{header.status_override}</span>
+          ) : <TierBadge tier={tier} />}
         </div>
       </div>
 
@@ -1225,7 +1232,7 @@ export default function Canvas(props: CanvasProps) {
           </>
         )}
 
-        {chart.dot_visible && (
+              {chart.dot_visible && (
           <>
             {chart.dot_ring_alpha > 0 && (
               <div
@@ -1284,6 +1291,11 @@ export default function Canvas(props: CanvasProps) {
         ))}
       </div>
 
+      {chart.source_note && (
+        <div style={{ position: "absolute", left: CANVAS.safe.x, top: 1290, fontSize: 22, color: COLORS.fade, display: "flex" }}>
+          {chart.source_note}
+        </div>
+      )}
       {chart.dot_visible && (
         <div
           style={{
@@ -1309,7 +1321,7 @@ export default function Canvas(props: CanvasProps) {
               display: "flex",
             }}
           >
-            {chart.count_value.toLocaleString("en-US")}
+            {chart.count_display ?? chart.count_value.toLocaleString("en-US")}
           </span>
           <span
             style={{
@@ -1321,7 +1333,7 @@ export default function Canvas(props: CanvasProps) {
               display: "flex",
             }}
           >
-            births in {chart.current_year}
+            recorded in {chart.current_year}
           </span>
         </div>
       )}

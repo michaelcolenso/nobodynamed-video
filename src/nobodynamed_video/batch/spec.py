@@ -16,6 +16,7 @@ from nobodynamed_video.data.ctx import (
 )
 from nobodynamed_video.data.d1_source import D1Source
 from nobodynamed_video.data.hooks import load_hook_library, resolve_hook
+from nobodynamed_video.data.snapshot import SnapshotSource, verified_snapshot
 from nobodynamed_video.data.sqlite_source import SqliteSource
 from nobodynamed_video.editorial.story import evaluate_story, load_story
 from nobodynamed_video.exceptions import BlocklistedName, StoryQualityError
@@ -117,11 +118,6 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
     fps: int = int(defaults.get("fps", 30))
     videos: list[dict[str, Any]] = raw.get("videos", [])
 
-    if settings.use_sqlite:
-        source: SqliteSource | D1Source = SqliteSource(settings.sqlite_fixture)
-    else:
-        source = D1Source(settings.d1_url, settings.get_d1_token(), timeout=30.0)
-
     specs: list[VideoSpec] = []
     latest_year = settings.latest_year
     hooks_library = load_hook_library()
@@ -146,10 +142,23 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
                 "Use --force to override."
             )
 
-        record = await source.get_record(name, sex, latest_year)
+        source: SqliteSource | D1Source | SnapshotSource
+        if story:
+            snapshot = verified_snapshot(story)
+            source = SnapshotSource(snapshot)
+            reference_year = snapshot.latest_year
+        elif settings.use_sqlite:
+            source = SqliteSource(settings.sqlite_fixture)
+            reference_year = latest_year
+        else:
+            source = D1Source(settings.d1_url, settings.get_d1_token(), timeout=30.0)
+            reference_year = latest_year
+        record = await source.get_record(name, sex, reference_year)
         tier = classify(record)
         seed = spec_seed(vid_id)
-        base_context = await build_base_context(source, record, tier, latest_year, cultural_events)
+        base_context = await build_base_context(
+            source, record, tier, reference_year, cultural_events
+        )
         hook = resolve_hook(
             base_context,
             style=style,
@@ -199,7 +208,7 @@ async def load_specs(yaml_path: Path, force: bool = False) -> list[VideoSpec]:
                 "narrative": context.narrative_text or "",
                 "support": context.supporting_text or "",
             },
-            cultural_events.get((record.name.lower(), record.sex)),
+            None if story else cultural_events.get((record.name.lower(), record.sex)),
         )
 
         # Re-narrow after model_copy: program is always set by
