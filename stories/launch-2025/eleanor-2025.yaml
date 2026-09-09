@@ -37,8 +37,11 @@ target_duration_s: 12.5
 voice_instructions: Use a precise, conversational documentary delivery. Read years
   naturally; pause briefly after the name. No theatrical gloom. Check the actual audio
   before release.
-status: draft
+status: approved
 quality_score: 80
+approved_by: michaelcolenso
+approved_at: 2026-09-09T01:42:12.663557+00:00
+approved_content_sha256: 910f1911140230624ed74b3ca4d2004e8cc4a4c3f42f3e166e02927bec9122ba
 data_snapshot: data/ssa-2025/eleanor-f.json
 data_sha256: 8a0e56ddddae96e7bce83f804c3d386db112b42c42c260e0929e97da7db72859
 count_claims:
