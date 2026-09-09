@@ -1,0 +1,102 @@
+{
+  "batch": "launch-six",
+  "total": 6,
+  "succeeded": 6,
+  "failed": 0,
+  "qc_failed": [],
+  "release_ids": [
+    "hazel-2025",
+    "alexa-2025",
+    "bertha-2025",
+    "kunta-2025",
+    "jennifer-2025",
+    "eleanor-2025"
+  ],
+  "results": [
+    {
+      "id": "hazel-2025",
+      "frames": 375,
+      "composed": true,
+      "mp4": "out/hazel-2025.mp4",
+      "duration_s": 12.5,
+      "render_time_s": 101.08930690499999,
+      "caption": "Hazel name history: a comeback across generations. #Hazel #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    },
+    {
+      "id": "alexa-2025",
+      "frames": 386,
+      "composed": true,
+      "mp4": "out/alexa-2025.mp4",
+      "duration_s": 12.866666666666667,
+      "render_time_s": 102.708038958,
+      "caption": "Alexa name popularity: the decline began before Echo. #Alexa #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    },
+    {
+      "id": "bertha-2025",
+      "frames": 375,
+      "composed": true,
+      "mp4": "out/bertha-2025.mp4",
+      "duration_s": 12.5,
+      "render_time_s": 95.413416224,
+      "caption": "Bertha name history: rare does not mean gone. #Bertha #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": [
+          {
+            "severity": "warning",
+            "code": "AUDIO_LEVELS",
+            "message": "integrated loudness is -15.7 LUFS, target -14 LUFS"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kunta-2025",
+      "frames": 375,
+      "composed": true,
+      "mp4": "out/kunta-2025.mp4",
+      "duration_s": 12.5,
+      "render_time_s": 96.94373369700003,
+      "caption": "Kunta name history: the Roots year in American records. #Kunta #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    },
+    {
+      "id": "jennifer-2025",
+      "frames": 381,
+      "composed": true,
+      "mp4": "out/jennifer-2025.mp4",
+      "duration_s": 12.7,
+      "render_time_s": 92.11838569699995,
+      "caption": "Jennifer name popularity: the curve behind a generation. #Jennifer #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    },
+    {
+      "id": "eleanor-2025",
+      "frames": 375,
+      "composed": true,
+      "mp4": "out/eleanor-2025.mp4",
+      "duration_s": 12.5,
+      "render_time_s": 94.86434810899999,
+      "caption": "Eleanor name history: an old name finds another generation. #Eleanor #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    }
+  ],
+  "errors": []
+}

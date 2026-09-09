@@ -1,0 +1,73 @@
+{
+  "id": "bertha-2025",
+  "name": "Bertha",
+  "sex": "F",
+  "story_kind": "long_decline",
+  "thesis": "Bertha fell from its 1918 peak, but its latest recorded births show it has not vanished.",
+  "headline": "Bertha is rare. Still here.",
+  "subhead": "Peak: 5,051 in 1918. Latest: 30 in 2025.",
+  "takeaway": "Rare does not mean gone.",
+  "support": "Annual records, not a count of living people.",
+  "script_beats": [
+    {
+      "kind": "hook",
+      "text": "Bertha is rare. Still here."
+    },
+    {
+      "kind": "reveal",
+      "text": "It peaked more than a century ago."
+    },
+    {
+      "kind": "proof",
+      "text": "Thirty girls received the name in 2025."
+    },
+    {
+      "kind": "loop",
+      "text": "A decline is not a disappearance."
+    }
+  ],
+  "evidence": [
+    {
+      "label": "SSA national data, complete 2025 release",
+      "url": "https://www.ssa.gov/oact/babynames/limits.html",
+      "kind": "ssa",
+      "supports": "Annual national name/sex counts; exact claims and full series are bound to the accompanying archive-derived snapshot."
+    }
+  ],
+  "visual_anchors": [
+    "name and premise",
+    "labeled annual-count curve",
+    "peak and recent observations"
+  ],
+  "social_caption": "Bertha name history: rare does not mean gone.",
+  "hashtags": [
+    "#Bertha",
+    "#NameData",
+    "#AIVoice"
+  ],
+  "share_prompt": "Who in your family carried this name?",
+  "target_duration_s": 12.5,
+  "voice": null,
+  "voice_instructions": "Use a precise, conversational documentary delivery. Read years naturally; pause briefly after the name. No theatrical gloom. Check the actual audio before release.",
+  "status": "approved",
+  "quality_score": 80,
+  "approved_by": "michaelcolenso",
+  "approved_at": "2026-09-09T01:42:12.663557Z",
+  "approved_content_sha256": "194fbc2fbd78979a753ec49dd8b1efd677cec22419f5d1bf63b92b46c0370262",
+  "data_snapshot": "data/ssa-2025/bertha-f.json",
+  "data_sha256": "b5014dabaf82da34fc99d12f54e2e3369fb6ce332112adab675471f234f09f95",
+  "count_claims": [
+    {
+      "year": 1918,
+      "count": 5051
+    },
+    {
+      "year": 2024,
+      "count": 29
+    },
+    {
+      "year": 2025,
+      "count": 30
+    }
+  ]
+}

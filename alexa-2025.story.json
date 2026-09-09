@@ -1,0 +1,85 @@
+{
+  "id": "alexa-2025",
+  "name": "Alexa",
+  "sex": "F",
+  "story_kind": "cultural_rupture",
+  "thesis": "Alexa's peak came before Echo; the name later fell much further.",
+  "headline": "Alexa was already falling.",
+  "subhead": "Peak: 6,117 in 2006. Latest: 243 in 2025.",
+  "takeaway": "The peak preceded Echo; timing alone does not prove why parents changed.",
+  "support": "2006 peak / 2014 Echo launch / 2025 count",
+  "script_beats": [
+    {
+      "kind": "hook",
+      "text": "Alexa was already falling."
+    },
+    {
+      "kind": "reveal",
+      "text": "Its peak came in 2006, before Amazon Echo."
+    },
+    {
+      "kind": "proof",
+      "text": "By 2025, just 243 girls received the name."
+    },
+    {
+      "kind": "loop",
+      "text": "The timeline changes the story."
+    }
+  ],
+  "evidence": [
+    {
+      "label": "SSA national data, complete 2025 release",
+      "url": "https://www.ssa.gov/oact/babynames/limits.html",
+      "kind": "ssa",
+      "supports": "Annual national name/sex counts; exact claims and full series are bound to the accompanying archive-derived snapshot."
+    },
+    {
+      "label": "Echo launch reporting, TIME, November 2014",
+      "url": "https://time.com/3562932/amazon-echo/",
+      "kind": "reporting",
+      "supports": "Contemporaneous reporting of the Echo launch in 2014."
+    },
+    {
+      "label": "Alexa tenth anniversary, The Verge",
+      "url": "https://www.theverge.com/2024/11/5/24288352/amazon-alexa-anniversary-ai-llm-assistant-vergecast",
+      "kind": "reporting",
+      "supports": "Echo and Alexa debuted in November 2014; the article recounts their anniversary."
+    }
+  ],
+  "visual_anchors": [
+    "name and premise",
+    "labeled annual-count curve",
+    "peak and recent observations"
+  ],
+  "social_caption": "Alexa name popularity: the decline began before Echo.",
+  "hashtags": [
+    "#Alexa",
+    "#NameData",
+    "#AIVoice"
+  ],
+  "share_prompt": "What changed for people named Alexa?",
+  "target_duration_s": 12.5,
+  "voice": null,
+  "voice_instructions": "Use a precise, conversational documentary delivery. Read years naturally; pause briefly after the name. No theatrical gloom. Check the actual audio before release.",
+  "status": "approved",
+  "quality_score": 95,
+  "approved_by": "michaelcolenso",
+  "approved_at": "2026-09-09T01:42:12.663557Z",
+  "approved_content_sha256": "7174eab495003c9ace082eb2799f0ae74ad039cae497f7b4f8dea8f2552d9fb9",
+  "data_snapshot": "data/ssa-2025/alexa-f.json",
+  "data_sha256": "f41bdab29050a989fda14832277da5255518775403afa717a81a5fd990dfa485",
+  "count_claims": [
+    {
+      "year": 2006,
+      "count": 6117
+    },
+    {
+      "year": 2024,
+      "count": 349
+    },
+    {
+      "year": 2025,
+      "count": 243
+    }
+  ]
+}
