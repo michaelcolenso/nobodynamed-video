@@ -13,15 +13,23 @@
 
 ## Credential handling
 
-Cloudflare Workers AI powers narration and alignment. Put a token with Workers AI Read
-and Edit permissions in `CLOUDFLARE_API_TOKEN` in the gitignored `.env` file. Set
-`CLOUDFLARE_ACCOUNT_ID`, or let non-release local workflows infer it from `D1_URL`. Never put
-a real token in `.env.example`, a story, a batch file, a manifest, logs, or a commit.
+The canonical Cloudflare credentials for this project are `D1_URL` and `D1_TOKEN`.
+`D1_URL` contains the Cloudflare account path, which the application uses to infer the
+Workers AI account ID. `D1_TOKEN` is used for D1 access and is also the fallback token for
+Workers AI narration. The token therefore needs the permissions required by the operations
+you run, including Workers AI narration for approved story renders.
 
-The GitHub launch workflow requires explicit repository secrets named
-`CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. It deliberately does not receive
-`D1_URL` or `D1_TOKEN`: the six launch stories read only their checked-in verified SSA
-snapshots. If any credential ever appears in logs, revoke or rotate it before reuse.
+The application still supports optional `CLOUDFLARE_ACCOUNT_ID` and
+`CLOUDFLARE_API_TOKEN` overrides, but the GitHub launch workflow does not require them.
+Keep all real credentials in the gitignored `.env` file or GitHub Actions secrets. Never put
+a real token in `.env.example`, a story, a batch file, a manifest, logs, or a commit. If any
+credential ever appears in logs, revoke or rotate it before reuse.
+
+The GitHub launch workflow requires repository secrets named exactly `D1_URL` and
+`D1_TOKEN`. The six launch stories read their facts from checked-in verified SSA snapshots;
+D1 is not queried for those facts during release. `D1_URL` is still supplied so the
+application can infer the Workers AI account ID, and `D1_TOKEN` supplies the narration
+authorization used by the existing CLI configuration.
 
 Use `--no-narration` only for frame/compositor diagnosis. A composed approved story without
 narration fails QC by design.
@@ -50,10 +58,12 @@ with comparable runtimes and distribution.
 
 ### Narration failure
 
-1. Confirm only the presence of `CLOUDFLARE_API_TOKEN`; never print it.
-2. Check the account ID and Workers AI model settings in `.env`.
-3. Re-run the story score to ensure the script is within 24–36 words.
-4. Cached audio lives under `out/.cache/narration`; a changed script or voice naturally
+1. Confirm only the presence of `D1_TOKEN`; never print it.
+2. Confirm `D1_URL` contains the expected `/accounts/<account-id>/` path so the account ID
+   can be inferred.
+3. Confirm the token has the Workers AI permissions needed by the narration models.
+4. Re-run the story score to ensure the script is within 24–36 words.
+5. Cached audio lives under `out/.cache/narration`; a changed script or voice naturally
    creates a new cache key.
 
 ### Data-source failure
@@ -76,27 +86,26 @@ re-score every affected story, and obtain fresh human approval before rendering.
 ## Verified six-video launch (2025 data)
 
 Review `docs/LAUNCH_SIX_REVIEW.md` and the six files in `stories/launch-2025/`.
-They are intentionally drafts. Existing approvals were removed from legacy scripts because
-those scripts do not carry the required verified data bindings. The old pilot commands
-therefore reject drafts; use the new launch batch after human review.
+Each release story must carry current human approval bound to its exact content and verified
+data snapshot.
 
 1. Refresh snapshots when needed: download the complete official SSA `names.zip`, then run
    `uv run python scripts/fetch_ssa.py /path/to/names.zip --year 2025 --out data/ssa-2025`.
    A refresh changes snapshot bytes; update story hashes/claims and obtain fresh approval.
 2. After explicit human approval, use `uv run nbn story approve <story-path> --reviewer <reviewer>`
    for each approved story. Never insert approval metadata to bypass review.
-3. Create a dedicated Cloudflare Workers AI token with Workers AI Read and Edit permissions.
-   Set GitHub Actions repository secrets `CLOUDFLARE_ACCOUNT_ID` and
-   `CLOUDFLARE_API_TOKEN`. Do not provide D1 credentials to the launch workflow.
+3. Set GitHub Actions repository secrets `D1_URL` and `D1_TOKEN`. `D1_URL` supplies the
+   account path used to infer the Workers AI account ID; `D1_TOKEN` supplies the narration
+   token fallback already used by the CLI.
 4. In GitHub Actions, manually run the `CI` workflow on `main` with `render_launch` enabled.
-   The render job first verifies all six approvals, then verifies the two Workers AI secrets,
-   before it starts Satori or injects credentials into the render command.
+   The render job first verifies all six approvals and the two release secrets before it
+   starts Satori or injects credentials into the render command.
 5. Inspect the six narrated MP4s and QC reports from the Actions artifact. Check phone-size
    legibility, pronunciation, word alignment, timing and historical interpretation.
 6. A fully successful workflow stages `out/launch-six.summary.json` into a verified release
    and publishes the release artifacts to the `videos` branch. That branch is an artifact
    destination, not a TikTok upload.
 
-Missing approval, missing Workers AI credentials, missing narration, silence, failed QC,
+Missing approval, missing release credentials, missing narration, silence, failed QC,
 missing provenance and partial batches block release. Stale files from earlier runs cannot
 enter the staged publication.
