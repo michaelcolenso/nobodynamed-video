@@ -1,0 +1,216 @@
+version: 1
+requested_year: 2025
+candidates:
+  - name: Khaleesi
+    sex: F
+    hypothesis: fiction
+  - name: Renesmee
+    sex: F
+    hypothesis: fiction
+  - name: Anakin
+    sex: M
+    hypothesis: fiction
+  - name: Leia
+    sex: F
+    hypothesis: fiction
+  - name: Arya
+    sex: F
+    hypothesis: fiction
+  - name: Daenerys
+    sex: F
+    hypothesis: fiction
+  - name: Hermione
+    sex: F
+    hypothesis: fiction
+  - name: Elsa
+    sex: F
+    hypothesis: fiction
+  - name: Moana
+    sex: F
+    hypothesis: fiction
+  - name: Wednesday
+    sex: F
+    hypothesis: fiction
+  - name: Miley
+    sex: F
+    hypothesis: celebrity
+  - name: Aaliyah
+    sex: F
+    hypothesis: celebrity
+  - name: Britney
+    sex: F
+    hypothesis: celebrity
+  - name: Zendaya
+    sex: F
+    hypothesis: celebrity
+  - name: Rihanna
+    sex: F
+    hypothesis: celebrity
+  - name: Keanu
+    sex: M
+    hypothesis: celebrity
+  - name: Elvis
+    sex: M
+    hypothesis: celebrity
+  - name: Madonna
+    sex: F
+    hypothesis: celebrity
+  - name: Heather
+    sex: F
+    hypothesis: generation
+  - name: Gary
+    sex: M
+    hypothesis: generation
+  - name: Todd
+    sex: M
+    hypothesis: generation
+  - name: Chad
+    sex: M
+    hypothesis: generation
+  - name: Craig
+    sex: M
+    hypothesis: generation
+  - name: Scott
+    sex: M
+    hypothesis: generation
+  - name: Jeffrey
+    sex: M
+    hypothesis: generation
+  - name: Debra
+    sex: F
+    hypothesis: generation
+  - name: Tammy
+    sex: F
+    hypothesis: generation
+  - name: Brenda
+    sex: F
+    hypothesis: generation
+  - name: Cheryl
+    sex: F
+    hypothesis: generation
+  - name: Donna
+    sex: F
+    hypothesis: generation
+  - name: Susan
+    sex: F
+    hypothesis: generation
+  - name: Nancy
+    sex: F
+    hypothesis: generation
+  - name: Barbara
+    sex: F
+    hypothesis: generation
+  - name: Patricia
+    sex: F
+    hypothesis: generation
+  - name: Luna
+    sex: F
+    hypothesis: modern-rise
+  - name: Maverick
+    sex: M
+    hypothesis: modern-rise
+  - name: Atlas
+    sex: M
+    hypothesis: modern-rise
+  - name: Nova
+    sex: F
+    hypothesis: modern-rise
+  - name: Juniper
+    sex: F
+    hypothesis: modern-rise
+  - name: Wren
+    sex: F
+    hypothesis: modern-rise
+  - name: Everly
+    sex: F
+    hypothesis: modern-rise
+  - name: Paisley
+    sex: F
+    hypothesis: modern-rise
+  - name: Braxton
+    sex: M
+    hypothesis: modern-rise
+  - name: Jaxon
+    sex: M
+    hypothesis: modern-rise
+  - name: Bentley
+    sex: M
+    hypothesis: modern-rise
+  - name: Mercedes
+    sex: F
+    hypothesis: brand
+  - name: Armani
+    sex: M
+    hypothesis: brand
+  - name: Armani
+    sex: F
+    hypothesis: brand
+  - name: Chanel
+    sex: F
+    hypothesis: brand
+  - name: Dior
+    sex: M
+    hypothesis: brand
+  - name: Dior
+    sex: F
+    hypothesis: brand
+  - name: Ashley
+    sex: M
+    hypothesis: gender-shift
+  - name: Ashley
+    sex: F
+    hypothesis: gender-shift
+  - name: Leslie
+    sex: M
+    hypothesis: gender-shift
+  - name: Leslie
+    sex: F
+    hypothesis: gender-shift
+  - name: Kelly
+    sex: M
+    hypothesis: gender-shift
+  - name: Kelly
+    sex: F
+    hypothesis: gender-shift
+  - name: Tracy
+    sex: M
+    hypothesis: gender-shift
+  - name: Tracy
+    sex: F
+    hypothesis: gender-shift
+  - name: Shannon
+    sex: M
+    hypothesis: gender-shift
+  - name: Shannon
+    sex: F
+    hypothesis: gender-shift
+  - name: Taylor
+    sex: M
+    hypothesis: gender-shift
+  - name: Taylor
+    sex: F
+    hypothesis: gender-shift
+  - name: Jordan
+    sex: M
+    hypothesis: gender-shift
+  - name: Jordan
+    sex: F
+    hypothesis: gender-shift
+  - name: Avery
+    sex: M
+    hypothesis: gender-shift
+  - name: Avery
+    sex: F
+    hypothesis: gender-shift
+  - name: Riley
+    sex: M
+    hypothesis: gender-shift
+  - name: Riley
+    sex: F
+    hypothesis: gender-shift
+  - name: Morgan
+    sex: M
+    hypothesis: gender-shift
+  - name: Morgan
+    sex: F
+    hypothesis: gender-shift

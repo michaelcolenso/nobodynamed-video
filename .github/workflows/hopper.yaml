@@ -1,0 +1,67 @@
+name: Hopper Analysis
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - research/hopper.yaml
+      - src/nobodynamed_video/research/**
+      - scripts/analyze_hopper.py
+      - tests/test_hopper.py
+      - .github/workflows/hopper.yaml
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Verify D1 secrets
+        env:
+          D1_URL: ${{ secrets.D1_URL }}
+          D1_TOKEN: ${{ secrets.D1_TOKEN }}
+        run: |
+          if [[ -z "$D1_URL" ]]; then
+            echo "::error::Missing GitHub Actions secret D1_URL"
+            exit 1
+          fi
+          if [[ -z "$D1_TOKEN" ]]; then
+            echo "::error::Missing GitHub Actions secret D1_TOKEN"
+            exit 1
+          fi
+
+      - name: Rank hopper candidates
+        env:
+          D1_URL: ${{ secrets.D1_URL }}
+          D1_TOKEN: ${{ secrets.D1_TOKEN }}
+        run: uv run python scripts/analyze_hopper.py research/hopper.yaml --year 2025 --out out/hopper
+
+      - name: Publish report to job summary
+        if: always()
+        run: |
+          if [[ -f out/hopper/hopper-ranked.md ]]; then
+            cat out/hopper/hopper-ranked.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload hopper report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hopper-analysis-${{ github.sha }}
+          path: out/hopper/
+          retention-days: 30
+          if-no-files-found: error
