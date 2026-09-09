@@ -33,7 +33,11 @@ from nobodynamed_video.models import StoryKind
 from nobodynamed_video.render.frame_planner import plan_frames
 from nobodynamed_video.render.satori_client import SatoriClient
 
-app = typer.Typer(name="nbn", help="nobodynamed video pipeline")
+app = typer.Typer(
+    name="nbn",
+    help="nobodynamed video pipeline",
+    pretty_exceptions_show_locals=False,
+)
 console = Console()
 
 
@@ -298,8 +302,6 @@ def captions_reset(
     confirm: bool = typer.Option(False, "--confirm", help="Required to actually wipe state."),
 ) -> None:
     """Wipe all recorded hashtag combinations from state DB."""
-    from nobodynamed_video.compose.state import CombinationState
-
     if not confirm:
         console.print("[red]Pass --confirm to wipe the state DB.[/red]")
         raise typer.Exit(1)
