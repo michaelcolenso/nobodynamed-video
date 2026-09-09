@@ -302,6 +302,8 @@ def captions_reset(
     confirm: bool = typer.Option(False, "--confirm", help="Required to actually wipe state."),
 ) -> None:
     """Wipe all recorded hashtag combinations from state DB."""
+    from nobodynamed_video.compose.state import CombinationState
+
     if not confirm:
         console.print("[red]Pass --confirm to wipe the state DB.[/red]")
         raise typer.Exit(1)
