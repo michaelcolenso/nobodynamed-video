@@ -1,0 +1,27 @@
+reference_year: 2025
+archive_sha256: cd78e975ed7bb358e018dd62fbe14ced89295e9581c49172ca4eedcb011b3724
+candidates:
+  - name: Rihanna
+    sex: F
+    story_kind: cultural_rupture
+    thesis: Rihanna was already present in the SSA record, but 2005 is the visible break in the curve; her breakout and the name jump align in time without proving individual parental motive.
+  - name: Miley
+    sex: F
+    story_kind: comeback
+    thesis: Miley's first surge aligns with Hannah Montana, but the stronger story is a second act after the 2008 peak: the name has been rising again since 2020.
+  - name: Aaliyah
+    sex: F
+    story_kind: cultural_rupture
+    thesis: Aaliyah's 1994 debut aligns with an extraordinary break in the name curve, but the name kept growing and did not reach its national peak until 2012.
+  - name: Elsa
+    sex: F
+    story_kind: cultural_rupture
+    thesis: Elsa's national birth count peaks in 2014, immediately after Frozen's 2013 release; the timing is unusually tight but should be described as alignment, not sole causation.
+  - name: Leia
+    sex: F
+    story_kind: cultural_rupture
+    thesis: Star Wars leaves a visible 1977 pulse in Leia's curve, but the name's actual national peak arrives much later in 2023.
+  - name: Atlas
+    sex: M
+    story_kind: comeback
+    thesis: Atlas is an old name with a modern record: it appears in nineteenth-century SSA data, disappears intermittently, and reaches its all-time high in 2025.
