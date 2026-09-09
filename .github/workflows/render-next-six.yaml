@@ -1,0 +1,155 @@
+name: Render Next Six
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install Python dependencies
+        run: uv sync
+
+      - name: Verify D1 credentials
+        env:
+          D1_URL: ${{ secrets.D1_URL }}
+          D1_TOKEN: ${{ secrets.D1_TOKEN }}
+        run: |
+          if [[ -z "$D1_URL" ]]; then
+            echo "::error::Missing GitHub Actions secret D1_URL"
+            exit 1
+          fi
+          if [[ -z "$D1_TOKEN" ]]; then
+            echo "::error::Missing GitHub Actions secret D1_TOKEN"
+            exit 1
+          fi
+          if [[ "$D1_URL" != *"/accounts/"* ]]; then
+            echo "::error::D1_URL does not contain a Cloudflare account path; Workers AI account ID cannot be inferred"
+            exit 1
+          fi
+
+      - name: Verify current D1 data against checked-in next-six snapshots
+        env:
+          D1_URL: ${{ secrets.D1_URL }}
+          D1_TOKEN: ${{ secrets.D1_TOKEN }}
+        run: |
+          uv run python scripts/snapshot_from_d1.py \
+            --year 2025 \
+            --archive-sha256 cd78e975ed7bb358e018dd62fbe14ced89295e9581c49172ca4eedcb011b3724 \
+            --anchor-dir data/ssa-2025 \
+            --out out/d1-preflight \
+            --names Rihanna:F Miley:F Aaliyah:F Elsa:F Leia:F Atlas:M
+          uv run python - <<'PY'
+          import json
+          from pathlib import Path
+
+          files = (
+              "rihanna-f.json",
+              "miley-f.json",
+              "aaliyah-f.json",
+              "elsa-f.json",
+              "leia-f.json",
+              "atlas-m.json",
+          )
+          stable_fields = (
+              "schema_version",
+              "source_url",
+              "archive_sha256",
+              "name",
+              "sex",
+              "latest_year",
+              "observations",
+          )
+          for filename in files:
+              checked = json.loads((Path("data/ssa-2025") / filename).read_text())
+              current = json.loads((Path("out/d1-preflight") / filename).read_text())
+              for field in stable_fields:
+                  if checked[field] != current[field]:
+                      raise SystemExit(f"{filename}: current D1 differs from checked-in snapshot field {field}")
+              print(f"{filename}: D1 verified")
+          PY
+
+      - name: Verify approved story content
+        run: |
+          stories=(
+            stories/next-2025/rihanna-2025.yaml
+            stories/next-2025/miley-2025.yaml
+            stories/next-2025/aaliyah-2025.yaml
+            stories/next-2025/elsa-2025.yaml
+            stories/next-2025/leia-2025.yaml
+            stories/next-2025/atlas-2025.yaml
+          )
+          for story in "${stories[@]}"; do
+            echo "Checking $story"
+            uv run nbn story score "$story"
+          done
+
+      - name: Install satori-service dependencies
+        working-directory: satori-service
+        run: pnpm install --frozen-lockfile
+
+      - name: Start satori sidecar
+        working-directory: satori-service
+        run: pnpm exec tsx src/server.ts &
+        env:
+          PORT: "3001"
+
+      - name: Wait for satori
+        run: |
+          for i in $(seq 1 30); do
+            curl -s http://localhost:3001/health > /dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -sf http://localhost:3001/health || { echo "satori sidecar failed to start"; exit 1; }
+
+      - name: Render next-six batch
+        run: uv run nbn batch batches/next-six.yaml
+        env:
+          SATORI_URL: "http://localhost:3001"
+          D1_URL: ${{ secrets.D1_URL }}
+          D1_TOKEN: ${{ secrets.D1_TOKEN }}
+
+      - name: Upload render workspace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-six-render-${{ github.sha }}
+          path: out/
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Stage verified release
+        if: success()
+        run: uv run python -m nobodynamed_video.release out/next-six.summary.json out/release
+
+      - name: Upload verified release
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-six-release-${{ github.sha }}
+          path: out/release/
+          retention-days: 90
+          if-no-files-found: error
