@@ -5,8 +5,10 @@ on:
     branches: [main]
     paths:
       - research/promoted-six-2025.yaml
+      - data/ssa-2025/**
       - .github/workflows/candidate-snapshots.yaml
       - scripts/fetch_ssa.py
+      - scripts/snapshot_from_d1.py
   workflow_dispatch:
 
 jobs:
@@ -21,39 +23,39 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Download official SSA archive
-        run: |
-          user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
-          curl --fail --location --retry 3 --retry-delay 2 \
-            --user-agent "$user_agent" \
-            --header "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" \
-            --cookie-jar /tmp/ssa.cookies \
-            https://www.ssa.gov/oact/babynames/ \
-            --output /tmp/ssa-babynames.html
-          curl --fail --location --retry 3 --retry-delay 2 \
-            --user-agent "$user_agent" \
-            --header "Referer: https://www.ssa.gov/oact/babynames/" \
-            --header "Accept: application/zip,application/octet-stream;q=0.9,*/*;q=0.8" \
-            --cookie /tmp/ssa.cookies \
-            https://www.ssa.gov/oact/babynames/names.zip \
-            --output /tmp/names.zip
+      - uses: astral-sh/setup-uv@v4
 
-      - name: Verify archive matches launch data
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Verify D1 credentials
+        env:
+          D1_URL: ${{ secrets.D1_URL }}
+          D1_TOKEN: ${{ secrets.D1_TOKEN }}
         run: |
-          expected="cd78e975ed7bb358e018dd62fbe14ced89295e9581c49172ca4eedcb011b3724"
-          actual="$(sha256sum /tmp/names.zip | cut -d' ' -f1)"
-          echo "SSA archive SHA256: $actual"
-          if [[ "$actual" != "$expected" ]]; then
-            echo "::error::SSA archive changed; review the new release before generating candidate snapshots"
+          if [[ -z "$D1_URL" ]]; then
+            echo "::error::Missing GitHub Actions secret D1_URL"
+            exit 1
+          fi
+          if [[ -z "$D1_TOKEN" ]]; then
+            echo "::error::Missing GitHub Actions secret D1_TOKEN"
             exit 1
           fi
 
-      - name: Extract promoted candidate snapshots
+      - name: Verify D1 mirror and extract promoted snapshots
+        env:
+          D1_URL: ${{ secrets.D1_URL }}
+          D1_TOKEN: ${{ secrets.D1_TOKEN }}
         run: |
-          python scripts/fetch_ssa.py /tmp/names.zip \
+          uv run python scripts/snapshot_from_d1.py \
             --year 2025 \
+            --archive-sha256 cd78e975ed7bb358e018dd62fbe14ced89295e9581c49172ca4eedcb011b3724 \
+            --anchor-dir data/ssa-2025 \
             --out out/candidate-snapshots \
             --names Rihanna:F Miley:F Aaliyah:F Elsa:F Leia:F Atlas:M
+
+      - name: Show provenance
+        run: cat out/candidate-snapshots/provenance.json
 
       - name: Upload candidate snapshots
         uses: actions/upload-artifact@v4
