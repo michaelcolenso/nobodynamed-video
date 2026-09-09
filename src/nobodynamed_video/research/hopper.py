@@ -83,10 +83,7 @@ def _longest_internal_gap(record: NameRecord) -> int:
     if len(positive_years) < 2:
         return 0
     return max(
-        (
-            right - left - 1
-            for left, right in zip(positive_years, positive_years[1:], strict=False)
-        ),
+        (right - left - 1 for left, right in zip(positive_years, positive_years[1:], strict=False)),
         default=0,
     )
 
@@ -301,9 +298,7 @@ def render_markdown(
     paired: dict[str, list[HopperMetrics]] = defaultdict(list)
     for item in results:
         paired[item.name.casefold()].append(item)
-    gender_pairs = [
-        items for items in paired.values() if len({item.sex for item in items}) == 2
-    ]
+    gender_pairs = [items for items in paired.values() if len({item.sex for item in items}) == 2]
     if gender_pairs:
         lines.extend(["", "## Paired-sex candidates", ""])
         for items in sorted(gender_pairs, key=lambda pair: pair[0].name.casefold()):
@@ -345,7 +340,5 @@ def write_report(
         "results": [asdict(item) for item in results],
     }
     json_path.write_text(json.dumps(payload, indent=2) + "\n")
-    markdown_path.write_text(
-        render_markdown(reference_year, candidates, results, errors)
-    )
+    markdown_path.write_text(render_markdown(reference_year, candidates, results, errors))
     return json_path, markdown_path
