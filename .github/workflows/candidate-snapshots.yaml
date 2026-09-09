@@ -1,4 +1,4 @@
-name: Candidate SSA Snapshots
+name: Candidate D1 Snapshots
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
       - research/promoted-six-2025.yaml
       - data/ssa-2025/**
       - .github/workflows/candidate-snapshots.yaml
-      - scripts/fetch_ssa.py
       - scripts/snapshot_from_d1.py
   workflow_dispatch:
 
