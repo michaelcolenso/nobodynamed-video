@@ -33,7 +33,11 @@ from nobodynamed_video.models import StoryKind
 from nobodynamed_video.render.frame_planner import plan_frames
 from nobodynamed_video.render.satori_client import SatoriClient
 
-app = typer.Typer(name="nbn", help="nobodynamed video pipeline")
+app = typer.Typer(
+    name="nbn",
+    help="nobodynamed video pipeline",
+    pretty_exceptions_show_locals=False,
+)
 console = Console()
 
 
