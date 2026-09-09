@@ -1,0 +1,53 @@
+name: Candidate SSA Snapshots
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - research/promoted-six-2025.yaml
+      - .github/workflows/candidate-snapshots.yaml
+      - scripts/fetch_ssa.py
+  workflow_dispatch:
+
+jobs:
+  snapshots:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download official SSA archive
+        run: |
+          curl --fail --location --retry 3 --retry-delay 2 \
+            https://www.ssa.gov/oact/babynames/names.zip \
+            --output /tmp/names.zip
+
+      - name: Verify archive matches launch data
+        run: |
+          expected="cd78e975ed7bb358e018dd62fbe14ced89295e9581c49172ca4eedcb011b3724"
+          actual="$(sha256sum /tmp/names.zip | cut -d' ' -f1)"
+          echo "SSA archive SHA256: $actual"
+          if [[ "$actual" != "$expected" ]]; then
+            echo "::error::SSA archive changed; review the new release before generating candidate snapshots"
+            exit 1
+          fi
+
+      - name: Extract promoted candidate snapshots
+        run: |
+          python scripts/fetch_ssa.py /tmp/names.zip \
+            --year 2025 \
+            --out out/candidate-snapshots \
+            --names Rihanna:F Miley:F Aaliyah:F Elsa:F Leia:F Atlas:M
+
+      - name: Upload candidate snapshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: candidate-snapshots-${{ github.sha }}
+          path: out/candidate-snapshots/
+          retention-days: 30
+          if-no-files-found: error
