@@ -37,8 +37,11 @@ target_duration_s: 12.5
 voice_instructions: Use a precise, conversational documentary delivery. Read years
   naturally; pause briefly after the name. No theatrical gloom. Check the actual audio
   before release.
-status: draft
+status: approved
 quality_score: 80
+approved_by: michaelcolenso
+approved_at: 2026-09-09T01:42:12.663557+00:00
+approved_content_sha256: 194fbc2fbd78979a753ec49dd8b1efd677cec22419f5d1bf63b92b46c0370262
 data_snapshot: data/ssa-2025/bertha-f.json
 data_sha256: b5014dabaf82da34fc99d12f54e2e3369fb6ce332112adab675471f234f09f95
 count_claims:

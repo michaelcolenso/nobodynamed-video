@@ -42,8 +42,11 @@ target_duration_s: 12.5
 voice_instructions: Use a precise, conversational documentary delivery. Read years
   naturally; pause briefly after the name. No theatrical gloom. Check the actual audio
   before release.
-status: draft
+status: approved
 quality_score: 88
+approved_by: michaelcolenso
+approved_at: 2026-09-09T01:42:12.663557+00:00
+approved_content_sha256: 5a943c79277dddefe4867ee4302c2d2d62f458bd0eb5efa1f2974a70c614551b
 data_snapshot: data/ssa-2025/kunta-m.json
 data_sha256: f6070b34d0163bf436b205441aa84017e4a4f9380033f980c4c766cc0be29214
 count_claims:

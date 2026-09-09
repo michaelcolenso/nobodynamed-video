@@ -21,14 +21,16 @@ from tests.test_frame_planner import make_bertha_spec
 LAUNCH = Path("stories/launch-2025")
 
 
-def test_six_launch_drafts_pass_facts_and_copy_but_require_human_approval() -> None:
+def test_six_launch_stories_are_currently_approved_and_publishable() -> None:
     paths = sorted(LAUNCH.glob("*.yaml"))
     assert len(paths) == 6
     for path in paths:
         story = load_story(path)
         assert evaluate_story(story, require_approval=False).publishable
-        assert not evaluate_story(story).publishable
-        assert not story.approved_by and story.approved_at is None
+        assert evaluate_story(story).publishable
+        assert story.approved_by
+        assert story.approved_at is not None
+        assert story.approved_content_sha256
 
 
 def test_wrong_count_and_altered_snapshot_are_rejected() -> None:
