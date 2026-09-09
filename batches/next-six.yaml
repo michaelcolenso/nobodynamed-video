@@ -1,0 +1,28 @@
+batch: next-six
+defaults:
+  fps: 30
+videos:
+- id: rihanna-2025
+  name: Rihanna
+  sex: F
+  story: stories/next-2025/rihanna-2025.yaml
+- id: miley-2025
+  name: Miley
+  sex: F
+  story: stories/next-2025/miley-2025.yaml
+- id: aaliyah-2025
+  name: Aaliyah
+  sex: F
+  story: stories/next-2025/aaliyah-2025.yaml
+- id: elsa-2025
+  name: Elsa
+  sex: F
+  story: stories/next-2025/elsa-2025.yaml
+- id: leia-2025
+  name: Leia
+  sex: F
+  story: stories/next-2025/leia-2025.yaml
+- id: atlas-2025
+  name: Atlas
+  sex: M
+  story: stories/next-2025/atlas-2025.yaml
