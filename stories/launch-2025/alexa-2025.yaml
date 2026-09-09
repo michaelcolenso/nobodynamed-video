@@ -46,8 +46,11 @@ target_duration_s: 12.5
 voice_instructions: Use a precise, conversational documentary delivery. Read years
   naturally; pause briefly after the name. No theatrical gloom. Check the actual audio
   before release.
-status: draft
+status: approved
 quality_score: 95
+approved_by: michaelcolenso
+approved_at: 2026-09-09T01:42:12.663557+00:00
+approved_content_sha256: 7174eab495003c9ace082eb2799f0ae74ad039cae497f7b4f8dea8f2552d9fb9
 data_snapshot: data/ssa-2025/alexa-f.json
 data_sha256: f41bdab29050a989fda14832277da5255518775403afa717a81a5fd990dfa485
 count_claims:
