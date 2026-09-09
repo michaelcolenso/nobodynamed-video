@@ -108,17 +108,21 @@ jobs:
             uv run nbn story score "$story"
           done
 
-      - name: Verify Workers AI credentials
+      - name: Verify release credentials
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          D1_URL: ${{ secrets.D1_URL }}
+          D1_TOKEN: ${{ secrets.D1_TOKEN }}
         run: |
-          if [[ -z "$CLOUDFLARE_ACCOUNT_ID" ]]; then
-            echo "::error::Missing GitHub Actions secret CLOUDFLARE_ACCOUNT_ID"
+          if [[ -z "$D1_URL" ]]; then
+            echo "::error::Missing GitHub Actions secret D1_URL"
             exit 1
           fi
-          if [[ -z "$CLOUDFLARE_API_TOKEN" ]]; then
-            echo "::error::Missing GitHub Actions secret CLOUDFLARE_API_TOKEN"
+          if [[ -z "$D1_TOKEN" ]]; then
+            echo "::error::Missing GitHub Actions secret D1_TOKEN"
+            exit 1
+          fi
+          if [[ "$D1_URL" != *"/accounts/"* ]]; then
+            echo "::error::D1_URL does not contain a Cloudflare account path; Workers AI account ID cannot be inferred"
             exit 1
           fi
 
@@ -142,16 +146,17 @@ jobs:
 
       - name: Render verified launch batch
         # Each story must have fresh human approval bound to its current content.
-        # Launch stories use checked-in verified SSA snapshots, so D1 credentials
-        # are deliberately not exposed to this release job.
+        # Launch stories read their data from checked-in verified SSA snapshots.
+        # D1_URL is also the canonical source for inferring the Cloudflare account
+        # ID, and D1_TOKEN is the configured Workers AI narration token fallback.
         run: |
           echo "::group::Rendering batches/launch-six.yaml"
           uv run nbn batch batches/launch-six.yaml
           echo "::endgroup::"
         env:
           SATORI_URL: "http://localhost:3001"
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          D1_URL: ${{ secrets.D1_URL }}
+          D1_TOKEN: ${{ secrets.D1_TOKEN }}
 
       - name: Upload rendered videos
         if: always()
