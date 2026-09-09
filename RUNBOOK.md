@@ -15,8 +15,13 @@
 
 Cloudflare Workers AI powers narration and alignment. Put a token with Workers AI Read
 and Edit permissions in `CLOUDFLARE_API_TOKEN` in the gitignored `.env` file. Set
-`CLOUDFLARE_ACCOUNT_ID`, or let the pipeline infer it from `D1_URL`. Never put a real
-token in `.env.example`, a story, a batch file, a manifest, logs, or a commit.
+`CLOUDFLARE_ACCOUNT_ID`, or let non-release local workflows infer it from `D1_URL`. Never put
+a real token in `.env.example`, a story, a batch file, a manifest, logs, or a commit.
+
+The GitHub launch workflow requires explicit repository secrets named
+`CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. It deliberately does not receive
+`D1_URL` or `D1_TOKEN`: the six launch stories read only their checked-in verified SSA
+snapshots. If any credential ever appears in logs, revoke or rotate it before reuse.
 
 Use `--no-narration` only for frame/compositor diagnosis. A composed approved story without
 narration fails QC by design.
@@ -80,13 +85,18 @@ therefore reject drafts; use the new launch batch after human review.
    A refresh changes snapshot bytes; update story hashes/claims and obtain fresh approval.
 2. After explicit human approval, use `uv run nbn story approve <story-path> --reviewer <reviewer>`
    for each approved story. Never insert approval metadata to bypass review.
-3. Start Satori and configure Workers AI credentials as described above. D1 is unnecessary
-   for these snapshot-backed stories.
-4. Run `uv run nbn batch batches/launch-six.yaml`. Inspect the six MP4s and QC reports.
-5. Run `uv run python -m nobodynamed_video.release out/launch-six.summary.json out/release`
-   only after a fully successful batch. The destination must be empty.
+3. Create a dedicated Cloudflare Workers AI token with Workers AI Read and Edit permissions.
+   Set GitHub Actions repository secrets `CLOUDFLARE_ACCOUNT_ID` and
+   `CLOUDFLARE_API_TOKEN`. Do not provide D1 credentials to the launch workflow.
+4. In GitHub Actions, manually run the `CI` workflow on `main` with `render_launch` enabled.
+   The render job first verifies all six approvals, then verifies the two Workers AI secrets,
+   before it starts Satori or injects credentials into the render command.
+5. Inspect the six narrated MP4s and QC reports from the Actions artifact. Check phone-size
+   legibility, pronunciation, word alignment, timing and historical interpretation.
+6. A fully successful workflow stages `out/launch-six.summary.json` into a verified release
+   and publishes the release artifacts to the `videos` branch. That branch is an artifact
+   destination, not a TikTok upload.
 
-Missing narration, silence, failed QC, missing provenance and partial batches block release.
-The main-branch workflow renders only this explicit batch and stages its MP4, manifest,
-story and source sidecars; stale files from earlier runs cannot enter that publication.
-GitHub's `videos` branch is an artifact destination, not a TikTok upload.
+Missing approval, missing Workers AI credentials, missing narration, silence, failed QC,
+missing provenance and partial batches block release. Stale files from earlier runs cannot
+enter the staged publication.
