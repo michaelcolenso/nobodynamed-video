@@ -1,0 +1,57 @@
+id: rihanna-2025
+name: Rihanna
+sex: F
+story_kind: cultural_rupture
+thesis: Rihanna's naming curve breaks upward in 2005, then peaks in 2008 as the singer's breakout enters popular culture.
+headline: Rihanna's 2005 break.
+subhead: 79 girls in 2005. 1,075 at the 2008 peak.
+takeaway: The breakout and the name curve align in time without proving parental motive.
+support: The count rose to 572 in 2006 before peaking two years later.
+script_beats:
+  - kind: hook
+    text: Rihanna breaks upward in 2005.
+  - kind: reveal
+    text: Seventy-nine American girls received the name that year. In 2006, the count jumped to 572.
+  - kind: proof
+    text: By 2008, Rihanna peaked at 1,075.
+  - kind: loop
+    text: The singer's breakout and the curve align in time.
+evidence:
+  - label: SSA national data, complete 2025 release
+    url: https://www.ssa.gov/oact/babynames/limits.html
+    kind: ssa
+    supports: Annual national name/sex counts; exact claims are bound to the pinned 2025 snapshot.
+  - label: Apple Music, Pon de Replay
+    url: https://music.apple.com/us/song/1440867324
+    kind: reporting
+    supports: Dates Rihanna's breakout single Pon de Replay to May 24, 2005.
+  - label: Official Charts, Pon de Replay
+    url: https://www.officialcharts.com/songs/rihanna-pon-de-replay/
+    kind: reporting
+    supports: Records Pon de Replay entering the UK chart in 2005 and peaking at number two.
+visual_anchors:
+  - 2005 break
+  - 2006 acceleration
+  - 2008 peak
+social_caption: 'Rihanna name history: the 2005 break in the SSA curve.'
+hashtags:
+  - '#Rihanna'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Which celebrity name curve should be checked next?
+target_duration_s: 12.5
+voice_instructions: Use a precise, conversational documentary delivery; emphasize the years, not a causal claim.
+status: approved
+approved_by: michaelcolenso
+approved_at: 2026-09-09T16:56:00+00:00
+approved_content_sha256: 225ed03f1178a92e55e1940d840072c15c5aba6c66e5f366ae5f7b75dfb0df6c
+quality_score: 100
+data_snapshot: data/ssa-2025/rihanna-f.json
+data_sha256: e3e4a871e29d8693ebeb1bd98f2b3ae5045db7ed9fc13d6987d22799e0591603
+count_claims:
+  - year: 2005
+    count: 79
+  - year: 2006
+    count: 572
+  - year: 2008
+    count: 1075
