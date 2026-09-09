@@ -83,7 +83,10 @@ def _longest_internal_gap(record: NameRecord) -> int:
     if len(positive_years) < 2:
         return 0
     return max(
-        (right - left - 1 for left, right in zip(positive_years, positive_years[1:])),
+        (
+            right - left - 1
+            for left, right in zip(positive_years, positive_years[1:], strict=False)
+        ),
         default=0,
     )
 
@@ -91,7 +94,7 @@ def _longest_internal_gap(record: NameRecord) -> int:
 def _max_one_year_shock(record: NameRecord) -> tuple[float, int | None]:
     best = 0.0
     best_year: int | None = None
-    for previous, current in zip(record.series, record.series[1:]):
+    for previous, current in zip(record.series, record.series[1:], strict=False):
         if previous.count == 0 and current.count == 0:
             continue
         shock = abs(current.count - previous.count) / max(previous.count, 5)
@@ -261,6 +264,10 @@ def render_markdown(
     results: list[HopperMetrics],
     errors: list[dict[str, str]],
 ) -> str:
+    header = (
+        "| # | Name | Sex | Score | Tier | First | Peak | Latest | Peak/latest | "
+        "5y | Shock | Gap | Signals | Hypothesis |"
+    )
     lines = [
         "# NobodyNamed Hopper Analysis",
         "",
@@ -275,8 +282,8 @@ def render_markdown(
         "",
         "## Ranked candidates",
         "",
-        "| # | Name | Sex | Score | Tier | First | Peak | Latest | Peak/latest | 5y | Shock | Gap | Signals | Hypothesis |",
-        "|---:|---|:---:|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|",
+        header,
+        "|---:|---|:---:|---:|---|---:|---:|---:|---:|---:|---:|---:|---|---|",
     ]
     for index, item in enumerate(results, start=1):
         shock = f"{item.max_one_year_shock:.1f}x"
