@@ -1,0 +1,75 @@
+{
+  "id": "atlas-2025",
+  "name": "Atlas",
+  "sex": "M",
+  "story_kind": "comeback",
+  "thesis": "Atlas appears in SSA records in 1883 and reaches its all-time peak in 2025, turning an old name into a distinctly modern record.",
+  "headline": "Atlas peaks in 2025.",
+  "subhead": "Five boys in 1883. 4,413 in 2025.",
+  "takeaway": "Atlas is old; an established name is setting its national high now.",
+  "support": "The 2025 count is the highest in the complete SSA series.",
+  "script_beats": [
+    {
+      "kind": "hook",
+      "text": "Atlas is old. Its peak is now."
+    },
+    {
+      "kind": "reveal",
+      "text": "Five boys were named Atlas in 1883. In 2025, the count reached 4,413."
+    },
+    {
+      "kind": "proof",
+      "text": "That is its national record."
+    },
+    {
+      "kind": "loop",
+      "text": "An old name just set a record."
+    }
+  ],
+  "evidence": [
+    {
+      "label": "SSA national data, complete 2025 release",
+      "url": "https://www.ssa.gov/oact/babynames/limits.html",
+      "kind": "ssa",
+      "supports": "Annual national name/sex counts; exact claims are bound to the pinned 2025 snapshot."
+    },
+    {
+      "label": "Behind the Name, Atlas",
+      "url": "https://www.behindthename.com/name/atlas",
+      "kind": "reporting",
+      "supports": "Documents Atlas as an ancient Greek mythological name rather than a newly coined modern name."
+    }
+  ],
+  "visual_anchors": [
+    "1883 appearance",
+    "modern acceleration",
+    "2025 record"
+  ],
+  "social_caption": "Atlas name history: an old name is setting its record now.",
+  "hashtags": [
+    "#Atlas",
+    "#NameData",
+    "#AIVoice"
+  ],
+  "share_prompt": "Which old name is secretly peaking now?",
+  "target_duration_s": 12.5,
+  "voice": null,
+  "voice_instructions": "Use a bright, precise documentary delivery; make the 1883-to-2025 contrast the reveal.",
+  "status": "approved",
+  "quality_score": 93,
+  "approved_by": "michaelcolenso",
+  "approved_at": "2026-09-09T16:56:00Z",
+  "approved_content_sha256": "d72c239dddda9c9ed757ee6d4f87e83a50c671d481bdeb99b04c518b0a732349",
+  "data_snapshot": "data/ssa-2025/atlas-m.json",
+  "data_sha256": "d8cfc829e29a9f7ab7475a760a0fddb58ec0a53df9702afccbabfecd4c045a0b",
+  "count_claims": [
+    {
+      "year": 1883,
+      "count": 5
+    },
+    {
+      "year": 2025,
+      "count": 4413
+    }
+  ]
+}

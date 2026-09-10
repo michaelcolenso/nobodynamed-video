@@ -1,0 +1,85 @@
+{
+  "id": "elsa-2025",
+  "name": "Elsa",
+  "sex": "F",
+  "story_kind": "cultural_rupture",
+  "thesis": "Elsa peaked in 2014 immediately after Frozen's 2013 release, producing one of the hopper's tightest culture-and-name timing alignments.",
+  "headline": "Elsa's 2014 peak.",
+  "subhead": "566 girls in 2013. 1,140 in 2014.",
+  "takeaway": "Frozen and the peak align closely in time without proving parental motive.",
+  "support": "By 2025, the count was 216.",
+  "script_beats": [
+    {
+      "kind": "hook",
+      "text": "Elsa doubled after Frozen."
+    },
+    {
+      "kind": "reveal",
+      "text": "There were 566 Elsas in 2013 and 1,140 in 2014."
+    },
+    {
+      "kind": "proof",
+      "text": "That 2014 count was the national peak; by 2025, it was 216."
+    },
+    {
+      "kind": "loop",
+      "text": "The timing is visible in the curve."
+    }
+  ],
+  "evidence": [
+    {
+      "label": "SSA national data, complete 2025 release",
+      "url": "https://www.ssa.gov/oact/babynames/limits.html",
+      "kind": "ssa",
+      "supports": "Annual national name/sex counts; exact claims are bound to the pinned 2025 snapshot."
+    },
+    {
+      "label": "Disney, Frozen",
+      "url": "https://movies.disney.com/frozen/",
+      "kind": "reporting",
+      "supports": "Dates Frozen to 2013 and identifies Elsa as a central character."
+    },
+    {
+      "label": "Academy of Motion Picture Arts and Sciences, Frozen",
+      "url": "https://www.oscars.org/events/animated-features",
+      "kind": "reporting",
+      "supports": "Records Frozen as the 2014 Best Animated Feature winner, documenting its major cultural reach."
+    }
+  ],
+  "visual_anchors": [
+    "2013 count",
+    "2014 peak",
+    "2025 count"
+  ],
+  "social_caption": "Elsa name history: the national peak arrived in 2014.",
+  "hashtags": [
+    "#Elsa",
+    "#NameData",
+    "#AIVoice"
+  ],
+  "share_prompt": "Which movie-era name should be checked next?",
+  "target_duration_s": 12.5,
+  "voice": null,
+  "voice_instructions": "Use a restrained documentary delivery; stress sequence and timing rather than claiming sole causation.",
+  "status": "approved",
+  "quality_score": 100,
+  "approved_by": "michaelcolenso",
+  "approved_at": "2026-09-09T16:56:00Z",
+  "approved_content_sha256": "25ccbc210428a1dca2ba0511cfcd85603f137c70c90937a4185cc4b01a0a7f6d",
+  "data_snapshot": "data/ssa-2025/elsa-f.json",
+  "data_sha256": "f2b6383bcb7d75f262161c02b73f9191513719d7ef423555fadebf6cf59645aa",
+  "count_claims": [
+    {
+      "year": 2013,
+      "count": 566
+    },
+    {
+      "year": 2014,
+      "count": 1140
+    },
+    {
+      "year": 2025,
+      "count": 216
+    }
+  ]
+}

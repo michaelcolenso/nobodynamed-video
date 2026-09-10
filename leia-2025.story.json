@@ -1,0 +1,85 @@
+{
+  "id": "leia-2025",
+  "name": "Leia",
+  "sex": "F",
+  "story_kind": "cultural_rupture",
+  "thesis": "Leia rose sharply with Star Wars in 1977, but its national peak came much later in 2023 rather than during the original film's release.",
+  "headline": "Leia's 1977 pulse.",
+  "subhead": "21 girls in 1976. 98 in 1977. Peak: 2023.",
+  "takeaway": "Star Wars aligns with a pulse, but the biggest year came 46 years later.",
+  "support": "Leia reached 1,424 births in 2023.",
+  "script_beats": [
+    {
+      "kind": "hook",
+      "text": "Star Wars moved Leia in 1977."
+    },
+    {
+      "kind": "reveal",
+      "text": "The count rose from 21 girls in 1976 to 98 in 1977."
+    },
+    {
+      "kind": "proof",
+      "text": "But Leia kept growing, reaching 1,424 births in 2023."
+    },
+    {
+      "kind": "loop",
+      "text": "The famous year was not the peak."
+    }
+  ],
+  "evidence": [
+    {
+      "label": "SSA national data, complete 2025 release",
+      "url": "https://www.ssa.gov/oact/babynames/limits.html",
+      "kind": "ssa",
+      "supports": "Annual national name/sex counts; exact claims are bound to the pinned 2025 snapshot."
+    },
+    {
+      "label": "StarWars.com, A New Hope",
+      "url": "https://www.starwars.com/films/star-wars-episode-iv-a-new-hope/",
+      "kind": "reporting",
+      "supports": "Dates the original Star Wars film to May 25, 1977."
+    },
+    {
+      "label": "StarWars.com, Leia Organa databank",
+      "url": "https://www.starwars.com/databank/leia-organa",
+      "kind": "reporting",
+      "supports": "Identifies Leia Organa as a central character in the Star Wars story."
+    }
+  ],
+  "visual_anchors": [
+    "1976 count",
+    "1977 pulse",
+    "2023 peak"
+  ],
+  "social_caption": "Leia name history: 1977 moved the curve, but did not peak it.",
+  "hashtags": [
+    "#Leia",
+    "#NameData",
+    "#AIVoice"
+  ],
+  "share_prompt": "Which franchise name should be checked next?",
+  "target_duration_s": 12.5,
+  "voice": null,
+  "voice_instructions": "Use a curious documentary delivery; make the late peak the surprise and avoid causal overclaiming.",
+  "status": "approved",
+  "quality_score": 100,
+  "approved_by": "michaelcolenso",
+  "approved_at": "2026-09-09T16:56:00Z",
+  "approved_content_sha256": "4875546bfd9a5bcdfcddf84bab4fc153cae69fcda763947d6d9e7ecee4448e51",
+  "data_snapshot": "data/ssa-2025/leia-f.json",
+  "data_sha256": "78b1bb3e5498910e3b2c96aaf3e292323184ebab4cab2f39b452b761ccc4985c",
+  "count_claims": [
+    {
+      "year": 1976,
+      "count": 21
+    },
+    {
+      "year": 1977,
+      "count": 98
+    },
+    {
+      "year": 2023,
+      "count": 1424
+    }
+  ]
+}

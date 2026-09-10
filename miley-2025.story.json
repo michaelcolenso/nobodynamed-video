@@ -1,0 +1,85 @@
+{
+  "id": "miley-2025",
+  "name": "Miley",
+  "sex": "F",
+  "story_kind": "comeback",
+  "thesis": "Miley peaked in 2008, fell sharply, and is now making a measurable comeback from 369 births in 2020 to 900 in 2025.",
+  "headline": "Miley's 2025 comeback.",
+  "subhead": "2,652 at the 2008 peak. 900 in 2025.",
+  "takeaway": "The first wave faded, but the name has been climbing again for five years.",
+  "support": "The 2025 count is more than double the 2020 count.",
+  "script_beats": [
+    {
+      "kind": "hook",
+      "text": "Miley has a second act."
+    },
+    {
+      "kind": "reveal",
+      "text": "It peaked at 2,652 girls in 2008."
+    },
+    {
+      "kind": "proof",
+      "text": "By 2020, the count had fallen to 369. In 2025, it reached 900."
+    },
+    {
+      "kind": "loop",
+      "text": "The curve is climbing again."
+    }
+  ],
+  "evidence": [
+    {
+      "label": "SSA national data, complete 2025 release",
+      "url": "https://www.ssa.gov/oact/babynames/limits.html",
+      "kind": "ssa",
+      "supports": "Annual national name/sex counts; exact claims are bound to the pinned 2025 snapshot."
+    },
+    {
+      "label": "Disney D23, Hannah Montana",
+      "url": "https://d23.com/a-to-z/hannah-montana-television/",
+      "kind": "reporting",
+      "supports": "Dates the Hannah Montana television premiere to March 24, 2006 and identifies Miley Cyrus as its star."
+    },
+    {
+      "label": "Billboard, Flowers chart history",
+      "url": "https://ca.billboard.com/music/chart-beat/miley-cyrus-flowers-ties-most-weeks-number-one-adult-contemporary-chart-1235576436/",
+      "kind": "reporting",
+      "supports": "Documents Miley Cyrus's renewed major chart visibility with Flowers in 2023."
+    }
+  ],
+  "visual_anchors": [
+    "2008 peak",
+    "2020 low point",
+    "2025 rebound"
+  ],
+  "social_caption": "Miley name history: a measurable second act in the SSA data.",
+  "hashtags": [
+    "#Miley",
+    "#NameData",
+    "#AIVoice"
+  ],
+  "share_prompt": "Which name deserves a comeback check?",
+  "target_duration_s": 12.5,
+  "voice": null,
+  "voice_instructions": "Use a curious documentary delivery; let the comeback in the counts carry the story.",
+  "status": "approved",
+  "quality_score": 100,
+  "approved_by": "michaelcolenso",
+  "approved_at": "2026-09-09T16:56:00Z",
+  "approved_content_sha256": "9687bac5f890343cc90aaadba5461a7a32e3b5e1dc1bb4f78a44a513a363cd86",
+  "data_snapshot": "data/ssa-2025/miley-f.json",
+  "data_sha256": "8d3861db57fbe4b494ccca80b25aa495d00e4683653c5eff5e969e9dd4b86432",
+  "count_claims": [
+    {
+      "year": 2008,
+      "count": 2652
+    },
+    {
+      "year": 2020,
+      "count": 369
+    },
+    {
+      "year": 2025,
+      "count": 900
+    }
+  ]
+}

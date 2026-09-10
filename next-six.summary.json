@@ -1,0 +1,96 @@
+{
+  "batch": "next-six",
+  "total": 6,
+  "succeeded": 6,
+  "failed": 0,
+  "qc_failed": [],
+  "release_ids": [
+    "rihanna-2025",
+    "miley-2025",
+    "aaliyah-2025",
+    "elsa-2025",
+    "atlas-2025",
+    "leia-2025"
+  ],
+  "results": [
+    {
+      "id": "rihanna-2025",
+      "frames": 415,
+      "composed": true,
+      "mp4": "out/rihanna-2025.mp4",
+      "duration_s": 13.833333333333334,
+      "render_time_s": 113.66516794,
+      "caption": "Rihanna name history: the 2005 break in the SSA curve. #Rihanna #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    },
+    {
+      "id": "miley-2025",
+      "frames": 416,
+      "composed": true,
+      "mp4": "out/miley-2025.mp4",
+      "duration_s": 13.866666666666667,
+      "render_time_s": 114.72767781599998,
+      "caption": "Miley name history: a measurable second act in the SSA data. #Miley #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    },
+    {
+      "id": "aaliyah-2025",
+      "frames": 416,
+      "composed": true,
+      "mp4": "out/aaliyah-2025.mp4",
+      "duration_s": 13.866666666666667,
+      "render_time_s": 111.00814234899997,
+      "caption": "Aaliyah name history: the 1994 shock was only the beginning. #Aaliyah #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    },
+    {
+      "id": "elsa-2025",
+      "frames": 416,
+      "composed": true,
+      "mp4": "out/elsa-2025.mp4",
+      "duration_s": 13.866666666666667,
+      "render_time_s": 111.40598363599997,
+      "caption": "Elsa name history: the national peak arrived in 2014. #Elsa #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    },
+    {
+      "id": "atlas-2025",
+      "frames": 416,
+      "composed": true,
+      "mp4": "out/atlas-2025.mp4",
+      "duration_s": 13.866666666666667,
+      "render_time_s": 109.99722250199994,
+      "caption": "Atlas name history: an old name is setting its record now. #Atlas #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    },
+    {
+      "id": "leia-2025",
+      "frames": 416,
+      "composed": true,
+      "mp4": "out/leia-2025.mp4",
+      "duration_s": 13.866666666666667,
+      "render_time_s": 110.49933349299994,
+      "caption": "Leia name history: 1977 moved the curve, but did not peak it. #Leia #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    }
+  ],
+  "errors": []
+}

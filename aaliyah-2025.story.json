@@ -1,0 +1,85 @@
+{
+  "id": "aaliyah-2025",
+  "name": "Aaliyah",
+  "sex": "F",
+  "story_kind": "cultural_rupture",
+  "thesis": "Aaliyah's count surged in 1994 as the singer debuted, but the name kept growing and did not reach its national peak until 2012.",
+  "headline": "Aaliyah's 1994 break.",
+  "subhead": "22 girls in 1993. 1,451 in 1994.",
+  "takeaway": "The cultural break is visible, but the biggest year came 18 years later.",
+  "support": "Aaliyah reached 5,523 births in 2012.",
+  "script_beats": [
+    {
+      "kind": "hook",
+      "text": "Aaliyah's curve broke in 1994."
+    },
+    {
+      "kind": "reveal",
+      "text": "The count jumped from 22 girls in 1993 to 1,451 in 1994."
+    },
+    {
+      "kind": "proof",
+      "text": "But that was not the peak. It reached 5,523 in 2012."
+    },
+    {
+      "kind": "loop",
+      "text": "The first shock was only the beginning."
+    }
+  ],
+  "evidence": [
+    {
+      "label": "SSA national data, complete 2025 release",
+      "url": "https://www.ssa.gov/oact/babynames/limits.html",
+      "kind": "ssa",
+      "supports": "Annual national name/sex counts; exact claims are bound to the pinned 2025 snapshot."
+    },
+    {
+      "label": "Apple Music, Age Ain't Nothing but a Number",
+      "url": "https://music.apple.com/us/album/age-aint-nothing-but-a-number-deluxe/254938506",
+      "kind": "reporting",
+      "supports": "Dates Aaliyah's debut album to 1994."
+    },
+    {
+      "label": "GRAMMY, Aaliyah retrospective",
+      "url": "https://www.grammy.com/news/aaliyah-one-million-record-25th-anniversary-record/",
+      "kind": "reporting",
+      "supports": "Describes 1994 as the start of Aaliyah's recording career and her later artistic development."
+    }
+  ],
+  "visual_anchors": [
+    "1993 baseline",
+    "1994 rupture",
+    "2012 peak"
+  ],
+  "social_caption": "Aaliyah name history: the 1994 shock was only the beginning.",
+  "hashtags": [
+    "#Aaliyah",
+    "#NameData",
+    "#AIVoice"
+  ],
+  "share_prompt": "Which cultural name shock should be investigated next?",
+  "target_duration_s": 12.5,
+  "voice": null,
+  "voice_instructions": "Use a precise culture-documentary delivery; separate temporal alignment from causation.",
+  "status": "approved",
+  "quality_score": 100,
+  "approved_by": "michaelcolenso",
+  "approved_at": "2026-09-09T16:56:00Z",
+  "approved_content_sha256": "9b563d44b547bdf876b55d951a186c40b7e2a5a3834ea8a99fd597264f5088df",
+  "data_snapshot": "data/ssa-2025/aaliyah-f.json",
+  "data_sha256": "2f906bd365a1de403cf625d3f517ec2a6cc9890ccda43e05e3f76a1150db9e8a",
+  "count_claims": [
+    {
+      "year": 1993,
+      "count": 22
+    },
+    {
+      "year": 1994,
+      "count": 1451
+    },
+    {
+      "year": 2012,
+      "count": 5523
+    }
+  ]
+}
