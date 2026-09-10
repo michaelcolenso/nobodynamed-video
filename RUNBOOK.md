@@ -109,3 +109,28 @@ data snapshot.
 Missing approval, missing release credentials, missing narration, silence, failed QC,
 missing provenance and partial batches block release. Stale files from earlier runs cannot
 enter the staged publication.
+
+### Next-six branch publication
+
+`Render Next Six` remains manual-only and runs from `main`. It publishes only after
+D1 snapshot verification, content-bound human approval checks, rendering/QC,
+release staging, and the verified-release artifact upload all succeed. Publication
+adds the 25 staged files (six MP4/manifest/story/source packages and the batch
+summary) to the existing `videos` branch, preserving other files and history.
+Identical releases produce no commit. A concurrent branch update rejects the
+normal push; publication never force-pushes or automatically rerenders.
+
+To recover an already successful run without rendering again, first verify the
+source run and all its gates succeeded, download its `next-six-release-<sha>`
+artifact, and confirm the story/source approvals still match the source commit.
+From a checkout with the publisher and authenticated Git access, run:
+
+```sh
+uv run python -m nobodynamed_video.publish_release /path/to/downloaded-release SOURCE_COMMIT_SHA
+```
+
+The publisher rechecks package completeness and QC summary, rejects unexpected
+files, and commits only the next-six package paths. It is not a substitute for
+checking the source run's D1, approval, and artifact-upload results. After a
+concurrent-push rejection, inspect the new branch state before retrying this
+publication command with the same verified artifact.
