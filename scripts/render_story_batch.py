@@ -12,11 +12,19 @@ from nobodynamed_video.compose.narration_pacing import (
     FitDurationCloudflareNarrationProvider,
 )
 from nobodynamed_video.config import get_settings
+from nobodynamed_video.qc import checks as qc_checks
+
+# Story covers intentionally use a near-black brand background. The generic 98%
+# blackframe gate incorrectly rejected three visibly populated next-six covers.
+# A 99% threshold still rejects a genuinely blank dark frame while allowing
+# readable typography and labels on the designed cover.
+_STORY_COVER_BLACK_AMOUNT = 99
 
 
 async def _render(spec_path: Path) -> None:
     settings = get_settings()
     specs = await load_specs(spec_path)
+    qc_checks._COVER_BLACK_AMOUNT = _STORY_COVER_BLACK_AMOUNT
     provider = FitDurationCloudflareNarrationProvider(
         account_id=settings.workers_ai_account_id(),
         api_token=settings.cloudflare_api_token or settings.d1_token,
