@@ -2,6 +2,10 @@ name: Render Next Six
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ops/render-next-six.trigger
 
 permissions:
   contents: read
