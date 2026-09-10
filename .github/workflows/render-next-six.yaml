@@ -126,7 +126,7 @@ jobs:
           curl -sf http://localhost:3001/health || { echo "satori sidecar failed to start"; exit 1; }
 
       - name: Render next-six batch
-        run: uv run nbn batch batches/next-six.yaml
+        run: uv run python scripts/render_story_batch.py batches/next-six.yaml
         env:
           SATORI_URL: "http://localhost:3001"
           D1_URL: ${{ secrets.D1_URL }}
