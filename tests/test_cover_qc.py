@@ -32,7 +32,8 @@ def _make_cover(path: Path, *, populated: bool) -> None:
 
 
 def test_story_cover_policy_rejects_blank_but_allows_dark_populated_frame(
-    tmp_path: Path, monkeypatch,
+    tmp_path: Path,
+    monkeypatch,
 ) -> None:
     blank_dir = tmp_path / "blank" / "frames"
     populated_dir = tmp_path / "populated" / "frames"
