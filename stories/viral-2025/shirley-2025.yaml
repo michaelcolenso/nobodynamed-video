@@ -1,0 +1,59 @@
+id: shirley-2025
+name: Shirley
+sex: F
+story_kind: one_hit
+thesis: Shirley nearly tripled from 14,320 births in 1933 to a 42,366 peak in 1935
+  behind one child star, then fell for ninety years to 133.
+headline: One child star tripled this name.
+subhead: 14,320 in 1933. 42,366 in 1935.
+takeaway: Two years up, then ninety years down.
+support: 133 births in 2025.
+script_beats:
+  - kind: hook
+    text: A child star rewrote this name.
+  - kind: reveal
+    text: Shirley went from 14,320 girls in 1933 to 42,366 in 1935.
+  - kind: proof
+    text: 'Shirley Temple won a juvenile Academy Award in 1935. By 2025: 133.'
+  - kind: loop
+    text: Watch two years change everything.
+evidence:
+  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+    url: https://www.ssa.gov/oact/babynames/limits.html
+    kind: ssa
+    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
+      to the pinned dataset snapshot named in data_snapshot.
+  - label: Academy of Motion Picture Arts and Sciences, the 7th Academy Awards
+    url: https://www.oscars.org/oscars/ceremonies/1935
+    kind: primary
+    supports: Official record of the February 27, 1935 ceremony at which Shirley Temple
+      received the first Academy Juvenile Award.
+  - label: Britannica, Bright Eyes
+    url: https://www.britannica.com/topic/Bright-Eyes
+    kind: reporting
+    supports: Dates the 1934 film built around Shirley Temple that carried her to
+      stardom the year before the name's peak.
+visual_anchors:
+  - 1933 base
+  - 1935 peak
+  - 2025 floor
+social_caption: Shirley Temple nearly tripled her own name in two years; ninety years
+  later it is down to 133.
+hashtags:
+  - '#Shirley'
+  - '#NameHistory'
+  - '#AIVoice'
+share_prompt: Which star moved a name the most?
+target_duration_s: 12.0
+voice_instructions: Archival and unhurried. Let the 1935 spike land before the decline.
+status: draft
+quality_score: 0
+data_snapshot: data/nobodynamed-2025/shirley-f.json
+data_sha256: bb82034d657a1ac9a3b4a30d671386aa0c5cd27446a276fd1b397c527e0322a6
+count_claims:
+  - year: 1933
+    count: 14320
+  - year: 1935
+    count: 42366
+  - year: 2025
+    count: 133

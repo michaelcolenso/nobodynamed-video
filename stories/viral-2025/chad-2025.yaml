@@ -1,0 +1,58 @@
+id: chad-2025
+name: Chad
+sex: M
+story_kind: cultural_rupture
+thesis: Chad peaked at 13,392 boys in 1972 and fell to 90 in 2024, its first year
+  under 100 births since 1951, as the internet turned it into a stereotype.
+headline: This name became an internet stereotype.
+subhead: 13,392 boys in 1972. 96 in 2025.
+takeaway: A fifty-year slide, then a meme took the name.
+support: Under 100 births in 2024 — a first since 1951.
+script_beats:
+  - kind: hook
+    text: The internet made this name a punchline.
+  - kind: reveal
+    text: Chad peaked at 13,392 American boys in 1972.
+  - kind: proof
+    text: By 2024 it was 90 — fewer than any year since 1951.
+  - kind: loop
+    text: Watch a stereotype finish a slow decline.
+evidence:
+  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+    url: https://www.ssa.gov/oact/babynames/limits.html
+    kind: ssa
+    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
+      to the pinned dataset snapshot named in data_snapshot.
+  - label: Merriam-Webster slang dictionary, Chad
+    url: https://www.merriam-webster.com/slang/chad
+    kind: primary
+    supports: Defines the internet sense of Chad as a stereotyped alpha male and dates
+      its spread through the 2010s incel community into 2020s general use.
+  - label: Dictionary.com slang, Chad
+    url: https://www.dictionary.com/culture/slang/chad
+    kind: primary
+    supports: Independently records Chad as a generic internet stereotype for a conventionally
+      attractive, confident man.
+visual_anchors:
+  - 1972 peak
+  - 2010s meme era
+  - 2024 record low
+social_caption: Chad slid for fifty years, then the internet turned it into a stereotype.
+hashtags:
+  - '#Chad'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Would you name a kid Chad today?
+target_duration_s: 11.5
+voice_instructions: Dry and factual. Never perform the meme; report it.
+status: draft
+quality_score: 0
+data_snapshot: data/nobodynamed-2025/chad-m.json
+data_sha256: 662f9e0b9a8063f2ba407510dfed4e13e720186251a62cf3a1d110d4a9f1e162
+count_claims:
+  - year: 1972
+    count: 13392
+  - year: 2024
+    count: 90
+  - year: 2025
+    count: 96

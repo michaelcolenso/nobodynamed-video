@@ -9,12 +9,14 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from nobodynamed_video.batch.runner import run_batch
-from nobodynamed_video.data.snapshot import SnapshotSource, verified_snapshot
+from nobodynamed_video.data.snapshot import Snapshot, SnapshotSource, verified_snapshot
 from nobodynamed_video.editorial.story import approve_story, evaluate_story, load_story
 from nobodynamed_video.exceptions import StoryQualityError
 from nobodynamed_video.models import CountClaim
 from nobodynamed_video.qc.checks import QCIssue, QCResult, _check_audio_loudness
 from nobodynamed_video.release import stage_release
+from pydantic import ValidationError
+from ruamel.yaml import YAML
 
 from tests.test_frame_planner import make_bertha_spec
 
@@ -40,6 +42,58 @@ def test_wrong_count_and_altered_snapshot_are_rejected() -> None:
         verified_snapshot(wrong)
     with pytest.raises(StoryQualityError, match="SHA256 mismatch"):
         verified_snapshot(story.model_copy(update={"data_sha256": "0" * 64}))
+
+
+def _archive_snapshot_payload() -> dict[str, object]:
+    return json.loads((Path("data/ssa-2025") / "kunta-m.json").read_text())
+
+
+def test_archive_snapshot_still_requires_its_sha256_and_a_rank_per_reported_year() -> None:
+    payload = _archive_snapshot_payload()
+    without_hash = {k: v for k, v in payload.items() if k != "archive_sha256"}
+    with pytest.raises(ValidationError, match="must pin the archive SHA256"):
+        Snapshot.model_validate(without_hash)
+
+    rankless = _archive_snapshot_payload()
+    reported = next(o for o in rankless["observations"] if o["count"] is not None)
+    reported["rank"] = None
+    with pytest.raises(ValidationError, match="both be present or absent"):
+        Snapshot.model_validate(rankless)
+
+
+def test_dataset_snapshot_may_omit_ranks_but_not_claim_an_archive() -> None:
+    payload = _archive_snapshot_payload()
+    dataset = {k: v for k, v in payload.items() if k not in {"source_url", "archive_sha256"}}
+    dataset["source_dataset"] = "nobodynamed-d1:name-vitals"
+    dataset["observations"] = [
+        {"year": o["year"], "count": o["count"]} for o in payload["observations"]
+    ]
+    snapshot = Snapshot.model_validate(dataset)
+    assert not snapshot.from_ssa_archive
+    assert next(o for o in snapshot.observations if o.year == 1977).count == 215
+
+    forged = dict(dataset, archive_sha256="0" * 64)
+    with pytest.raises(ValidationError, match="must not claim an SSA archive SHA256"):
+        Snapshot.model_validate(forged)
+
+    ranked_gap = dict(dataset)
+    ranked_gap["observations"] = [
+        {"year": o["year"], "count": o["count"], "rank": None if o["count"] else 12}
+        for o in payload["observations"]
+    ]
+    with pytest.raises(ValidationError, match="unreported year must not carry a rank"):
+        Snapshot.model_validate(ranked_gap)
+
+
+def test_snapshot_must_declare_exactly_one_provenance() -> None:
+    payload = _archive_snapshot_payload()
+    both = dict(payload, source_dataset="nobodynamed-d1:name-vitals")
+    with pytest.raises(ValidationError, match="exactly one of source_url or source_dataset"):
+        Snapshot.model_validate(both)
+
+    neither = {k: v for k, v in payload.items() if k not in {"source_url", "archive_sha256"}}
+    with pytest.raises(ValidationError, match="exactly one of source_url or source_dataset"):
+        Snapshot.model_validate(neither)
 
 
 def test_copy_edit_invalidates_approval_without_a_new_reviewer() -> None:
@@ -135,3 +189,35 @@ def test_actual_silent_audio_is_fatal(tmp_path: Path) -> None:
     )
     issues = _check_audio_loudness(path)
     assert any(i.code == "SILENT_NARRATION" and i.severity == "error" for i in issues)
+
+
+VIRAL = Path("stories/viral-2025")
+
+
+def test_viral_ten_stories_are_gate_clean_except_for_human_approval() -> None:
+    """The ten viral-ten stories are render-ready the moment a reviewer approves them."""
+    paths = sorted(VIRAL.glob("*.yaml"))
+    assert len(paths) == 10
+    for path in paths:
+        story = load_story(path)
+        evaluation = evaluate_story(story, require_approval=False)
+        assert evaluation.publishable, (path.name, evaluation.blockers)
+        assert evaluation.score == 100, (path.name, evaluation.components)
+        # Every published number is pinned to the snapshot, not to the copy.
+        assert story.count_claims
+        verified_snapshot(story)
+        # Unapproved by design: approval is a human act, never a generated field.
+        assert evaluate_story(story).blockers == [
+            "story has not been approved",
+            "approval metadata is incomplete",
+            "approval does not cover the current story content",
+        ]
+
+
+def test_viral_ten_batch_entries_match_their_stories() -> None:
+    yaml = YAML(typ="safe")
+    entries = yaml.load(Path("batches/viral-ten.yaml").read_text())["videos"]
+    assert len(entries) == 10
+    for entry in entries:
+        story = load_story(Path(str(entry["story"])))
+        assert (story.id, story.name, story.sex) == (entry["id"], entry["name"], entry["sex"])

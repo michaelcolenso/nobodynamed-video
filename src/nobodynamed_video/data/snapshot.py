@@ -1,4 +1,11 @@
-"""Pinned SSA observations for releases; synthetic fixtures are never a release source."""
+"""Pinned SSA observations for releases; synthetic fixtures are never a release source.
+
+Two provenances are accepted. ``source_url`` pins the complete official SSA archive by
+SHA256 and carries a national rank for every reported year. ``source_dataset`` pins the
+nobodynamed ``name-vitals`` D1 dataset, which serves annual counts but no precomputed
+national rank, so a reported year may omit its rank. Counts are gated identically under
+both; only the rank column differs.
+"""
 
 from __future__ import annotations
 
@@ -22,20 +29,35 @@ class Observation(BaseModel):
 
 class Snapshot(BaseModel):
     schema_version: Literal[1] = 1
-    source_url: Literal["https://www.ssa.gov/oact/babynames/names.zip"]
-    archive_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_url: Literal["https://www.ssa.gov/oact/babynames/names.zip"] | None = None
+    source_dataset: Literal["nobodynamed-d1:name-vitals"] | None = None
+    archive_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     retrieved_at: datetime
     name: str
     sex: Literal["M", "F"]
     latest_year: int = Field(ge=1880, le=2100)
     observations: list[Observation]
 
+    @property
+    def from_ssa_archive(self) -> bool:
+        return self.source_url is not None
+
     @model_validator(mode="after")
     def complete_series(self) -> Snapshot:
+        if (self.source_url is None) == (self.source_dataset is None):
+            raise ValueError("snapshot must declare exactly one of source_url or source_dataset")
+        if self.from_ssa_archive:
+            if self.archive_sha256 is None:
+                raise ValueError("an SSA archive snapshot must pin the archive SHA256")
+            if any((p.count is None) != (p.rank is None) for p in self.observations):
+                raise ValueError("reported counts and ranks must both be present or absent")
+        else:
+            if self.archive_sha256 is not None:
+                raise ValueError("a dataset snapshot must not claim an SSA archive SHA256")
+            if any(p.rank is not None and p.count is None for p in self.observations):
+                raise ValueError("an unreported year must not carry a rank")
         if [p.year for p in self.observations] != list(range(1880, self.latest_year + 1)):
             raise ValueError("snapshot must cover every year once, from 1880 to latest_year")
-        if any((p.count is None) != (p.rank is None) for p in self.observations):
-            raise ValueError("reported counts and ranks must both be present or absent")
         if not any(p.count is not None for p in self.observations):
             raise ValueError("snapshot has no reported counts")
         return self
@@ -63,7 +85,14 @@ def verified_snapshot(story: StorySpec) -> Snapshot:
 
 
 class SnapshotSource:
-    """Ranks were computed against ALL national rows, not just the selected names."""
+    """Ranks were computed against ALL national rows, not just the selected names.
+
+    A ``name-vitals`` dataset snapshot carries no ranks, so the rank accessors below
+    report the unranked sentinel, ``None``, and zero. Those values reach ``VideoContext``
+    but never reach rendered copy for an approved story, whose headline, subhead,
+    narrative and support text all come from the StorySpec. Do not build published copy
+    on them without first restoring a ranked source.
+    """
 
     def __init__(self, snapshot: Snapshot) -> None:
         self.snapshot = snapshot

@@ -1,0 +1,61 @@
+id: maverick-2025
+name: Maverick
+sex: M
+story_kind: comeback
+thesis: 'Maverick fell to six boys in 1967 and returned to an all-time peak of 7,049
+  in 2022, the year Top Gun: Maverick opened.'
+headline: From 6 boys to 7,049.
+subhead: 6 in 1967. 7,049 in 2022.
+takeaway: Two screen moments, sixty-five years apart.
+support: A 1957 TV western gave it a smaller first spike.
+script_beats:
+  - kind: hook
+    text: Six boys got this name in 1967.
+  - kind: reveal
+    text: Maverick peaks at 7,049 boys in 2022.
+  - kind: proof
+    text: 'Top Gun: Maverick opened that May. The count has fallen every year since.'
+  - kind: loop
+    text: Watch a name follow the box office.
+evidence:
+  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+    url: https://www.ssa.gov/oact/babynames/limits.html
+    kind: ssa
+    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
+      to the pinned dataset snapshot named in data_snapshot.
+  - label: Britannica, Maverick television series
+    url: https://www.britannica.com/topic/Maverick-American-television-series
+    kind: reporting
+    supports: Dates the ABC western to 1957-62, matching the small 1957-1960 bump
+      that precedes the modern rise.
+  - label: 'Box Office Mojo, Top Gun: Maverick'
+    url: https://www.boxofficemojo.com/title/tt1745960/
+    kind: primary
+    supports: Release and gross record for the May 2022 film, the year of the name's
+      all-time peak.
+visual_anchors:
+  - 1958 western bump
+  - 1967 low
+  - 2022 all-time peak
+social_caption: 'Maverick fell to six boys in 1967 and hit an all-time high of 7,049
+  the year Top Gun: Maverick opened.'
+hashtags:
+  - '#Maverick'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Which movie moved a name the most?
+target_duration_s: 11.5
+voice_instructions: Straight and forward-leaning. The 1967 trough sets up the wall.
+status: draft
+quality_score: 0
+data_snapshot: data/nobodynamed-2025/maverick-m.json
+data_sha256: f58aa284e2db3f6d6bb58c2e60bbe90160bcbae378c57d18aa61b2a5184551c1
+count_claims:
+  - year: 1958
+    count: 88
+  - year: 1967
+    count: 6
+  - year: 2022
+    count: 7049
+  - year: 2025
+    count: 5894
