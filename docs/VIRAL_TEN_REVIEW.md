@@ -28,8 +28,11 @@ Rank never reaches rendered copy for an approved story — every on-screen line 
 the StorySpec — so the missing column does not affect these ten videos. It does mean the
 snapshots are a weaker provenance than the launch six.
 
-**Recommended before rendering:** regenerate through the credentialed path so the ten carry
-full archive identity and ranks, then re-pin. Locally, with `D1_URL` and `D1_TOKEN` set:
+**Required before release.** `stage_release()` now refuses any package whose
+`.source.json` declares dataset provenance, so a connector snapshot can be drafted,
+scored and approved but cannot be published. Regenerate through the credentialed path so
+the ten carry full archive identity and ranks, then re-pin. Locally, with `D1_URL` and
+`D1_TOKEN` set:
 
 ```sh
 uv run python scripts/snapshot_from_d1.py \
@@ -93,6 +96,16 @@ alive with that name. A missing year means fewer than five recorded births, not 
 - Every number in every line was checked against the pinned snapshot, including the
   "lowest since" claims. Britney's 93 in 2019 is described as a fall, not a floor — the
   all-time series minimum is 7 in 1969.
+- No line claims zero births for a year SSA suppressed. Absence from the record means
+  fewer than five recorded births, so Wendy and Khaleesi say "no record" and "no reported
+  count", never "there were none" or "did not exist".
+- **Adolph renders as `long_decline`, not `cultural_rupture`.** The two are not
+  interchangeable here: `cultural_rupture` selects the `cultural_event` program, which
+  resolves `fixtures/cultural_events.yaml` and would have drawn this name's shared
+  marker — "World War II", 1945 — under a headline and narration about 1933. The story's
+  own argument is that this is a long decline that predates the rupture, so the archetype
+  is also the more accurate one. Chad is the only one of the ten that does draw a marker;
+  its anchors now name it ("online slang", 2015) so the reviewer sees what renders.
 
 ## Approval
 
@@ -116,6 +129,8 @@ uv run nbn batch batches/viral-ten.yaml
 > Fame does not save a name. Taylor peaked at 21,270 American girls in 1993. The Eras Tour became the highest-grossing tour ever. In 2025: 772. Watch the curve ignore the pop star.
 
 **On-screen:** This name got famous and died anyway. / 21,270 girls in 1993. 772 in 2025. / Peak fame did not slow the decline. / The lowest count since 1983.
+
+**Anchors:** 1993 peak; 2023-2024 Eras Tour years; 2025 floor
 
 **Caption:** Taylor Swift broke every touring record; the name Taylor fell to its lowest count since 1983. #Taylor #NameData #AIVoice
 
@@ -143,6 +158,8 @@ uv run nbn batch batches/viral-ten.yaml
 
 **On-screen:** Netflix made this name. Then unmade it. / 154 girls in 2023. 37 two years later. / The spike gave everything back within two years. / Down 76 percent from the 2023 peak.
 
+**Anchors:** 1965 first reported year; 2023 all-time high; 2025 collapse
+
 **Caption:** Netflix pushed Wednesday to an all-time high in 2023; two years later it gave back 76 percent. #Wednesday #NameData #AIVoice
 
 **Comment prompt:** Which streaming name fades next?
@@ -168,6 +185,8 @@ uv run nbn batch batches/viral-ten.yaml
 > The internet made this name a punchline. Chad peaked at 13,392 American boys in 1972. By 2024 it was 90 — fewer than any year since 1951. Watch a stereotype finish a slow decline.
 
 **On-screen:** This name became an internet stereotype. / 13,392 boys in 1972. 96 in 2025. / A fifty-year slide, then a meme took the name. / Under 100 births in 2024 — a first since 1951.
+
+**Anchors:** 1972 peak; 2015 event marker, online slang; 2024 record low
 
 **Caption:** Chad slid for fifty years, then the internet turned it into a stereotype. #Chad #NameData #AIVoice
 
@@ -195,6 +214,8 @@ uv run nbn batch batches/viral-ten.yaml
 
 **On-screen:** One child star tripled this name. / 14,320 in 1933. 42,366 in 1935. / Two years up, then ninety years down. / 133 births in 2025.
 
+**Anchors:** 1933 base; 1935 peak; 2025 floor
+
 **Caption:** Shirley Temple nearly tripled her own name in two years; ninety years later it is down to 133. #Shirley #NameHistory #AIVoice
 
 **Comment prompt:** Which star moved a name the most?
@@ -221,6 +242,8 @@ uv run nbn batch batches/viral-ten.yaml
 
 **On-screen:** From 6 boys to 7,049. / 6 in 1967. 7,049 in 2022. / Two screen moments, sixty-five years apart. / A 1957 TV western gave it a smaller first spike.
 
+**Anchors:** 1958 western bump; 1967 low; 2022 all-time peak
+
 **Caption:** Maverick fell to six boys in 1967 and hit an all-time high of 7,049 the year Top Gun: Maverick opened. #Maverick #NameData #AIVoice
 
 **Comment prompt:** Which movie moved a name the most?
@@ -245,7 +268,9 @@ uv run nbn batch batches/viral-ten.yaml
 
 > A TV title became a real name. Khaleesi debuts in 2011 and peaks at 565 in 2018. The show ended in 2019. The next year: 373. Watch a name outlive its own story.
 
-**On-screen:** This name did not exist before 2011. / 565 girls in 2018. 410 in 2025. / The finale cost it a third, not its life. / Down 29 percent the year after the ending.
+**On-screen:** This name has no record before 2011. / 565 girls in 2018. 410 in 2025. / The finale cost it a third, not its life. / Down 29 percent the year after the ending.
+
+**Anchors:** 2011 first reported year; 2018 peak; 2020 post-finale drop
 
 **Caption:** Game of Thrones put Khaleesi in the birth record, then its own finale knocked the name down 29 percent. #Khaleesi #NameData #AIVoice
 
@@ -273,6 +298,8 @@ uv run nbn batch batches/viral-ten.yaml
 
 **On-screen:** This name was nearly gone in 1952. / 5 girls in 1952. 8,977 in 2022. / A seventy-year round trip into the top ten. / Out of the top ten again by 2024.
 
+**Anchors:** 1952 low; 2022 peak; 2024 exit from the top ten
+
 **Caption:** Luna went from five girls in 1952 to the national top ten in 2022, and back out by 2024. #Luna #NameData #AIVoice
 
 **Comment prompt:** Which name cracks the top ten next?
@@ -299,6 +326,8 @@ uv run nbn batch batches/viral-ten.yaml
 
 **On-screen:** This name peaked before she did. / 2,494 in 1989. 2,404 in 2000. / The fame spike never beat the pre-fame peak. / 93 in 2019, the lowest since 1978. 211 in 2023.
 
+**Anchors:** 1989 pre-fame peak; 2000 fame spike; 2019 floor; 2023 rebound
+
 **Caption:** Britney peaked in 1989, a decade before the fame, then fell to its lowest count since 1978 before climbing back. #Britney #NameData #AIVoice
 
 **Comment prompt:** Did the news move this name, or not?
@@ -315,17 +344,19 @@ uv run nbn batch batches/viral-ten.yaml
 
 ## 9. Wendy — A name with a birthday
 
-**Kind:** `long_decline` · **Score:** 100/100 · **Target:** 12.0s · **Narration:** 34 words
+**Kind:** `long_decline` · **Score:** 100/100 · **Target:** 12.0s · **Narration:** 35 words
 
 **Thesis:** Wendy is absent from the record until 1918, fourteen years after Peter Pan opened, then rose to a 11,223 peak in 1967 and fell to 165 by 2025.
 
 **Narration (exact draft):**
 
-> There were no Wendys before 1918. Peter Pan opened in 1904. Wendy enters the record in 1918. It climbs to 11,223 girls in 1967, then falls to 165. Watch a character become a generation.
+> The record has no Wendy before 1918. Peter Pan opened in 1904. Wendy enters the record in 1918. It climbs to 11,223 girls in 1967, then falls to 165. Watch a character become a generation.
 
-**On-screen:** This name has a birthday: 1904. / 11,223 girls in 1967. 165 in 2025. / Sixty-three years to the peak. Fifty-eight to fade. / Nothing in the record before 1918.
+**On-screen:** This name has a birthday: 1904. / 11,223 girls in 1967. 165 in 2025. / Sixty-three years to the peak. Fifty-eight to fade. / No reported count before 1918.
 
-**Caption:** There are no Wendys in the US birth record until 1918, fourteen years after Peter Pan opened. #Wendy #NameHistory #AIVoice
+**Anchors:** 1918 first reported year; 1967 peak; 2025 floor
+
+**Caption:** No Wendy is reported in the US birth record until 1918, fourteen years after Peter Pan opened. #Wendy #NameHistory #AIVoice
 
 **Comment prompt:** What other name came from a book?
 
@@ -341,7 +372,7 @@ uv run nbn batch batches/viral-ten.yaml
 
 ## 10. Adolph — The collapse started sixteen years early
 
-**Kind:** `cultural_rupture` · **Score:** 100/100 · **Target:** 12.0s · **Narration:** 32 words
+**Kind:** `long_decline` · **Score:** 100/100 · **Target:** 12.0s · **Narration:** 32 words
 
 **Thesis:** Adolph peaked at 673 boys in 1917 and had already fallen 67 percent by 1933, the year Hitler took power, and never recovered.
 
@@ -350,6 +381,8 @@ uv run nbn batch batches/viral-ten.yaml
 > This name was already dying before 1933. Adolph peaked at 673 American boys in 1917. By the time Hitler took power it was 222, down sixty-seven percent. Watch the fall start early.
 
 **On-screen:** This name was dying before 1933. / 673 boys in 1917. 222 in 1933. / The collapse started sixteen years before Hitler. / The last reported count is five births, in 2023.
+
+**Anchors:** 1917 peak; 1933 two-thirds down; post-1945 floor
 
 **Caption:** Adolph had already lost two-thirds of its births before Hitler became chancellor in 1933. #Adolph #NameHistory #AIVoice
 

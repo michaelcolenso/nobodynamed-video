@@ -9,10 +9,11 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from nobodynamed_video.batch.runner import run_batch
+from nobodynamed_video.data.ctx import load_cultural_events
 from nobodynamed_video.data.snapshot import Snapshot, SnapshotSource, verified_snapshot
 from nobodynamed_video.editorial.story import approve_story, evaluate_story, load_story
 from nobodynamed_video.exceptions import StoryQualityError
-from nobodynamed_video.models import CountClaim
+from nobodynamed_video.models import CountClaim, StoryKind
 from nobodynamed_video.qc.checks import QCIssue, QCResult, _check_audio_loudness
 from nobodynamed_video.release import stage_release
 from pydantic import ValidationError
@@ -148,8 +149,13 @@ async def test_composed_but_qc_failed_batch_exits_nonzero(tmp_path: Path) -> Non
 
 
 def test_release_stages_only_allowlisted_complete_packages(tmp_path: Path) -> None:
-    for suffix in (".mp4", ".json", ".story.json", ".source.json"):
+    for suffix in (".mp4", ".json", ".story.json"):
         (tmp_path / f"approved{suffix}").write_bytes(b"test-content")
+    # runner.py writes the approved snapshot verbatim into .source.json, and staging
+    # now reads it back to confirm archive provenance, so the fixture must be one.
+    (tmp_path / "approved.source.json").write_bytes(
+        Path("data/ssa-2025/jennifer-f.json").read_bytes()
+    )
     (tmp_path / "stale.mp4").write_bytes(b"not in the batch")
     summary = {
         "total": 1,
@@ -221,3 +227,64 @@ def test_viral_ten_batch_entries_match_their_stories() -> None:
     for entry in entries:
         story = load_story(Path(str(entry["story"])))
         assert (story.id, story.name, story.sex) == (entry["id"], entry["name"], entry["sex"])
+
+
+def test_release_rejects_a_dataset_snapshot_even_when_everything_else_passes(
+    tmp_path: Path,
+) -> None:
+    """Approval may rest on a connector snapshot; publication may not."""
+    ids = ["taylor-2025"]
+    summary = tmp_path / "viral.summary.json"
+    summary.write_text(
+        json.dumps(
+            {
+                "release_ids": ids,
+                "failed": 0,
+                "errors": [],
+                "qc_failed": 0,
+                "total": 1,
+                "succeeded": 1,
+                "results": [{"id": ids[0], "composed": True, "qc": {"passed": True}}],
+            }
+        )
+    )
+    for suffix in (".mp4", ".json", ".story.json"):
+        (tmp_path / f"{ids[0]}{suffix}").write_text("x")
+    (tmp_path / f"{ids[0]}.source.json").write_bytes(
+        Path("data/nobodynamed-2025/taylor-f.json").read_bytes()
+    )
+    with pytest.raises(ValueError, match="requires an archive-pinned snapshot"):
+        stage_release(summary, tmp_path / "staged")
+
+    # The same package backed by an archive snapshot stages normally.
+    (tmp_path / f"{ids[0]}.source.json").write_bytes(
+        Path("data/ssa-2025/jennifer-f.json").read_bytes()
+    )
+    assert stage_release(summary, tmp_path / "staged-ok")
+
+
+def test_viral_ten_event_markers_are_declared_in_the_story_anchors() -> None:
+    """A rendered event marker must not contradict the copy a reviewer approved.
+
+    build_base_context always resolves fixtures/cultural_events.yaml, so a
+    cultural_rupture story inherits any shared marker for its name whether or not the
+    story mentions it. Adolph inherited a 1945 World War II line under a 1933 thesis.
+    """
+    events = load_cultural_events()
+    for path in sorted(VIRAL.glob("*.yaml")):
+        story = load_story(path)
+        event = events.get((story.name.lower(), story.sex))
+        draws_marker = (
+            story.story_kind == StoryKind.CULTURAL_RUPTURE
+            and event is not None
+            and bool(str(event.get("killing_event", "")).strip())
+        )
+        if not draws_marker:
+            continue
+        assert event is not None
+        year = str(event["event_year"])
+        assert any(year in anchor for anchor in story.visual_anchors), (
+            path.name,
+            year,
+            story.visual_anchors,
+        )

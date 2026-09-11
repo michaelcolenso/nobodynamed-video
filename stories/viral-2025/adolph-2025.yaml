@@ -1,7 +1,7 @@
 id: adolph-2025
 name: Adolph
 sex: M
-story_kind: cultural_rupture
+story_kind: long_decline
 thesis: Adolph peaked at 673 boys in 1917 and had already fallen 67 percent by 1933,
   the year Hitler took power, and never recovered.
 headline: This name was dying before 1933.
@@ -35,7 +35,7 @@ evidence:
       in the United States from 1917, the name's peak year.
 visual_anchors:
   - 1917 peak
-  - 1933 event line
+  - 1933 two-thirds down
   - post-1945 floor
 social_caption: Adolph had already lost two-thirds of its births before Hitler became
   chancellor in 1933.

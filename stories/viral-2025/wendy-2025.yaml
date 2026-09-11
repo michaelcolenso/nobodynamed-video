@@ -7,10 +7,10 @@ thesis: Wendy is absent from the record until 1918, fourteen years after Peter P
 headline: 'This name has a birthday: 1904.'
 subhead: 11,223 girls in 1967. 165 in 2025.
 takeaway: Sixty-three years to the peak. Fifty-eight to fade.
-support: Nothing in the record before 1918.
+support: No reported count before 1918.
 script_beats:
   - kind: hook
-    text: There were no Wendys before 1918.
+    text: The record has no Wendy before 1918.
   - kind: reveal
     text: Peter Pan opened in 1904. Wendy enters the record in 1918.
   - kind: proof
@@ -34,10 +34,10 @@ evidence:
     supports: The rights holder's own history of Barrie and Peter Pan, including the
       1904 stage debut and the 1911 novel Peter and Wendy.
 visual_anchors:
-  - 1918 first appearance
+  - 1918 first reported year
   - 1967 peak
   - 2025 floor
-social_caption: There are no Wendys in the US birth record until 1918, fourteen years
+social_caption: No Wendy is reported in the US birth record until 1918, fourteen years
   after Peter Pan opened.
 hashtags:
   - '#Wendy'

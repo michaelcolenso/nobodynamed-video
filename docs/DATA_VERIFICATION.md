@@ -43,3 +43,8 @@ uv run python scripts/snapshot_from_d1.py \
 
 Re-pinning changes each story's `data_sha256`, which invalidates its approval digest by
 design. The gate fails closed until a reviewer approves the re-pinned content.
+
+This is enforced, not merely documented: `stage_release()` reads each package's
+`.source.json` — the approved snapshot copied verbatim by the batch runner — and refuses
+to stage a release whose snapshot declares dataset provenance. A connector snapshot can
+be drafted, scored and approved; it cannot be published.

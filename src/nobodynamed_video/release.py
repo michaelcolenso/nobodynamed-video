@@ -7,6 +7,24 @@ import shutil
 import sys
 from pathlib import Path
 
+from nobodynamed_video.data.snapshot import Snapshot
+
+
+def _require_archive_provenance(spec_id: str, path: Path) -> None:
+    """Release only what an archive-pinned snapshot backs.
+
+    A ``source_dataset`` snapshot is a drafting source: it is read from the
+    nobodynamed connector, which serves no national rank, so it never passes the
+    rank-level anchor comparison that docs/DATA_VERIFICATION.md requires. Scoring and
+    approval accept one; publication does not. Regenerate through
+    scripts/snapshot_from_d1.py with D1 credentials, re-pin, and re-approve.
+    """
+    if not Snapshot.model_validate_json(path.read_bytes()).from_ssa_archive:
+        raise ValueError(
+            f"{spec_id}: release requires an archive-pinned snapshot, "
+            f"but {path.name} declares dataset provenance"
+        )
+
 
 def stage_release(summary_path: Path, destination: Path) -> list[str]:
     summary = json.loads(summary_path.read_text())
@@ -37,6 +55,8 @@ def stage_release(summary_path: Path, destination: Path) -> list[str]:
             path = source / f"{spec_id}{suffix}"
             if not path.is_file() or path.stat().st_size == 0:
                 raise ValueError(f"missing release file: {path.name}")
+            if suffix == ".source.json":
+                _require_archive_provenance(spec_id, path)
             files.append(path)
     if destination.exists() and any(destination.iterdir()):
         raise ValueError("release destination must be empty; stale files are not publishable")
