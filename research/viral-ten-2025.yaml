@@ -4,40 +4,50 @@ candidates:
   - name: Taylor
     sex: F
     story_kind: long_decline
-    thesis: Taylor is a counterexample to the celebrity-name assumption. The girls' name peaked at 21,270 in 1993 and fell every year through the Eras Tour to 772 in 2025, its lowest since 1983. Fame and naming move independently.
+    thesis: Taylor peaked at 21,270 girls in 1993 and fell to 772 in 2025, its lowest
+      since 1983, despite Taylor Swift's record-breaking tour.
   - name: Wednesday
     sex: F
     story_kind: cultural_rupture
-    thesis: Wednesday is the fastest streaming-era round trip in the record. The 2022 Netflix series aligns with an all-time high of 154 in 2023, and the count gives back 76 percent by 2025. Alignment, not proven causation.
+    thesis: Wednesday peaked at an all-time high of 154 girls in 2023 after the Netflix
+      series, then fell 76 percent to 37 in 2025.
   - name: Chad
     sex: M
-    story_kind: cultural_rupture
-    thesis: Chad was already in a fifty-year decline from its 1972 peak of 13,392 when the internet made it a stereotype. The meme years coincide with the final drop under 100 births in 2024, the first since 1951.
+    story_kind: long_decline
+    thesis: Chad peaked at 13,392 boys in 1972, fell below 100 in 2024, and reached
+      96 in 2025; the decline began before internet memes.
   - name: Shirley
     sex: F
     story_kind: one_hit
-    thesis: Shirley is the largest short-window surge in the pre-war record: 14,320 in 1933 to 42,366 in 1935, aligned with Shirley Temple's breakout, then ninety years of decline to 133.
+    thesis: Shirley rose from 14,320 births in 1933 to a 42,366 peak in 1935 during
+      Shirley Temple's breakthrough, then fell to 133 by 2025.
   - name: Maverick
     sex: M
     story_kind: comeback
-    thesis: Maverick carries two screen pulses sixty-five years apart, a 1957-60 western bump and a modern climb to an all-time 7,049 in 2022, the year of Top Gun: Maverick. It has fallen every year since.
+    thesis: 'Maverick fell to six boys in 1967 and returned to an all-time peak of
+      7,049 in 2022, the year Top Gun: Maverick opened.'
   - name: Khaleesi
     sex: F
     story_kind: cultural_rupture
-    thesis: Khaleesi is a title with no record before 2011. It peaked at 565 in 2018, fell 29 percent the year after the 2019 finale, and then held near 410 rather than vanishing.
+    thesis: Khaleesi peaked at 565 girls in 2018, fell from 524 in 2019 to 373 in
+      2020, then reached 410 in 2025.
   - name: Luna
     sex: F
     story_kind: comeback
-    thesis: Luna is a seventy-year round trip: five girls in 1952, an 8,977 peak and a national top-ten place in 2022, and out of the top ten again by 2024.
+    thesis: Luna fell to five girls in 1952, returned to a peak of 8,977 and the national
+      top ten in 2022, then dropped out of the top ten by 2024.
   - name: Britney
     sex: F
     story_kind: comeback
-    thesis: Britney's peak of 2,494 comes in 1989, a decade before the fame; the 1999-2000 surge never beats it. The count falls to 93 in 2019, then rises to 211 by 2023 alongside the conservatorship coverage.
+    thesis: Britney peaked at 2,494 girls in 1989, a decade before the fame, fell
+      to 93 in 2019, and made a comeback to 211 by 2023.
   - name: Wendy
     sex: F
     story_kind: long_decline
-    thesis: Wendy has no entries in the record before 1918, fourteen years after Peter Pan opened. It climbs for half a century to 11,223 in 1967 and falls to 165 by 2025. Origin claims stay descriptive, not etymological.
+    thesis: Wendy is absent from the record until 1918, fourteen years after Peter
+      Pan opened, then rose to a 11,223 peak in 1967 and fell to 165 by 2025.
   - name: Adolph
     sex: M
-    story_kind: cultural_rupture
-    thesis: Adolph contradicts the obvious reading. It peaked at 673 in 1917 and had already lost 67 percent by 1933, the year Hitler took power. The collapse starts sixteen years early; the war ends a decline already underway.
+    story_kind: long_decline
+    thesis: Adolph peaked at 673 boys in 1917 and had already fallen 67 percent by
+      1933, the year Hitler took power, and never recovered.

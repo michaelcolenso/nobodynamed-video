@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from nobodynamed_video.publish_release import NEXT_SIX, publish_release
+from nobodynamed_video.publish_release import RELEASE_BATCHES, publish_release
 from ruamel.yaml import YAML
 
 # Tests chdir into a temporary checkout, so repo fixtures need an absolute path.
@@ -19,7 +19,9 @@ def git(*args: str) -> str:
 
 
 @pytest.fixture
-def publication(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path]:
+def publication(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
+) -> tuple[Path, Path]:
     remote = tmp_path / "remote.git"
     git("init", "--bare", str(remote))
     checkout = tmp_path / "checkout"
@@ -38,22 +40,23 @@ def publication(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, 
     # .source.json is the approved snapshot copied verbatim, and staging reads it back
     # to confirm archive provenance, so these fixtures must be real archive snapshots.
     archive_snapshot = (REPO / "data" / "ssa-2025" / "jennifer-f.json").read_bytes()
-    for name in NEXT_SIX:
+    batch_name = getattr(request, "param", "next-six")
+    ids = RELEASE_BATCHES[batch_name]
+    for name in ids:
         for suffix in (".mp4", ".json", ".story.json"):
             (release / f"{name}{suffix}").write_bytes(b"verified artifact")
         (release / f"{name}.source.json").write_bytes(archive_snapshot)
-    (release / "next-six.summary.json").write_text(
+    (release / f"{batch_name}.summary.json").write_text(
         json.dumps(
             {
-                "total": 6,
-                "succeeded": 6,
+                "total": len(ids),
+                "succeeded": len(ids),
                 "failed": 0,
                 "errors": [],
                 "qc_failed": [],
-                "release_ids": sorted(NEXT_SIX),
+                "release_ids": sorted(ids),
                 "results": [
-                    {"id": name, "composed": True, "qc": {"passed": True}}
-                    for name in sorted(NEXT_SIX)
+                    {"id": name, "composed": True, "qc": {"passed": True}} for name in sorted(ids)
                 ],
             }
         )
@@ -61,12 +64,14 @@ def publication(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, 
     return release, remote
 
 
+@pytest.mark.parametrize("publication", ["launch-six", "next-six", "viral-ten"], indirect=True)
 def test_publish_preserves_existing_files_history_and_is_idempotent(
     publication: tuple[Path, Path],
 ) -> None:
     release, remote = publication
     old = git("--git-dir", str(remote), "rev-parse", "videos")
-    publish_release(release, "test-source")
+    batch_name = next(release.glob("*.summary.json")).name.removesuffix(".summary.json")
+    publish_release(release, "test-source", batch_name)
     new = git("--git-dir", str(remote), "rev-parse", "videos")
     assert new != old
     assert git("--git-dir", str(remote), "rev-parse", "videos^") == old
@@ -76,7 +81,7 @@ def test_publish_preserves_existing_files_history_and_is_idempotent(
         published = git("--git-dir", str(remote), "show", f"videos:{path.name}")
         assert published == path.read_text().strip()
     assert git("branch", "--show-current") == "main"
-    publish_release(release, "test-source")
+    publish_release(release, "test-source", batch_name)
     assert git("--git-dir", str(remote), "rev-parse", "videos") == new
 
 
