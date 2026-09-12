@@ -6,7 +6,7 @@ thesis: Adolph peaked at 673 boys in 1917 and had already fallen 67 percent by 1
   the year Hitler took power, and never recovered.
 headline: This name was dying before 1933.
 subhead: 673 boys in 1917. 222 in 1933.
-takeaway: The collapse started sixteen years before Hitler.
+takeaway: The peak came sixteen years before Hitler took power.
 support: The last reported count is five births, in 2023.
 script_beats:
   - kind: hook
@@ -18,11 +18,12 @@ script_beats:
   - kind: loop
     text: Watch the fall start early.
 evidence:
-  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+  - label: Official SSA national names archive, 2025 release
     url: https://www.ssa.gov/oact/babynames/limits.html
     kind: ssa
-    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
-      to the pinned dataset snapshot named in data_snapshot.
+    supports: Annual US name/sex counts and national ranks, 1880-2025, verified directly
+      against the complete official archive with the pinned SHA256; absent rows mean
+      fewer than five, not zero.
   - label: US Holocaust Memorial Museum, Hitler is appointed chancellor
     url: 
       https://encyclopedia.ushmm.org/content/en/timeline-event/holocaust/1933-1938/hitler-appointed-chancellor
@@ -43,14 +44,14 @@ hashtags:
   - '#Adolph'
   - '#NameHistory'
   - '#AIVoice'
-share_prompt: Did the war kill this name, or just finish it?
+share_prompt: Did you expect the decline to begin in 1917?
 target_duration_s: 12.0
 voice_instructions: Flat, historical, no editorialising. The early start of the fall
   is the fact.
-status: draft
-quality_score: 0
-data_snapshot: data/nobodynamed-2025/adolph-m.json
-data_sha256: 89af433de4df2c5c2a03f6086474abc7008b512c079e0f2d2e0f50844f0c1ac6
+status: approved
+quality_score: 100
+data_snapshot: data/ssa-2025/adolph-m.json
+data_sha256: 0604b1927c8b6a6d31c283346f30f6f2f4b30cc3e478021f1e80a9ac1d1e44be
 count_claims:
   - year: 1917
     count: 673
@@ -58,3 +59,6 @@ count_claims:
     count: 222
   - year: 2023
     count: 5
+approved_by: Michael Colenso (explicit approval via ChatGPT, 2026-09-12)
+approved_at: '2026-09-12T08:54:34.033147Z'
+approved_content_sha256: 9362c033056ccc301231e820ee6632b58df3fcfbc9b9015b82abc445a048b2a0

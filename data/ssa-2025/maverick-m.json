@@ -1,0 +1,741 @@
+{
+  "schema_version": 1,
+  "source_url": "https://www.ssa.gov/oact/babynames/names.zip",
+  "archive_sha256": "cd78e975ed7bb358e018dd62fbe14ced89295e9581c49172ca4eedcb011b3724",
+  "retrieved_at": "2026-09-12T08:49:56.742970+00:00",
+  "name": "Maverick",
+  "sex": "M",
+  "latest_year": 2025,
+  "observations": [
+    {
+      "year": 1880,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1881,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1882,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1883,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1884,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1885,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1886,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1887,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1888,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1889,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1890,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1891,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1892,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1893,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1894,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1895,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1896,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1897,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1898,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1899,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1900,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1901,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1902,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1903,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1904,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1905,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1906,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1907,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1908,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1909,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1910,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1911,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1912,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1913,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1914,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1915,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1916,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1917,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1918,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1919,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1920,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1921,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1922,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1923,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1924,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1925,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1926,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1927,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1928,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1929,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1930,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1931,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1932,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1933,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1934,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1935,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1936,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1937,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1938,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1939,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1940,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1941,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1942,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1943,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1944,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1945,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1946,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1947,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1948,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1949,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1950,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1951,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1952,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1953,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1954,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1955,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1956,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1957,
+      "count": 33,
+      "rank": 1364
+    },
+    {
+      "year": 1958,
+      "count": 88,
+      "rank": 796
+    },
+    {
+      "year": 1959,
+      "count": 61,
+      "rank": 987
+    },
+    {
+      "year": 1960,
+      "count": 46,
+      "rank": 1152
+    },
+    {
+      "year": 1961,
+      "count": 26,
+      "rank": 1570
+    },
+    {
+      "year": 1962,
+      "count": 21,
+      "rank": 1757
+    },
+    {
+      "year": 1963,
+      "count": 14,
+      "rank": 2200
+    },
+    {
+      "year": 1964,
+      "count": 10,
+      "rank": 2665
+    },
+    {
+      "year": 1965,
+      "count": 11,
+      "rank": 2476
+    },
+    {
+      "year": 1966,
+      "count": 10,
+      "rank": 2627
+    },
+    {
+      "year": 1967,
+      "count": 6,
+      "rank": 3559
+    },
+    {
+      "year": 1968,
+      "count": 8,
+      "rank": 3107
+    },
+    {
+      "year": 1969,
+      "count": 8,
+      "rank": 3314
+    },
+    {
+      "year": 1970,
+      "count": 9,
+      "rank": 3282
+    },
+    {
+      "year": 1971,
+      "count": 8,
+      "rank": 3658
+    },
+    {
+      "year": 1972,
+      "count": null,
+      "rank": null
+    },
+    {
+      "year": 1973,
+      "count": 10,
+      "rank": 3223
+    },
+    {
+      "year": 1974,
+      "count": 8,
+      "rank": 3837
+    },
+    {
+      "year": 1975,
+      "count": 9,
+      "rank": 3659
+    },
+    {
+      "year": 1976,
+      "count": 9,
+      "rank": 3724
+    },
+    {
+      "year": 1977,
+      "count": 6,
+      "rank": 5123
+    },
+    {
+      "year": 1978,
+      "count": 11,
+      "rank": 3400
+    },
+    {
+      "year": 1979,
+      "count": 7,
+      "rank": 4842
+    },
+    {
+      "year": 1980,
+      "count": 14,
+      "rank": 3098
+    },
+    {
+      "year": 1981,
+      "count": 11,
+      "rank": 3601
+    },
+    {
+      "year": 1982,
+      "count": 14,
+      "rank": 3108
+    },
+    {
+      "year": 1983,
+      "count": 13,
+      "rank": 3230
+    },
+    {
+      "year": 1984,
+      "count": 6,
+      "rank": 5561
+    },
+    {
+      "year": 1985,
+      "count": 16,
+      "rank": 2942
+    },
+    {
+      "year": 1986,
+      "count": 19,
+      "rank": 2684
+    },
+    {
+      "year": 1987,
+      "count": 44,
+      "rank": 1587
+    },
+    {
+      "year": 1988,
+      "count": 48,
+      "rank": 1525
+    },
+    {
+      "year": 1989,
+      "count": 54,
+      "rank": 1516
+    },
+    {
+      "year": 1990,
+      "count": 75,
+      "rank": 1278
+    },
+    {
+      "year": 1991,
+      "count": 88,
+      "rank": 1183
+    },
+    {
+      "year": 1992,
+      "count": 76,
+      "rank": 1294
+    },
+    {
+      "year": 1993,
+      "count": 101,
+      "rank": 1118
+    },
+    {
+      "year": 1994,
+      "count": 128,
+      "rank": 976
+    },
+    {
+      "year": 1995,
+      "count": 148,
+      "rank": 903
+    },
+    {
+      "year": 1996,
+      "count": 167,
+      "rank": 843
+    },
+    {
+      "year": 1997,
+      "count": 189,
+      "rank": 782
+    },
+    {
+      "year": 1998,
+      "count": 191,
+      "rank": 801
+    },
+    {
+      "year": 1999,
+      "count": 188,
+      "rank": 809
+    },
+    {
+      "year": 2000,
+      "count": 184,
+      "rank": 862
+    },
+    {
+      "year": 2001,
+      "count": 229,
+      "rank": 752
+    },
+    {
+      "year": 2002,
+      "count": 216,
+      "rank": 798
+    },
+    {
+      "year": 2003,
+      "count": 249,
+      "rank": 730
+    },
+    {
+      "year": 2004,
+      "count": 236,
+      "rank": 767
+    },
+    {
+      "year": 2005,
+      "count": 331,
+      "rank": 652
+    },
+    {
+      "year": 2006,
+      "count": 395,
+      "rank": 606
+    },
+    {
+      "year": 2007,
+      "count": 455,
+      "rank": 566
+    },
+    {
+      "year": 2008,
+      "count": 535,
+      "rank": 507
+    },
+    {
+      "year": 2009,
+      "count": 484,
+      "rank": 545
+    },
+    {
+      "year": 2010,
+      "count": 509,
+      "rank": 507
+    },
+    {
+      "year": 2011,
+      "count": 640,
+      "rank": 425
+    },
+    {
+      "year": 2012,
+      "count": 857,
+      "rank": 357
+    },
+    {
+      "year": 2013,
+      "count": 1304,
+      "rank": 270
+    },
+    {
+      "year": 2014,
+      "count": 1879,
+      "rank": 206
+    },
+    {
+      "year": 2015,
+      "count": 2277,
+      "rank": 184
+    },
+    {
+      "year": 2016,
+      "count": 2961,
+      "rank": 139
+    },
+    {
+      "year": 2017,
+      "count": 4731,
+      "rank": 84
+    },
+    {
+      "year": 2018,
+      "count": 5041,
+      "rank": 73
+    },
+    {
+      "year": 2019,
+      "count": 5765,
+      "rank": 58
+    },
+    {
+      "year": 2020,
+      "count": 6139,
+      "rank": 50
+    },
+    {
+      "year": 2021,
+      "count": 6610,
+      "rank": 47
+    },
+    {
+      "year": 2022,
+      "count": 7049,
+      "rank": 40
+    },
+    {
+      "year": 2023,
+      "count": 6990,
+      "rank": 37
+    },
+    {
+      "year": 2024,
+      "count": 6635,
+      "rank": 36
+    },
+    {
+      "year": 2025,
+      "count": 5894,
+      "rank": 49
+    }
+  ]
+}

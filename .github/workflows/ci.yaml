@@ -7,8 +7,14 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
+      batch:
+        description: Approved batch to render and stage
+        required: true
+        default: none
+        type: choice
+        options: [none, launch-six, next-six, viral-ten]
       render_launch:
-        description: Render and stage the verified launch-six batch
+        description: Legacy launch-six shortcut (leave false when selecting a batch)
         required: true
         default: false
         type: boolean
@@ -64,7 +70,7 @@ jobs:
 
   batch:
     name: Render batches
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.render_launch == true
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && (inputs.render_launch == true || (inputs.batch != '' && inputs.batch != 'none'))
     needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -93,20 +99,25 @@ jobs:
       - name: Install Python deps
         run: uv sync
 
-      - name: Verify launch story approvals
+      - name: Select approved batch
+        id: selected
+        env:
+          SELECTED_BATCH: ${{ inputs.batch }}
+          RENDER_LAUNCH: ${{ inputs.render_launch }}
         run: |
-          stories=(
-            stories/launch-2025/alexa-2025.yaml
-            stories/launch-2025/hazel-2025.yaml
-            stories/launch-2025/bertha-2025.yaml
-            stories/launch-2025/kunta-2025.yaml
-            stories/launch-2025/jennifer-2025.yaml
-            stories/launch-2025/eleanor-2025.yaml
-          )
-          for story in "${stories[@]}"; do
-            echo "Checking $story"
-            uv run nbn story score "$story"
-          done
+          selected="$SELECTED_BATCH"
+          if [[ "$RENDER_LAUNCH" == "true" ]]; then
+            if [[ -n "$selected" && "$selected" != "none" && "$selected" != "launch-six" ]]; then
+              echo "::error::Choose a batch or the legacy launch shortcut, not both"
+              exit 1
+            fi
+            selected=launch-six
+          fi
+          case "$selected" in
+            launch-six|next-six|viral-ten) ;;
+            *) echo "::error::Unknown release batch"; exit 1 ;;
+          esac
+          echo "name=$selected" >> "$GITHUB_OUTPUT"
 
       - name: Verify release credentials
         env:
@@ -126,6 +137,13 @@ jobs:
             exit 1
           fi
 
+      - name: Verify approved stories and current D1 data
+        env:
+          BATCH_NAME: ${{ steps.selected.outputs.name }}
+          D1_URL: ${{ secrets.D1_URL }}
+          D1_TOKEN: ${{ secrets.D1_TOKEN }}
+        run: uv run python -m scripts.verify_batch_data "batches/$BATCH_NAME.yaml"
+
       - name: Install satori-service deps
         working-directory: satori-service
         run: pnpm install --frozen-lockfile
@@ -144,16 +162,10 @@ jobs:
           done
           curl -sf http://localhost:3001/health || { echo "satori sidecar failed to start"; exit 1; }
 
-      - name: Render verified launch batch
-        # Each story must have fresh human approval bound to its current content.
-        # Launch stories read their data from checked-in verified SSA snapshots.
-        # D1_URL is also the canonical source for inferring the Cloudflare account
-        # ID, and D1_TOKEN is the configured Workers AI narration token fallback.
-        run: |
-          echo "::group::Rendering batches/launch-six.yaml"
-          uv run nbn batch batches/launch-six.yaml
-          echo "::endgroup::"
+      - name: Render verified batch
+        run: uv run python scripts/render_story_batch.py "batches/$BATCH_NAME.yaml"
         env:
+          BATCH_NAME: ${{ steps.selected.outputs.name }}
           SATORI_URL: "http://localhost:3001"
           D1_URL: ${{ secrets.D1_URL }}
           D1_TOKEN: ${{ secrets.D1_TOKEN }}
@@ -162,27 +174,32 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: rendered-videos-${{ github.sha }}
+          name: rendered-videos-${{ steps.selected.outputs.name }}-${{ github.sha }}
           path: out/
           retention-days: 90
           if-no-files-found: warn
 
       - name: Stage verified release
         if: success()
-        run: uv run python -m nobodynamed_video.release out/launch-six.summary.json out/release
+        env:
+          BATCH_NAME: ${{ steps.selected.outputs.name }}
+        run: uv run python -m nobodynamed_video.release "out/$BATCH_NAME.summary.json" out/release
 
-      - name: Publish videos to 'videos' branch
+      - name: Upload verified release
         if: success()
-        run: |
-          publish_dir="$(mktemp -d)"
-          cp out/release/* "$publish_dir/"
-          cd "$publish_dir"
-          git init
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- *.mp4 *.json
-          git commit -m "Verified videos from ${{ github.sha }}"
-          git -c "http.https://github.com/.extraheader=$(git -C "$GITHUB_WORKSPACE" config --get http.https://github.com/.extraheader)" push -f "https://github.com/${{ github.repository }}.git" HEAD:videos
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.selected.outputs.name }}-release-${{ github.sha }}
+          path: out/release/
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Publish verified release to videos branch
+        if: success()
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+          BATCH_NAME: ${{ steps.selected.outputs.name }}
+        run: uv run python -m nobodynamed_video.publish_release out/release "$RELEASE_SHA" "$BATCH_NAME"
 
       - name: Summary
         if: always()

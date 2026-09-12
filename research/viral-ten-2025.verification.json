@@ -1,0 +1,101 @@
+{
+  "verified_on": "2026-09-12",
+  "method": "direct_official_ssa_archive_extraction",
+  "source_url": "https://www.ssa.gov/oact/babynames/names.zip",
+  "archive_sha256": "cd78e975ed7bb358e018dd62fbe14ced89295e9581c49172ca4eedcb011b3724",
+  "latest_year": 2025,
+  "rank_method": "1 + number of same-sex names with a higher annual count across the full national file",
+  "suppression": "Unreported name/sex/year is null, not zero.",
+  "stories": [
+    {
+      "name": "Taylor",
+      "sex": "F",
+      "snapshot": "data/ssa-2025/taylor-f.json",
+      "sha256": "207f7477d8dc2cf88cc11c58ca186f359eb2f75b2d1f4fcd00b77a788c1b40b1",
+      "annual_counts_compared": 146,
+      "count_differences": 0,
+      "approved_content_sha256": "f84a61affd02a021e473114e19bcb3d6b490e0a3bfa8b58fc050dd4f2a60aeff"
+    },
+    {
+      "name": "Wednesday",
+      "sex": "F",
+      "snapshot": "data/ssa-2025/wednesday-f.json",
+      "sha256": "d368c472106c18606bf6407dc733ee37d994e4859659f2c1e8aca8e6e152d673",
+      "annual_counts_compared": 146,
+      "count_differences": 0,
+      "approved_content_sha256": "e5da2aaf8233c48fad2ae0ee0cbda72d11bfa206c1481eff8e53411e8f3af676"
+    },
+    {
+      "name": "Chad",
+      "sex": "M",
+      "snapshot": "data/ssa-2025/chad-m.json",
+      "sha256": "6ce7e52f6005ddc8458c63648628e0e56c451c4fa123995872f360c7592e5e75",
+      "annual_counts_compared": 146,
+      "count_differences": 0,
+      "approved_content_sha256": "80e8da236f11a3e9b864239ae1915d9751223136af35e2d17429083b7229bdae"
+    },
+    {
+      "name": "Shirley",
+      "sex": "F",
+      "snapshot": "data/ssa-2025/shirley-f.json",
+      "sha256": "2ce1b05309811ad569419c318add10240279610cc70d00e760ddffe8533dfe17",
+      "annual_counts_compared": 146,
+      "count_differences": 0,
+      "approved_content_sha256": "184a997664e058c322103bddba41819757df7e0e5a3e8a4a3b2336ec808299de"
+    },
+    {
+      "name": "Maverick",
+      "sex": "M",
+      "snapshot": "data/ssa-2025/maverick-m.json",
+      "sha256": "b63111b3eedd6e17599628b471a2be5e8f9ffb33bfe44e1699eeb9a98bbcc48c",
+      "annual_counts_compared": 146,
+      "count_differences": 0,
+      "approved_content_sha256": "1fa6db4db94348ea9c884ae975697b89215cdac678aaed574e4c44db5b82e6c3"
+    },
+    {
+      "name": "Khaleesi",
+      "sex": "F",
+      "snapshot": "data/ssa-2025/khaleesi-f.json",
+      "sha256": "64dd5f9820bc068a862bc38c82e8a9ff8a166b2773f900c7f4f1680155f3dcf4",
+      "annual_counts_compared": 146,
+      "count_differences": 0,
+      "approved_content_sha256": "2b7c9817e277a5aaccc2b096ccec7a02141061b0da8c765f1d36a520d76a719e"
+    },
+    {
+      "name": "Luna",
+      "sex": "F",
+      "snapshot": "data/ssa-2025/luna-f.json",
+      "sha256": "ee0343f32a12437bbf95292729969b66d724a7b78bae09c3271f339d5c1c4550",
+      "annual_counts_compared": 146,
+      "count_differences": 0,
+      "approved_content_sha256": "e9697ffe7041a4cfbc2840ee447d0ecba7ea0950610df95edaa14991c7eb97d6"
+    },
+    {
+      "name": "Britney",
+      "sex": "F",
+      "snapshot": "data/ssa-2025/britney-f.json",
+      "sha256": "7e4efe63545b8e8ebaff7f59e0abf31ce2ad58f5ea6eccb10a9239d813b75ed2",
+      "annual_counts_compared": 146,
+      "count_differences": 0,
+      "approved_content_sha256": "c9d78ab371aef22c16f827f971b070d50306c43ae9370c24c5e1d06a44006dfb"
+    },
+    {
+      "name": "Wendy",
+      "sex": "F",
+      "snapshot": "data/ssa-2025/wendy-f.json",
+      "sha256": "d59d0ec4dec2527ef175d7854ea82569beae959abdf6bc793e41fb96b4fe145e",
+      "annual_counts_compared": 146,
+      "count_differences": 0,
+      "approved_content_sha256": "56eb82c27b93b7d78652f2284eae8dd0f5720c21638c100de50a9cdbec2b61e2"
+    },
+    {
+      "name": "Adolph",
+      "sex": "M",
+      "snapshot": "data/ssa-2025/adolph-m.json",
+      "sha256": "0604b1927c8b6a6d31c283346f30f6f2f4b30cc3e478021f1e80a9ac1d1e44be",
+      "annual_counts_compared": 146,
+      "count_differences": 0,
+      "approved_content_sha256": "9362c033056ccc301231e820ee6632b58df3fcfbc9b9015b82abc445a048b2a0"
+    }
+  ]
+}

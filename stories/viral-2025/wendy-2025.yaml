@@ -4,25 +4,26 @@ sex: F
 story_kind: long_decline
 thesis: Wendy is absent from the record until 1918, fourteen years after Peter Pan
   opened, then rose to a 11,223 peak in 1967 and fell to 165 by 2025.
-headline: 'This name has a birthday: 1904.'
+headline: 'This name took 49 years to peak.'
 subhead: 11,223 girls in 1967. 165 in 2025.
-takeaway: Sixty-three years to the peak. Fifty-eight to fade.
-support: No reported count before 1918.
+takeaway: Forty-nine years from first reported count to peak.
+support: 'First SSA count: 1918. Peter Pan debuted: 1904.'
 script_beats:
   - kind: hook
-    text: The record has no Wendy before 1918.
+    text: This name appears late in the record.
   - kind: reveal
-    text: Peter Pan opened in 1904. Wendy enters the record in 1918.
+    text: 'Wendy first appears in 1918: five girls.'
   - kind: proof
-    text: It climbs to 11,223 girls in 1967, then falls to 165.
+    text: 'Peter Pan opened in 1904. By 1967, Wendy reached 11,223. In 2025: 165.'
   - kind: loop
-    text: Watch a character become a generation.
+    text: Watch the rise arrive slowly.
 evidence:
-  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+  - label: Official SSA national names archive, 2025 release
     url: https://www.ssa.gov/oact/babynames/limits.html
     kind: ssa
-    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
-      to the pinned dataset snapshot named in data_snapshot.
+    supports: Annual US name/sex counts and national ranks, 1880-2025, verified directly
+      against the complete official archive with the pinned SHA256; absent rows mean
+      fewer than five, not zero.
   - label: Britannica, Peter Pan
     url: https://www.britannica.com/topic/Peter-Pan-play-by-Barrie
     kind: reporting
@@ -37,8 +38,8 @@ visual_anchors:
   - 1918 first reported year
   - 1967 peak
   - 2025 floor
-social_caption: No Wendy is reported in the US birth record until 1918, fourteen years
-  after Peter Pan opened.
+social_caption: Wendy first appears in SSA data in 1918, fourteen years after Peter
+  Pan opened.
 hashtags:
   - '#Wendy'
   - '#NameHistory'
@@ -47,10 +48,10 @@ share_prompt: What other name came from a book?
 target_duration_s: 12.0
 voice_instructions: Documentary and slightly wondering. The flat pre-1918 run is the
   hook.
-status: draft
-quality_score: 0
-data_snapshot: data/nobodynamed-2025/wendy-f.json
-data_sha256: ebe074e6b760f5bf49e46a25b71e2ced9c3295cc0ef418da1d79b018dcb33b5b
+status: approved
+quality_score: 100
+data_snapshot: data/ssa-2025/wendy-f.json
+data_sha256: d59d0ec4dec2527ef175d7854ea82569beae959abdf6bc793e41fb96b4fe145e
 count_claims:
   - year: 1918
     count: 5
@@ -58,3 +59,6 @@ count_claims:
     count: 11223
   - year: 2025
     count: 165
+approved_by: Michael Colenso (explicit approval via ChatGPT, 2026-09-12)
+approved_at: '2026-09-12T08:54:34.119007Z'
+approved_content_sha256: 56eb82c27b93b7d78652f2284eae8dd0f5720c21638c100de50a9cdbec2b61e2

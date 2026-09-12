@@ -2,15 +2,15 @@ id: shirley-2025
 name: Shirley
 sex: F
 story_kind: one_hit
-thesis: Shirley nearly tripled from 14,320 births in 1933 to a 42,366 peak in 1935
-  behind one child star, then fell for ninety years to 133.
-headline: One child star tripled this name.
+thesis: Shirley rose from 14,320 births in 1933 to a 42,366 peak in 1935 during Shirley
+  Temple's breakthrough, then fell to 133 by 2025.
+headline: This name nearly tripled in two years.
 subhead: 14,320 in 1933. 42,366 in 1935.
 takeaway: Two years up, then ninety years down.
 support: 133 births in 2025.
 script_beats:
   - kind: hook
-    text: A child star rewrote this name.
+    text: This name nearly tripled in two years.
   - kind: reveal
     text: Shirley went from 14,320 girls in 1933 to 42,366 in 1935.
   - kind: proof
@@ -18,11 +18,12 @@ script_beats:
   - kind: loop
     text: Watch two years change everything.
 evidence:
-  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+  - label: Official SSA national names archive, 2025 release
     url: https://www.ssa.gov/oact/babynames/limits.html
     kind: ssa
-    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
-      to the pinned dataset snapshot named in data_snapshot.
+    supports: Annual US name/sex counts and national ranks, 1880-2025, verified directly
+      against the complete official archive with the pinned SHA256; absent rows mean
+      fewer than five, not zero.
   - label: Academy of Motion Picture Arts and Sciences, the 7th Academy Awards
     url: https://www.oscars.org/oscars/ceremonies/1935
     kind: primary
@@ -37,8 +38,8 @@ visual_anchors:
   - 1933 base
   - 1935 peak
   - 2025 floor
-social_caption: Shirley Temple nearly tripled her own name in two years; ninety years
-  later it is down to 133.
+social_caption: Shirley nearly tripled during Shirley Temple's breakthrough, then
+  fell from 42,366 in 1935 to 133 in 2025.
 hashtags:
   - '#Shirley'
   - '#NameHistory'
@@ -46,10 +47,10 @@ hashtags:
 share_prompt: Which star moved a name the most?
 target_duration_s: 12.0
 voice_instructions: Archival and unhurried. Let the 1935 spike land before the decline.
-status: draft
-quality_score: 0
-data_snapshot: data/nobodynamed-2025/shirley-f.json
-data_sha256: bb82034d657a1ac9a3b4a30d671386aa0c5cd27446a276fd1b397c527e0322a6
+status: approved
+quality_score: 100
+data_snapshot: data/ssa-2025/shirley-f.json
+data_sha256: 2ce1b05309811ad569419c318add10240279610cc70d00e760ddffe8533dfe17
 count_claims:
   - year: 1933
     count: 14320
@@ -57,3 +58,6 @@ count_claims:
     count: 42366
   - year: 2025
     count: 133
+approved_by: Michael Colenso (explicit approval via ChatGPT, 2026-09-12)
+approved_at: '2026-09-12T08:54:34.093014Z'
+approved_content_sha256: 184a997664e058c322103bddba41819757df7e0e5a3e8a4a3b2336ec808299de

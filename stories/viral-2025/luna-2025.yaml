@@ -16,13 +16,14 @@ script_beats:
   - kind: proof
     text: By 2024 it was out of the top ten again.
   - kind: loop
-    text: Watch a dead name take the top ten.
+    text: Watch a rare name reach the top ten.
 evidence:
-  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+  - label: Official SSA national names archive, 2025 release
     url: https://www.ssa.gov/oact/babynames/limits.html
     kind: ssa
-    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
-      to the pinned dataset snapshot named in data_snapshot.
+    supports: Annual US name/sex counts and national ranks, 1880-2025, verified directly
+      against the complete official archive with the pinned SHA256; absent rows mean
+      fewer than five, not zero.
   - label: CBS News, the top baby names of 2022
     url: https://www.cbsnews.com/news/top-baby-names-of-2022-have-been-revealed-ssa/
     kind: reporting
@@ -47,10 +48,10 @@ hashtags:
 share_prompt: Which name cracks the top ten next?
 target_duration_s: 12.0
 voice_instructions: Measured. Hold the long flat stretch; the wall does the work.
-status: draft
-quality_score: 0
-data_snapshot: data/nobodynamed-2025/luna-f.json
-data_sha256: a72b5e7499fe4166bade7812a0beaf4dbcd7715adeecfc59dd7125605bbdef95
+status: approved
+quality_score: 100
+data_snapshot: data/ssa-2025/luna-f.json
+data_sha256: ee0343f32a12437bbf95292729969b66d724a7b78bae09c3271f339d5c1c4550
 count_claims:
   - year: 1952
     count: 5
@@ -58,3 +59,6 @@ count_claims:
     count: 8977
   - year: 2025
     count: 6076
+approved_by: Michael Colenso (explicit approval via ChatGPT, 2026-09-12)
+approved_at: '2026-09-12T08:54:34.075670Z'
+approved_content_sha256: e9697ffe7041a4cfbc2840ee447d0ecba7ea0950610df95edaa14991c7eb97d6

@@ -7,7 +7,7 @@ thesis: 'Maverick fell to six boys in 1967 and returned to an all-time peak of 7
 headline: From 6 boys to 7,049.
 subhead: 6 in 1967. 7,049 in 2022.
 takeaway: Two screen moments, sixty-five years apart.
-support: A 1957 TV western gave it a smaller first spike.
+support: An earlier bump coincided with the 1957 TV western.
 script_beats:
   - kind: hook
     text: Six boys got this name in 1967.
@@ -16,13 +16,14 @@ script_beats:
   - kind: proof
     text: 'Top Gun: Maverick opened that May. The count has fallen every year since.'
   - kind: loop
-    text: Watch a name follow the box office.
+    text: Watch two screen-era peaks.
 evidence:
-  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+  - label: Official SSA national names archive, 2025 release
     url: https://www.ssa.gov/oact/babynames/limits.html
     kind: ssa
-    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
-      to the pinned dataset snapshot named in data_snapshot.
+    supports: Annual US name/sex counts and national ranks, 1880-2025, verified directly
+      against the complete official archive with the pinned SHA256; absent rows mean
+      fewer than five, not zero.
   - label: Britannica, Maverick television series
     url: https://www.britannica.com/topic/Maverick-American-television-series
     kind: reporting
@@ -46,10 +47,10 @@ hashtags:
 share_prompt: Which movie moved a name the most?
 target_duration_s: 11.5
 voice_instructions: Straight and forward-leaning. The 1967 trough sets up the wall.
-status: draft
-quality_score: 0
-data_snapshot: data/nobodynamed-2025/maverick-m.json
-data_sha256: f58aa284e2db3f6d6bb58c2e60bbe90160bcbae378c57d18aa61b2a5184551c1
+status: approved
+quality_score: 100
+data_snapshot: data/ssa-2025/maverick-m.json
+data_sha256: b63111b3eedd6e17599628b471a2be5e8f9ffb33bfe44e1699eeb9a98bbcc48c
 count_claims:
   - year: 1958
     count: 88
@@ -59,3 +60,6 @@ count_claims:
     count: 7049
   - year: 2025
     count: 5894
+approved_by: Michael Colenso (explicit approval via ChatGPT, 2026-09-12)
+approved_at: '2026-09-12T08:54:34.084435Z'
+approved_content_sha256: 1fa6db4db94348ea9c884ae975697b89215cdac678aaed574e4c44db5b82e6c3

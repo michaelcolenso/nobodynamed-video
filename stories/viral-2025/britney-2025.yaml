@@ -7,22 +7,23 @@ thesis: Britney peaked at 2,494 girls in 1989, a decade before the fame, fell to
 headline: This name peaked before she did.
 subhead: 2,494 in 1989. 2,404 in 2000.
 takeaway: The fame spike never beat the pre-fame peak.
-support: 93 in 2019, the lowest since 1978. 211 in 2023.
+support: 93 in 2019. 211 in 2023. Back to 134 in 2025.
 script_beats:
   - kind: hook
     text: This name peaked before she was famous.
   - kind: reveal
     text: Britney hit 2,494 girls in 1989, ten years early.
   - kind: proof
-    text: It fell to 93 by 2019, then climbed back to 211.
+    text: After a 2023 rebound to 211, it fell to 134 in 2025.
   - kind: loop
-    text: Watch the second peak fall short.
+    text: Watch the earlier peak.
 evidence:
-  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+  - label: Official SSA national names archive, 2025 release
     url: https://www.ssa.gov/oact/babynames/limits.html
     kind: ssa
-    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
-      to the pinned dataset snapshot named in data_snapshot.
+    supports: Annual US name/sex counts and national ranks, 1880-2025, verified directly
+      against the complete official archive with the pinned SHA256; absent rows mean
+      fewer than five, not zero.
   - label: Billboard chart rewind, ...Baby One More Time
     url: 
       https://www.billboard.com/music/chart-beat/britney-spears-baby-one-more-time-chart-rewind-1999-1235591427/
@@ -38,10 +39,10 @@ evidence:
 visual_anchors:
   - 1989 pre-fame peak
   - 2000 fame spike
-  - 2019 floor
   - 2023 rebound
-social_caption: Britney peaked in 1989, a decade before the fame, then fell to its
-  lowest count since 1978 before climbing back.
+  - 2025 renewed decline
+social_caption: Britney peaked before the fame, rebounded to 211 in 2023, then fell
+  to 134 in 2025.
 hashtags:
   - '#Britney'
   - '#NameData'
@@ -49,10 +50,10 @@ hashtags:
 share_prompt: Did the news move this name, or not?
 target_duration_s: 12.0
 voice_instructions: Curious, not sympathetic. Two peaks; the first one is the surprise.
-status: draft
-quality_score: 0
-data_snapshot: data/nobodynamed-2025/britney-f.json
-data_sha256: 770781f2dcdf7d820d79b14bab389599324bd6177588330759d737485702b9f5
+status: approved
+quality_score: 100
+data_snapshot: data/ssa-2025/britney-f.json
+data_sha256: 7e4efe63545b8e8ebaff7f59e0abf31ce2ad58f5ea6eccb10a9239d813b75ed2
 count_claims:
   - year: 1989
     count: 2494
@@ -62,3 +63,8 @@ count_claims:
     count: 93
   - year: 2023
     count: 211
+  - year: 2025
+    count: 134
+approved_by: Michael Colenso (explicit approval via ChatGPT, 2026-09-12)
+approved_at: '2026-09-12T08:54:34.043624Z'
+approved_content_sha256: c9d78ab371aef22c16f827f971b070d50306c43ae9370c24c5e1d06a44006dfb

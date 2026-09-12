@@ -4,13 +4,13 @@ sex: F
 story_kind: cultural_rupture
 thesis: Wednesday peaked at an all-time high of 154 girls in 2023 after the Netflix
   series, then fell 76 percent to 37 in 2025.
-headline: Netflix made this name. Then unmade it.
+headline: This name's TV-era spike fell 76%.
 subhead: 154 girls in 2023. 37 two years later.
-takeaway: The spike gave everything back within two years.
+takeaway: The count fell below its pre-series level.
 support: Down 76 percent from the 2023 peak.
 script_beats:
   - kind: hook
-    text: Netflix made this name a hit.
+    text: This name spiked after a Netflix premiere.
   - kind: reveal
     text: Wednesday hit an all-time high of 154 girls in 2023.
   - kind: proof
@@ -18,11 +18,12 @@ script_beats:
   - kind: loop
     text: Watch the spike erase itself.
 evidence:
-  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+  - label: Official SSA national names archive, 2025 release
     url: https://www.ssa.gov/oact/babynames/limits.html
     kind: ssa
-    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
-      to the pinned dataset snapshot named in data_snapshot.
+    supports: Annual US name/sex counts and national ranks, 1880-2025, verified directly
+      against the complete official archive with the pinned SHA256; absent rows mean
+      fewer than five, not zero.
   - label: Variety, Wednesday breaks the Netflix weekly viewing record
     url: 
       https://variety.com/2022/tv/news/wednesday-stranger-things-4-record-most-hours-viewed-in-a-week-341-million-1235444385/
@@ -38,8 +39,8 @@ visual_anchors:
   - 1965 first reported year
   - 2023 all-time high
   - 2025 collapse
-social_caption: Netflix pushed Wednesday to an all-time high in 2023; two years later
-  it gave back 76 percent.
+social_caption: Wednesday peaked at 154 in 2023 after the Netflix premiere, then fell
+  76 percent to 37 in 2025.
 hashtags:
   - '#Wednesday'
   - '#NameData'
@@ -47,10 +48,10 @@ hashtags:
 share_prompt: Which streaming name fades next?
 target_duration_s: 11.5
 voice_instructions: Brisk and clinical. The speed of the collapse is the point.
-status: draft
-quality_score: 0
-data_snapshot: data/nobodynamed-2025/wednesday-f.json
-data_sha256: 63a68fb9a8cf3923b20531f6a5aa3b58a126437c1c5168f7f5897cb186a44811
+status: approved
+quality_score: 100
+data_snapshot: data/ssa-2025/wednesday-f.json
+data_sha256: d368c472106c18606bf6407dc733ee37d994e4859659f2c1e8aca8e6e152d673
 count_claims:
   - year: 1965
     count: 15
@@ -58,3 +59,6 @@ count_claims:
     count: 154
   - year: 2025
     count: 37
+approved_by: Michael Colenso (explicit approval via ChatGPT, 2026-09-12)
+approved_at: '2026-09-12T08:54:34.109797Z'
+approved_content_sha256: e5da2aaf8233c48fad2ae0ee0cbda72d11bfa206c1481eff8e53411e8f3af676

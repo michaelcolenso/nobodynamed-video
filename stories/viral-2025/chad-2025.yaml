@@ -1,28 +1,29 @@
 id: chad-2025
 name: Chad
 sex: M
-story_kind: cultural_rupture
-thesis: Chad peaked at 13,392 boys in 1972 and fell to 90 in 2024, its first year
-  under 100 births since 1951, as the internet turned it into a stereotype.
+story_kind: long_decline
+thesis: Chad peaked at 13,392 boys in 1972, fell below 100 in 2024, and reached 96
+  in 2025; the decline began before internet memes.
 headline: This name became an internet stereotype.
 subhead: 13,392 boys in 1972. 96 in 2025.
-takeaway: A fifty-year slide, then a meme took the name.
+takeaway: The decline began decades before the memes.
 support: Under 100 births in 2024 — a first since 1951.
 script_beats:
   - kind: hook
-    text: The internet made this name a punchline.
+    text: This meme name had already been falling.
   - kind: reveal
     text: Chad peaked at 13,392 American boys in 1972.
   - kind: proof
-    text: By 2024 it was 90 — fewer than any year since 1951.
+    text: In 2024, it reached 90. The decline began decades before internet memes.
   - kind: loop
-    text: Watch a stereotype finish a slow decline.
+    text: Watch the long slide.
 evidence:
-  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+  - label: Official SSA national names archive, 2025 release
     url: https://www.ssa.gov/oact/babynames/limits.html
     kind: ssa
-    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
-      to the pinned dataset snapshot named in data_snapshot.
+    supports: Annual US name/sex counts and national ranks, 1880-2025, verified directly
+      against the complete official archive with the pinned SHA256; absent rows mean
+      fewer than five, not zero.
   - label: Merriam-Webster slang dictionary, Chad
     url: https://www.merriam-webster.com/slang/chad
     kind: primary
@@ -35,9 +36,10 @@ evidence:
       attractive, confident man.
 visual_anchors:
   - 1972 peak
-  - 2015 event marker, online slang
-  - 2024 record low
-social_caption: Chad slid for fifty years, then the internet turned it into a stereotype.
+  - 2024 count below 100
+  - 2025 small uptick
+social_caption: Chad peaked in 1972, decades before internet memes, and fell below
+  100 births in 2024.
 hashtags:
   - '#Chad'
   - '#NameData'
@@ -45,10 +47,10 @@ hashtags:
 share_prompt: Would you name a kid Chad today?
 target_duration_s: 11.5
 voice_instructions: Dry and factual. Never perform the meme; report it.
-status: draft
-quality_score: 0
-data_snapshot: data/nobodynamed-2025/chad-m.json
-data_sha256: 662f9e0b9a8063f2ba407510dfed4e13e720186251a62cf3a1d110d4a9f1e162
+status: approved
+quality_score: 100
+data_snapshot: data/ssa-2025/chad-m.json
+data_sha256: 6ce7e52f6005ddc8458c63648628e0e56c451c4fa123995872f360c7592e5e75
 count_claims:
   - year: 1972
     count: 13392
@@ -56,3 +58,6 @@ count_claims:
     count: 90
   - year: 2025
     count: 96
+approved_by: Michael Colenso (explicit approval via ChatGPT, 2026-09-12)
+approved_at: '2026-09-12T08:54:34.057196Z'
+approved_content_sha256: 80e8da236f11a3e9b864239ae1915d9751223136af35e2d17429083b7229bdae

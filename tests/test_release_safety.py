@@ -200,8 +200,8 @@ def test_actual_silent_audio_is_fatal(tmp_path: Path) -> None:
 VIRAL = Path("stories/viral-2025")
 
 
-def test_viral_ten_stories_are_gate_clean_except_for_human_approval() -> None:
-    """The ten viral-ten stories are render-ready the moment a reviewer approves them."""
+def test_viral_ten_stories_have_current_approvals_and_archive_provenance() -> None:
+    """User-approved content remains bound to the reviewed archive and exact copy."""
     paths = sorted(VIRAL.glob("*.yaml"))
     assert len(paths) == 10
     for path in paths:
@@ -211,13 +211,14 @@ def test_viral_ten_stories_are_gate_clean_except_for_human_approval() -> None:
         assert evaluation.score == 100, (path.name, evaluation.components)
         # Every published number is pinned to the snapshot, not to the copy.
         assert story.count_claims
-        verified_snapshot(story)
-        # Unapproved by design: approval is a human act, never a generated field.
-        assert evaluate_story(story).blockers == [
-            "story has not been approved",
-            "approval metadata is incomplete",
-            "approval does not cover the current story content",
-        ]
+        assert verified_snapshot(story).from_ssa_archive
+        assert evaluate_story(story).publishable
+        assert story.approved_by
+        assert story.approved_at is not None
+        edited = story.model_copy(update={"takeaway": story.takeaway + " Edited."})
+        assert (
+            "approval does not cover the current story content" in evaluate_story(edited).blockers
+        )
 
 
 def test_viral_ten_batch_entries_match_their_stories() -> None:

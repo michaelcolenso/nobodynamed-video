@@ -3,8 +3,8 @@ name: Taylor
 sex: F
 story_kind: long_decline
 thesis: Taylor peaked at 21,270 girls in 1993 and fell to 772 in 2025, its lowest
-  count since 1983, through the most lucrative pop career ever recorded.
-headline: This name got famous and died anyway.
+  since 1983, despite Taylor Swift's record-breaking tour.
+headline: This name fell while its star rose.
 subhead: 21,270 girls in 1993. 772 in 2025.
 takeaway: Peak fame did not slow the decline.
 support: The lowest count since 1983.
@@ -18,11 +18,12 @@ script_beats:
   - kind: loop
     text: Watch the curve ignore the pop star.
 evidence:
-  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+  - label: Official SSA national names archive, 2025 release
     url: https://www.ssa.gov/oact/babynames/limits.html
     kind: ssa
-    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
-      to the pinned dataset snapshot named in data_snapshot.
+    supports: Annual US name/sex counts and national ranks, 1880-2025, verified directly
+      against the complete official archive with the pinned SHA256; absent rows mean
+      fewer than five, not zero.
   - label: Billboard, Eras Tour final gross
     url: 
       https://www.billboard.com/music/chart-beat/taylor-swift-eras-tour-earnings-2-billion-sales-1235847513/
@@ -38,7 +39,7 @@ visual_anchors:
   - 1993 peak
   - 2023-2024 Eras Tour years
   - 2025 floor
-social_caption: Taylor Swift broke every touring record; the name Taylor fell to its
+social_caption: Taylor Swift broke touring records while the name Taylor fell to its
   lowest count since 1983.
 hashtags:
   - '#Taylor'
@@ -48,12 +49,15 @@ share_prompt: Can a superstar save a name?
 target_duration_s: 11.5
 voice_instructions: Cold and level. Let the gap between the fame and the count do
   the work; no irony in the delivery.
-status: draft
-quality_score: 0
-data_snapshot: data/nobodynamed-2025/taylor-f.json
-data_sha256: e0e426a8b8fbe3b333550ca8446515e48c44dbfa158c03515e10d1ebd919c3cd
+status: approved
+quality_score: 100
+data_snapshot: data/ssa-2025/taylor-f.json
+data_sha256: 207f7477d8dc2cf88cc11c58ca186f359eb2f75b2d1f4fcd00b77a788c1b40b1
 count_claims:
   - year: 1993
     count: 21270
   - year: 2025
     count: 772
+approved_by: Michael Colenso (explicit approval via ChatGPT, 2026-09-12)
+approved_at: '2026-09-12T08:54:34.101118Z'
+approved_content_sha256: f84a61affd02a021e473114e19bcb3d6b490e0a3bfa8b58fc050dd4f2a60aeff

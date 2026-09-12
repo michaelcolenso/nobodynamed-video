@@ -97,9 +97,10 @@ data snapshot.
 3. Set GitHub Actions repository secrets `D1_URL` and `D1_TOKEN`. `D1_URL` supplies the
    account path used to infer the Workers AI account ID; `D1_TOKEN` supplies the narration
    token fallback already used by the CLI.
-4. In GitHub Actions, manually run the `CI` workflow on `main` with `render_launch` enabled.
-   The render job first verifies all six approvals and the two release secrets before it
-   starts Satori or injects credentials into the render command.
+4. In GitHub Actions, manually run the `CI` workflow on `main` with `batch=launch-six`.
+   The legacy `render_launch` shortcut remains supported. The render job verifies
+   approvals, the two release secrets, and every current D1 count/rank against the
+   approved snapshots before starting Satori or narration.
 5. Inspect the six narrated MP4s and QC reports from the Actions artifact. Check phone-size
    legibility, pronunciation, word alignment, timing and historical interpretation.
 6. A fully successful workflow stages `out/launch-six.summary.json` into a verified release
@@ -130,7 +131,26 @@ uv run python -m nobodynamed_video.publish_release /path/to/downloaded-release S
 ```
 
 The publisher rechecks package completeness and QC summary, rejects unexpected
-files, and commits only the next-six package paths. It is not a substitute for
+files, and commits only the selected batch's package paths. It is not a substitute for
 checking the source run's D1, approval, and artifact-upload results. After a
 concurrent-push rejection, inspect the new branch state before retrying this
 publication command with the same verified artifact.
+
+### Approved ten-story batch
+
+The September 12, 2026 approval covers `batches/viral-ten.yaml`: Taylor, Wednesday,
+Chad, Shirley, Maverick, Khaleesi, Luna, Britney, Wendy, and Adolph. Every approval
+is bound to corrected copy and an archive-pinned source. The verification record is
+`research/viral-ten-2025.verification.json`.
+
+Run **CI → Run workflow → main → batch: viral-ten**, leaving `render_launch` false.
+The default `batch=none` runs checks only. Pushes and pull requests never render.
+CI verifies the selected batch against current D1, uses the bounded-narration
+renderer, stages only a complete QC-passed batch, uploads the verified release,
+and appends its packages to `videos` without force-pushing. Launch and next-six
+are also supported by the same selector; the separate `Render Next Six` action
+remains compatible.
+
+Before uploading any new MP4 to TikTok, inspect its pronunciation, caption timing,
+phone-size legibility, and historical interpretation. Story approval authorizes
+production; a successful render and final video review are separate milestones.
