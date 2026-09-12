@@ -1,0 +1,60 @@
+id: luna-2025
+name: Luna
+sex: F
+story_kind: comeback
+thesis: Luna fell to five girls in 1952, returned to a peak of 8,977 and the national
+  top ten in 2022, then dropped out of the top ten by 2024.
+headline: This name was nearly gone in 1952.
+subhead: 5 girls in 1952. 8,977 in 2022.
+takeaway: A seventy-year round trip into the top ten.
+support: Out of the top ten again by 2024.
+script_beats:
+  - kind: hook
+    text: Five girls got this name in 1952.
+  - kind: reveal
+    text: Luna reaches 8,977 in 2022 and cracks the top ten.
+  - kind: proof
+    text: By 2024 it was out of the top ten again.
+  - kind: loop
+    text: Watch a dead name take the top ten.
+evidence:
+  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+    url: https://www.ssa.gov/oact/babynames/limits.html
+    kind: ssa
+    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
+      to the pinned dataset snapshot named in data_snapshot.
+  - label: CBS News, the top baby names of 2022
+    url: https://www.cbsnews.com/news/top-baby-names-of-2022-have-been-revealed-ssa/
+    kind: reporting
+    supports: Reports Luna entering the national top ten girls' names at number ten
+      in 2022, displacing Harper.
+  - label: CBS News, the top baby names of 2024
+    url: 
+      https://www.cbsnews.com/news/baby-names-popular-social-security-administration-2024/
+    kind: reporting
+    supports: Reports Luna dropping out of the top ten in 2024, replaced at number
+      ten by Sofia.
+visual_anchors:
+  - 1952 low
+  - 2022 peak
+  - 2024 exit from the top ten
+social_caption: Luna went from five girls in 1952 to the national top ten in 2022,
+  and back out by 2024.
+hashtags:
+  - '#Luna'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Which name cracks the top ten next?
+target_duration_s: 12.0
+voice_instructions: Measured. Hold the long flat stretch; the wall does the work.
+status: draft
+quality_score: 0
+data_snapshot: data/nobodynamed-2025/luna-f.json
+data_sha256: a72b5e7499fe4166bade7812a0beaf4dbcd7715adeecfc59dd7125605bbdef95
+count_claims:
+  - year: 1952
+    count: 5
+  - year: 2022
+    count: 8977
+  - year: 2025
+    count: 6076

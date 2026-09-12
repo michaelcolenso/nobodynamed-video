@@ -10,6 +10,9 @@ import pytest
 from nobodynamed_video.publish_release import NEXT_SIX, publish_release
 from ruamel.yaml import YAML
 
+# Tests chdir into a temporary checkout, so repo fixtures need an absolute path.
+REPO = Path(__file__).resolve().parent.parent
+
 
 def git(*args: str) -> str:
     return subprocess.check_output(["git", *args], text=True).strip()
@@ -32,9 +35,13 @@ def publication(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, 
     git("switch", "-c", "main")
     release = tmp_path / "release"
     release.mkdir()
+    # .source.json is the approved snapshot copied verbatim, and staging reads it back
+    # to confirm archive provenance, so these fixtures must be real archive snapshots.
+    archive_snapshot = (REPO / "data" / "ssa-2025" / "jennifer-f.json").read_bytes()
     for name in NEXT_SIX:
-        for suffix in (".mp4", ".json", ".story.json", ".source.json"):
+        for suffix in (".mp4", ".json", ".story.json"):
             (release / f"{name}{suffix}").write_bytes(b"verified artifact")
+        (release / f"{name}.source.json").write_bytes(archive_snapshot)
     (release / "next-six.summary.json").write_text(
         json.dumps(
             {
@@ -65,7 +72,9 @@ def test_publish_preserves_existing_files_history_and_is_idempotent(
     assert git("--git-dir", str(remote), "rev-parse", "videos^") == old
     assert git("--git-dir", str(remote), "show", "videos:earlier.mp4") == "existing release"
     for path in release.iterdir():
-        assert git("--git-dir", str(remote), "show", f"videos:{path.name}") == path.read_text()
+        # git() strips; the snapshot fixtures end in a newline, so strip both sides.
+        published = git("--git-dir", str(remote), "show", f"videos:{path.name}")
+        assert published == path.read_text().strip()
     assert git("branch", "--show-current") == "main"
     publish_release(release, "test-source")
     assert git("--git-dir", str(remote), "rev-parse", "videos") == new

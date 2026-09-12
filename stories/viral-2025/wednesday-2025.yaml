@@ -1,0 +1,60 @@
+id: wednesday-2025
+name: Wednesday
+sex: F
+story_kind: cultural_rupture
+thesis: Wednesday peaked at an all-time high of 154 girls in 2023 after the Netflix
+  series, then fell 76 percent to 37 in 2025.
+headline: Netflix made this name. Then unmade it.
+subhead: 154 girls in 2023. 37 two years later.
+takeaway: The spike gave everything back within two years.
+support: Down 76 percent from the 2023 peak.
+script_beats:
+  - kind: hook
+    text: Netflix made this name a hit.
+  - kind: reveal
+    text: Wednesday hit an all-time high of 154 girls in 2023.
+  - kind: proof
+    text: The series premiered in November 2022. By 2025 the count was 37.
+  - kind: loop
+    text: Watch the spike erase itself.
+evidence:
+  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+    url: https://www.ssa.gov/oact/babynames/limits.html
+    kind: ssa
+    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
+      to the pinned dataset snapshot named in data_snapshot.
+  - label: Variety, Wednesday breaks the Netflix weekly viewing record
+    url: 
+      https://variety.com/2022/tv/news/wednesday-stranger-things-4-record-most-hours-viewed-in-a-week-341-million-1235444385/
+    kind: reporting
+    supports: Dates the premiere to November 23, 2022 and records 341.2 million hours
+      viewed in its first full week, then a Netflix English-language record.
+  - label: Britannica, The Addams Family television series
+    url: https://www.britannica.com/topic/The-Addams-Family-television-series
+    kind: reporting
+    supports: Dates the original Addams Family television series to 1964-66, the year
+      before the name's first appearance in the birth record.
+visual_anchors:
+  - 1965 first reported year
+  - 2023 all-time high
+  - 2025 collapse
+social_caption: Netflix pushed Wednesday to an all-time high in 2023; two years later
+  it gave back 76 percent.
+hashtags:
+  - '#Wednesday'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Which streaming name fades next?
+target_duration_s: 11.5
+voice_instructions: Brisk and clinical. The speed of the collapse is the point.
+status: draft
+quality_score: 0
+data_snapshot: data/nobodynamed-2025/wednesday-f.json
+data_sha256: 63a68fb9a8cf3923b20531f6a5aa3b58a126437c1c5168f7f5897cb186a44811
+count_claims:
+  - year: 1965
+    count: 15
+  - year: 2023
+    count: 154
+  - year: 2025
+    count: 37

@@ -1,0 +1,59 @@
+id: taylor-2025
+name: Taylor
+sex: F
+story_kind: long_decline
+thesis: Taylor peaked at 21,270 girls in 1993 and fell to 772 in 2025, its lowest
+  count since 1983, through the most lucrative pop career ever recorded.
+headline: This name got famous and died anyway.
+subhead: 21,270 girls in 1993. 772 in 2025.
+takeaway: Peak fame did not slow the decline.
+support: The lowest count since 1983.
+script_beats:
+  - kind: hook
+    text: Fame does not save a name.
+  - kind: reveal
+    text: Taylor peaked at 21,270 American girls in 1993.
+  - kind: proof
+    text: 'The Eras Tour became the highest-grossing tour ever. In 2025: 772.'
+  - kind: loop
+    text: Watch the curve ignore the pop star.
+evidence:
+  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+    url: https://www.ssa.gov/oact/babynames/limits.html
+    kind: ssa
+    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
+      to the pinned dataset snapshot named in data_snapshot.
+  - label: Billboard, Eras Tour final gross
+    url: 
+      https://www.billboard.com/music/chart-beat/taylor-swift-eras-tour-earnings-2-billion-sales-1235847513/
+    kind: reporting
+    supports: Reports the Eras Tour closing as the first tour to pass $2 billion in
+      sales, the highest-grossing tour on record.
+  - label: NPR, the Eras Tour wrap-up
+    url: https://www.npr.org/2024/12/09/nx-s1-5222234/taylor-swift-eras-tour-record-sales
+    kind: reporting
+    supports: Documents the 21-month, record-breaking tour concluding in December
+      2024.
+visual_anchors:
+  - 1993 peak
+  - 2023-2024 Eras Tour years
+  - 2025 floor
+social_caption: Taylor Swift broke every touring record; the name Taylor fell to its
+  lowest count since 1983.
+hashtags:
+  - '#Taylor'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Can a superstar save a name?
+target_duration_s: 11.5
+voice_instructions: Cold and level. Let the gap between the fame and the count do
+  the work; no irony in the delivery.
+status: draft
+quality_score: 0
+data_snapshot: data/nobodynamed-2025/taylor-f.json
+data_sha256: e0e426a8b8fbe3b333550ca8446515e48c44dbfa158c03515e10d1ebd919c3cd
+count_claims:
+  - year: 1993
+    count: 21270
+  - year: 2025
+    count: 772

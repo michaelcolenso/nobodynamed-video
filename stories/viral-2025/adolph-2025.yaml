@@ -1,0 +1,60 @@
+id: adolph-2025
+name: Adolph
+sex: M
+story_kind: long_decline
+thesis: Adolph peaked at 673 boys in 1917 and had already fallen 67 percent by 1933,
+  the year Hitler took power, and never recovered.
+headline: This name was dying before 1933.
+subhead: 673 boys in 1917. 222 in 1933.
+takeaway: The collapse started sixteen years before Hitler.
+support: The last reported count is five births, in 2023.
+script_beats:
+  - kind: hook
+    text: This name was already dying before 1933.
+  - kind: reveal
+    text: Adolph peaked at 673 American boys in 1917.
+  - kind: proof
+    text: By the time Hitler took power it was 222, down sixty-seven percent.
+  - kind: loop
+    text: Watch the fall start early.
+evidence:
+  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+    url: https://www.ssa.gov/oact/babynames/limits.html
+    kind: ssa
+    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
+      to the pinned dataset snapshot named in data_snapshot.
+  - label: US Holocaust Memorial Museum, Hitler is appointed chancellor
+    url: 
+      https://encyclopedia.ushmm.org/content/en/timeline-event/holocaust/1933-1938/hitler-appointed-chancellor
+    kind: primary
+    supports: Dates Hitler's appointment as chancellor of Germany to January 30, 1933.
+  - label: Library of Congress, Shadows of War
+    url: https://www.loc.gov/classroom-materials/immigration/german/shadows-of-war/
+    kind: academic
+    supports: Documents the anti-German pressure on German American families and institutions
+      in the United States from 1917, the name's peak year.
+visual_anchors:
+  - 1917 peak
+  - 1933 two-thirds down
+  - post-1945 floor
+social_caption: Adolph had already lost two-thirds of its births before Hitler became
+  chancellor in 1933.
+hashtags:
+  - '#Adolph'
+  - '#NameHistory'
+  - '#AIVoice'
+share_prompt: Did the war kill this name, or just finish it?
+target_duration_s: 12.0
+voice_instructions: Flat, historical, no editorialising. The early start of the fall
+  is the fact.
+status: draft
+quality_score: 0
+data_snapshot: data/nobodynamed-2025/adolph-m.json
+data_sha256: 89af433de4df2c5c2a03f6086474abc7008b512c079e0f2d2e0f50844f0c1ac6
+count_claims:
+  - year: 1917
+    count: 673
+  - year: 1933
+    count: 222
+  - year: 2023
+    count: 5

@@ -5,6 +5,19 @@ This script does not trust D1 by default: it first proves that D1 reproduces the
 checked-in archive-derived launch snapshots, including annual counts, suppression
 gaps, and ranks. Only then may it emit new snapshots carrying the same upstream
 SSA release identity.
+
+    uv run python scripts/snapshot_from_d1.py --out out/candidate-snapshots \
+        --names Taylor:F Chad:M
+
+``--from-connector`` is the weaker fallback for a workstation with no D1 credentials.
+It replays captured nobodynamed connector responses, which serve annual counts but no
+national rank, so it cannot run the rank-level anchor check and must not claim the SSA
+archive identity. The snapshots it writes declare ``source_dataset`` instead, and the
+Snapshot model refuses to let them carry an archive SHA256. Re-run the credentialed
+path above before a release, then ``--repin-stories`` to re-pin the story hashes.
+
+    uv run python scripts/snapshot_from_d1.py --out data/nobodynamed-2025 \
+        --from-connector data/nobodynamed-2025/source --repin-stories stories/viral-2025
 """
 
 from __future__ import annotations
@@ -20,11 +33,13 @@ from typing import Any
 
 from nobodynamed_video.data.d1_source import D1Source
 from nobodynamed_video.data.snapshot import Snapshot
+from nobodynamed_video.editorial.story import load_story, write_story
 
 SOURCE_URL = "https://www.ssa.gov/oact/babynames/names.zip"
 DEFAULT_ARCHIVE_SHA256 = (
     "cd78e975ed7bb358e018dd62fbe14ced89295e9581c49172ca4eedcb011b3724"
 )
+CONNECTOR_DATASET = "nobodynamed-d1:name-vitals"
 DEFAULT_ANCHORS = (
     "alexa-f.json",
     "hazel-f.json",
@@ -147,6 +162,71 @@ async def _verify_anchors(
     return verified
 
 
+def replay_connector(out: Path, source_dir: Path, latest_year: int) -> list[dict[str, Any]]:
+    """Emit rank-free snapshots from captured connector responses.
+
+    The connector serves counts only, so these snapshots carry ``source_dataset`` and
+    are barred by the Snapshot model from claiming the SSA archive SHA256. Counts are
+    still gated exactly as they are for an archive snapshot.
+    """
+    out.mkdir(parents=True, exist_ok=True)
+    retrieved_at = datetime.now(UTC).isoformat()
+    emitted: list[dict[str, Any]] = []
+    for path in sorted(source_dir.glob("*.json")):
+        payload = json.loads(path.read_text())
+        name, sex = str(payload["name"]), str(payload["sex"])
+        series = {int(year): int(count) for year, count in payload["series"].items()}
+        stray = sorted(year for year in series if year > latest_year)
+        if stray:
+            raise ValueError(f"{path}: observations after --year {latest_year}: {stray}")
+        # rank is omitted, not null: the connector has no rank to report.
+        payload = {
+            "schema_version": 1,
+            "source_dataset": CONNECTOR_DATASET,
+            "retrieved_at": retrieved_at,
+            "name": name,
+            "sex": sex,
+            "latest_year": latest_year,
+            "observations": [
+                {"year": year, "count": series.get(year)}
+                for year in range(1880, latest_year + 1)
+            ],
+        }
+        Snapshot.model_validate(payload)
+        target = out / f"{name.lower()}-{sex.lower()}.json"
+        data = json.dumps(payload, indent=2).encode() + b"\n"
+        target.write_bytes(data)
+        emitted.append(
+            {
+                "file": target.name,
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "name": name,
+                "sex": sex,
+            }
+        )
+        print(target)
+    if not emitted:
+        raise ValueError(f"no captured connector responses in {source_dir}")
+    return emitted
+
+
+def repin_stories(story_dir: Path) -> None:
+    """Re-pin each story to the current bytes of the snapshot it already names.
+
+    A changed hash invalidates the story's approval digest by design, so the gate
+    fails closed until a reviewer approves the re-pinned content.
+    """
+    for path in sorted(story_dir.glob("*.yaml")):
+        story = load_story(path)
+        if not story.data_snapshot:
+            continue
+        digest = hashlib.sha256(Path(story.data_snapshot).read_bytes()).hexdigest()
+        if digest == story.data_sha256:
+            continue
+        write_story(story.model_copy(update={"data_sha256": digest}), path)
+        print(f"re-pinned {path} -> {digest}")
+
+
 async def generate(
     out: Path,
     anchor_dir: Path,
@@ -215,14 +295,33 @@ if __name__ == "__main__":
     parser.add_argument("--anchor-dir", type=Path, default=Path("data/ssa-2025"))
     parser.add_argument("--year", type=int, default=2025)
     parser.add_argument("--archive-sha256", default=DEFAULT_ARCHIVE_SHA256)
-    parser.add_argument("--names", nargs="+", required=True)
-    args = parser.parse_args()
-    asyncio.run(
-        generate(
-            out=args.out,
-            anchor_dir=args.anchor_dir,
-            latest_year=args.year,
-            archive_sha256=args.archive_sha256,
-            names=args.names,
-        )
+    parser.add_argument("--names", nargs="+", default=[])
+    parser.add_argument(
+        "--from-connector",
+        type=Path,
+        default=None,
+        help="Replay captured connector responses instead of querying D1 (no ranks)",
     )
+    parser.add_argument(
+        "--repin-stories",
+        type=Path,
+        default=None,
+        help="Re-pin data_sha256 for the stories in this directory after writing snapshots",
+    )
+    args = parser.parse_args()
+    if args.from_connector is not None:
+        replay_connector(args.out, args.from_connector, args.year)
+    elif args.names:
+        asyncio.run(
+            generate(
+                out=args.out,
+                anchor_dir=args.anchor_dir,
+                latest_year=args.year,
+                archive_sha256=args.archive_sha256,
+                names=args.names,
+            )
+        )
+    else:
+        parser.error("pass --names for a verified D1 extract, or --from-connector to replay")
+    if args.repin_stories is not None:
+        repin_stories(args.repin_stories)

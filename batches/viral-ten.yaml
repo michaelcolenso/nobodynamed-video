@@ -1,0 +1,44 @@
+batch: viral-ten
+defaults:
+  fps: 30
+videos:
+- id: taylor-2025
+  name: Taylor
+  sex: F
+  story: stories/viral-2025/taylor-2025.yaml
+- id: wednesday-2025
+  name: Wednesday
+  sex: F
+  story: stories/viral-2025/wednesday-2025.yaml
+- id: chad-2025
+  name: Chad
+  sex: M
+  story: stories/viral-2025/chad-2025.yaml
+- id: shirley-2025
+  name: Shirley
+  sex: F
+  story: stories/viral-2025/shirley-2025.yaml
+- id: maverick-2025
+  name: Maverick
+  sex: M
+  story: stories/viral-2025/maverick-2025.yaml
+- id: khaleesi-2025
+  name: Khaleesi
+  sex: F
+  story: stories/viral-2025/khaleesi-2025.yaml
+- id: luna-2025
+  name: Luna
+  sex: F
+  story: stories/viral-2025/luna-2025.yaml
+- id: britney-2025
+  name: Britney
+  sex: F
+  story: stories/viral-2025/britney-2025.yaml
+- id: wendy-2025
+  name: Wendy
+  sex: F
+  story: stories/viral-2025/wendy-2025.yaml
+- id: adolph-2025
+  name: Adolph
+  sex: M
+  story: stories/viral-2025/adolph-2025.yaml

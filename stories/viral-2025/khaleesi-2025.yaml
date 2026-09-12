@@ -1,0 +1,62 @@
+id: khaleesi-2025
+name: Khaleesi
+sex: F
+story_kind: cultural_rupture
+thesis: Khaleesi first appears in 2011, peaked at 565 girls in 2018, fell 29 percent
+  the year after the finale, and still returned 410 births in 2025.
+headline: This name has no record before 2011.
+subhead: 565 girls in 2018. 410 in 2025.
+takeaway: The finale cost it a third, not its life.
+support: Down 29 percent the year after the ending.
+script_beats:
+  - kind: hook
+    text: A TV title became a real name.
+  - kind: reveal
+    text: Khaleesi debuts in 2011 and peaks at 565 in 2018.
+  - kind: proof
+    text: 'The show ended in 2019. The next year: 373.'
+  - kind: loop
+    text: Watch a name outlive its own story.
+evidence:
+  - label: nobodynamed name-vitals dataset, complete 2025 SSA series
+    url: https://www.ssa.gov/oact/babynames/limits.html
+    kind: ssa
+    supports: Annual national name/sex birth counts, 1880-2025. Exact claims are bound
+      to the pinned dataset snapshot named in data_snapshot.
+  - label: Britannica, Game of Thrones
+    url: https://www.britannica.com/topic/Game-of-Thrones
+    kind: reporting
+    supports: Dates the HBO series run to 2011-2019 and records that its final season
+      was far less well received than the earlier ones.
+  - label: The Hollywood Reporter, final-season backlash
+    url: 
+      https://www.hollywoodreporter.com/tv/tv-news/game-thrones-final-season-backlash-female-characters-daenerys-targaryen-twitter-reactions-1210005/
+    kind: reporting
+    supports: Documents the 2019 audience backlash to the treatment of Daenerys Targaryen,
+      the character who carries the Khaleesi title.
+visual_anchors:
+  - 2011 first reported year
+  - 2018 peak
+  - 2020 post-finale drop
+social_caption: Game of Thrones put Khaleesi in the birth record, then its own finale
+  knocked the name down 29 percent.
+hashtags:
+  - '#Khaleesi'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Would you still use a name from a show?
+target_duration_s: 11.5
+voice_instructions: Even and observational. No fandom warmth, no mockery.
+status: draft
+quality_score: 0
+data_snapshot: data/nobodynamed-2025/khaleesi-f.json
+data_sha256: 2b28a979aa73cae3d89c503c51f4290b8b015e3a2c612292dd8d3a8b78dca464
+count_claims:
+  - year: 2011
+    count: 28
+  - year: 2018
+    count: 565
+  - year: 2020
+    count: 373
+  - year: 2025
+    count: 410
