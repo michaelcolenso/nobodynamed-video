@@ -1,0 +1,41 @@
+id: jacob-2024
+name: Jacob
+sex: M
+story_kind: long_decline
+thesis: Jacob was the #1 boy name in America for 14 consecutive years — the longest reign in modern SSA history. It was the sound of Gen Z boyhood.
+headline: The #1 name for 14 straight years.
+subhead: 36,000 Jacobs born at peak. Now: 7,800.
+takeaway: No name has held #1 longer than Jacob. It defined an entire generation of boys.
+support: 14 years at #1 from 1999 to 2012, then a steady decline.
+script_beats:
+  - kind: hook
+    text: This name was number one for fourteen years.
+  - kind: reveal
+    text: Jacob peaked at 36,000 births in 1998.
+  - kind: proof
+    text: It held the top spot from 1999 to 2012. No name has reigned longer.
+  - kind: loop
+    text: Watch the longest reign in naming history.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Jacob was the #1 male name from 1999 to 2012, peaking at approximately 36,000 births, and declined to approximately 7,800 by 2024.
+visual_anchors:
+  - 1998-2012 #1 streak badge
+  - 36,000 peak marker
+  - post-2012 decline curve
+  - reign-length ruler
+social_caption: Jacob: 14 years at #1. The longest reign in modern American naming history.
+hashtags:
+  - '#Jacob'
+  - '#GenZ'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: How many Jacobs do you know?
+target_duration_s: 12.0
+voice_instructions: Read with documentary authority. Stress fourteen years and thirty-six thousand. The final line should feel like closing a chapter.
+status: approved
+quality_score: 95
+approved_by: gen-z-batch
+approved_at: 2026-09-21T16:30:00Z
