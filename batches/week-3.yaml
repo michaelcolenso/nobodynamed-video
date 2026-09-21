@@ -1,6 +1,6 @@
 batch: week-3
-# Temporary focused animation test batch. Keep only Kunta while tuning the
-# one-hit-spike chart pacing; restore the full week-3 list after validation.
+# Restored production batch. All four approved pilot stories.
+# Add new approved stories below as they pass the 75-point gate.
 defaults:
   fps: 30
 videos:
@@ -9,3 +9,18 @@ videos:
     sex: M
     style: peak-year
     story: stories/kunta-2024.yaml
+  - id: alexa-2024
+    name: Alexa
+    sex: F
+    style: cultural-collapse
+    story: stories/alexa-2024.yaml
+  - id: bertha-2024
+    name: Bertha
+    sex: F
+    style: extinction-watch
+    story: stories/bertha-2024.yaml
+  - id: hazel-2024
+    name: Hazel
+    sex: F
+    style: rising
+    story: stories/hazel-2024.yaml
