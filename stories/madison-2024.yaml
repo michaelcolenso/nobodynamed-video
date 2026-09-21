@@ -1,0 +1,41 @@
+id: madison-2024
+name: Madison
+sex: F
+story_kind: long_decline
+thesis: Madison was the defining girl name of the Gen Z generation. It peaked in the early 2000s and has fallen 85% since.
+headline: This name was everywhere in 2001.
+subhead: 22,000 girls named Madison. Now: 3,200.
+takeaway: Madison defined a generation. That generation is now naming their own children something else.
+support: A steep rise in the 1990s, a sharp peak, and a sustained fall.
+script_beats:
+  - kind: hook
+    text: In 2001, this name was everywhere.
+  - kind: reveal
+    text: Madison peaked at 22,000 births.
+  - kind: proof
+    text: By 2024, only 3,200 girls were named Madison.
+  - kind: loop
+    text: Watch the name that defined a generation fade.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Madison peaked at approximately 22,000 female births in 2001 and declined to approximately 3,200 by 2024.
+visual_anchors:
+  - 2001 peak badge
+  - steep 1990s rise curve
+  - 2024 low point
+  - generational fade loop
+social_caption: Madison was the sound of the early 2000s. Now it's heading toward extinction.
+hashtags:
+  - '#Madison'
+  - '#GenZ'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Do you know a Madison born after 2010?
+target_duration_s: 11.0
+voice_instructions: Read with quiet documentary weight. Let 22,000 and 3,200 land as hard facts. The final line should feel like an observation, not a judgment.
+status: approved
+quality_score: 90
+approved_by: gen-z-batch
+approved_at: 2026-09-21T16:30:00Z
