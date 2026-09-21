@@ -1,0 +1,37 @@
+batch: gen-z
+# Gen Z names batch: names that peaked during the Gen Z era (1997-2012)
+# and are now in decline as Gen Alpha names take over.
+# All stories pre-approved for pipeline rendering.
+defaults:
+  fps: 30
+videos:
+  - id: madison-2024
+    name: Madison
+    sex: F
+    style: extinction-watch
+    story: stories/madison-2024.yaml
+  - id: jacob-2024
+    name: Jacob
+    sex: M
+    style: peak-year
+    story: stories/jacob-2024.yaml
+  - id: emily-2024
+    name: Emily
+    sex: F
+    style: peak-year
+    story: stories/emily-2024.yaml
+  - id: ethan-2024
+    name: Ethan
+    sex: M
+    style: peak-year
+    story: stories/ethan-2024.yaml
+  - id: hannah-2024
+    name: Hannah
+    sex: F
+    style: extinction-watch
+    story: stories/hannah-2024.yaml
+  - id: destiny-2024
+    name: Destiny
+    sex: F
+    style: extinction-watch
+    story: stories/destiny-2024.yaml
