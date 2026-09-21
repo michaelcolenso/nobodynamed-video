@@ -1,0 +1,41 @@
+id: emily-2024
+name: Emily
+sex: F
+story_kind: long_decline
+thesis: Emily was the most popular girl name in America for 12 years. It was the defining sound of 2000s girlhood.
+headline: The most popular girl name of the 2000s.
+subhead: 26,000 Emilys born at peak. Now: 7,500.
+takeaway: Emily held #1 for twelve years. It was inescapable — and now it's in retreat.
+support: #1 from 1996 to 2007, a sustained peak, then a 70% decline.
+script_beats:
+  - kind: hook
+    text: This was the most popular girl name for over a decade.
+  - kind: reveal
+    text: Emily peaked at 26,000 births.
+  - kind: proof
+    text: It was number one from 1996 to 2007. Then the curve turned down.
+  - kind: loop
+    text: Watch the name that ruled the 2000s retreat.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Emily was the #1 female name from 1996 to 2007, peaking at approximately 26,000 births, and declined to approximately 7,500 by 2024.
+visual_anchors:
+  - 1996-2007 #1 streak badge
+  - 26,000 peak marker
+  - post-2007 decline curve
+  - decade ruler
+social_caption: Emily: #1 for 12 years. The sound of 2000s girlhood, now in retreat.
+hashtags:
+  - '#Emily'
+  - '#GenZ'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: How many Emilys are in your life?
+target_duration_s: 11.5
+voice_instructions: Read with warm documentary clarity. Let twelve years and twenty-six thousand feel like the scale of an era. The final line should feel like watching a tide go out.
+status: approved
+quality_score: 92
+approved_by: gen-z-batch
+approved_at: 2026-09-21T16:30:00Z
