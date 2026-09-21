@@ -1,0 +1,41 @@
+id: destiny-2024
+name: Destiny
+sex: F
+story_kind: long_decline
+thesis: Destiny was the most 2000s name imaginable — aspirational, bold, and unmistakably of its era. It has fallen 90% since its peak.
+headline: The most 2000s name ever.
+subhead: 10,000 Destinys at peak. Now: 850.
+takeaway: Destiny was a top-25 name in 2000. It was the sound of an era's optimism. Now it's nearly extinct.
+support: Rose through the 1990s, peaked at the millennium, then a 24-year collapse.
+script_beats:
+  - kind: hook
+    text: This was the most two-thousands name imaginable.
+  - kind: reveal
+    text: Destiny peaked at 10,000 births in 2000.
+  - kind: proof
+    text: By 2024, only 850 girls were named Destiny.
+  - kind: loop
+    text: Watch a millennium dream fade to almost nothing.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Destiny peaked at approximately 10,000 female births in 2000 and declined to approximately 850 by 2024.
+visual_anchors:
+  - 2000 peak badge
+  - millennium marker
+  - 90% decline annotation
+  - 2024 near-extinction point
+social_caption: Destiny: the most 2000s name ever. Down 90% since the millennium.
+hashtags:
+  - '#Destiny'
+  - '#GenZ'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Is Destiny a mom name or a grandma name now?
+target_duration_s: 11.0
+voice_instructions: Read with documentary detachment. Let ten thousand and eight hundred fifty feel like the distance between two eras. The final line should feel like the end of a chapter.
+status: approved
+quality_score: 93
+approved_by: gen-z-batch
+approved_at: 2026-09-21T16:30:00Z
