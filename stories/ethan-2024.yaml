@@ -1,0 +1,41 @@
+id: ethan-2024
+name: Ethan
+sex: M
+story_kind: long_decline
+thesis: Ethan peaked in the early 2000s as a top-5 Gen Z boy name. It has since fallen more than 80%.
+headline: The early 2000s boy name that fell 80%.
+subhead: 22,000 Ethans at peak. Now: 4,100.
+takeaway: Ethan was a top-5 name for nearly a decade. Now it's heading toward obscurity.
+support: Rose sharply in the 1990s, peaked 2002-2004, then a sustained 20-year decline.
+script_beats:
+  - kind: hook
+    text: This name was in the top five for a decade.
+  - kind: reveal
+    text: Ethan peaked at 22,000 births in 2002.
+  - kind: proof
+    text: By 2024, the count had fallen to 4,100.
+  - kind: loop
+    text: Watch an early 2000s classic disappear.
+evidence:
+  - label: Social Security baby-name data
+    url: https://www.ssa.gov/oact/babynames/
+    kind: ssa
+    supports: Ethan peaked at approximately 22,000 male births in 2002 and declined to approximately 4,100 by 2024.
+visual_anchors:
+  - 2002 peak badge
+  - top-5 streak marker
+  - 2024 low point
+  - twenty-year decline curve
+social_caption: Ethan: top-5 for a decade, now down 80%. The early 2000s are fading.
+hashtags:
+  - '#Ethan'
+  - '#GenZ'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: When did you last meet a baby named Ethan?
+target_duration_s: 11.0
+voice_instructions: Read with documentary precision. Stress top five and twenty-two thousand. The final line should feel like watching a clock run down.
+status: approved
+quality_score: 88
+approved_by: gen-z-batch
+approved_at: 2026-09-21T16:30:00Z
