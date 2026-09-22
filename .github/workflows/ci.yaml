@@ -12,7 +12,7 @@ on:
         required: true
         default: none
         type: choice
-        options: [none, launch-six, next-six, viral-ten]
+        options: [none, launch-six, next-six, viral-ten, gen-z]
       render_launch:
         description: Legacy launch-six shortcut (leave false when selecting a batch)
         required: true
@@ -114,7 +114,7 @@ jobs:
             selected=launch-six
           fi
           case "$selected" in
-            launch-six|next-six|viral-ten) ;;
+            launch-six|next-six|viral-ten|gen-z) ;;
             *) echo "::error::Unknown release batch"; exit 1 ;;
           esac
           echo "name=$selected" >> "$GITHUB_OUTPUT"
