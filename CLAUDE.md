@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Dev deps are already in `[dependency-groups] dev` in `pyproject.toml`. The "tool.uv.dev-dependencies" warning follow-up is done.
 - CI's `batch` job does not glob `batches/week-*.yaml`. It runs only on `workflow_dispatch` on `main`, with a batch picked from a fixed list (`launch-six`, `next-six`, `viral-ten`, `gen-z`). It runs `scripts/render_story_batch.py batches/<name>.yaml`, then `python -m nobodynamed_video.release` stages the output and `python -m nobodynamed_video.publish_release` pushes it to the `videos` branch. To make a new batch renderable in CI, add it to the `options` list in `.github/workflows/ci.yaml`.
 - CI's `check` job also runs `pnpm test && pnpm build` in `satori-service/`, so sidecar TS changes must pass both.
-- Only `fixtures/golden/bertha-2024/{hook_f00.sha256,manifest.json}` are tracked. Golden checks are write-if-missing, so fresh CI runners always pass them.
+- Only `fixtures/golden/bertha-2024/{hook_f00.sha256,manifest.json}` are tracked (`render/golden.py`). A missing hash is written on first render, but the committed Bertha hook hash still fails on mismatch on a clean checkout. Treat a mismatch as a real regression unless the visual change was intentional, and in that case delete the hash and re-render.
 - HANDOFF.md §7–8 (`/home/kimi`, the tsinghua mirror, fuse FS) describe a different sandbox. Ignore them here.
 
 ## Running tests
@@ -34,7 +34,7 @@ Archetypes / visual modes: `one_hit`, `cultural_rupture`, `long_decline`, `comeb
 - The Satori frame cache key (`render/satori_client.py`, `out/.cache`) includes a digest of the sidecar template source. Template edits invalidate cached frames automatically, and you don't need to clear the cache by hand.
 - Chart pacing is time-domain (see HANDOFF §4 and `docs/ANIMATION_TIMING.md`). Don't reintroduce per-segment-index pacing. Read that doc before touching `programs.py`/`hyperframes.py`/`smoothPathD`.
 - `nbn preview` layout differs from batch render layout. Use preview only for motion/chart QA, not for layout QA.
-- Every narrated video must show the `AI NARRATION` disclosure and include `#AIVoice` in its caption. QC checks both.
+- Every narrated video must show the `AI NARRATION` disclosure (`render/programs.py`) and include `#AIVoice` in its caption. Neither is verified on the output: the editorial gate checks `#AIVoice` on the StorySpec, and QC only checks the manifest's `ai_voice_disclosure` string, never a rendered frame. If you touch templates, programs or captions, confirm both by inspecting a smoke render.
 
 ## Configuration
 `.env` (see `.env.example`): `SATORI_URL`, `D1_URL`, `D1_TOKEN`, `LATEST_YEAR`, and optional Workers AI overrides. The Cloudflare account ID is inferred from `D1_URL`, and narration uses `D1_TOKEN` unless `CLOUDFLARE_API_TOKEN` is set. `NARRATION_ENABLED` / `--no-narration` skips the AI calls. Without D1 credentials, `fixtures/ssa.sqlite` backs the SQLite source. Some stories, such as Kunta, need D1.
