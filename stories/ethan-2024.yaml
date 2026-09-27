@@ -4,9 +4,9 @@ sex: M
 story_kind: long_decline
 thesis: Ethan peaked in the early 2000s as a top-5 Gen Z boy name. It has since fallen more than 80%.
 headline: The early 2000s boy name that fell 80%.
-subhead: 22,000 Ethans at peak. Now: 4,100.
+subhead: "22,000 Ethans at peak. Now: 4,100."
 takeaway: Ethan was a top-5 name for nearly a decade. Now it's heading toward obscurity.
-support: Rose sharply in the 1990s, peaked 2002-2004, then a sustained 20-year decline.
+support: Rose sharply in the 1990s, peaked 2002-2004, then a 20-year decline.
 script_beats:
   - kind: hook
     text: This name was in the top five for a decade.
@@ -26,7 +26,7 @@ visual_anchors:
   - top-5 streak marker
   - 2024 low point
   - twenty-year decline curve
-social_caption: Ethan: top-5 for a decade, now down 80%. The early 2000s are fading.
+social_caption: "Ethan: top-5 for a decade, now down 80%. The early 2000s are fading."
 hashtags:
   - '#Ethan'
   - '#GenZ'

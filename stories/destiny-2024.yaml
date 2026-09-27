@@ -4,9 +4,9 @@ sex: F
 story_kind: long_decline
 thesis: Destiny was the most 2000s name imaginable — aspirational, bold, and unmistakably of its era. It has fallen 90% since its peak.
 headline: The most 2000s name ever.
-subhead: 10,000 Destinys at peak. Now: 850.
-takeaway: Destiny was a top-25 name in 2000. It was the sound of an era's optimism. Now it's nearly extinct.
-support: Rose through the 1990s, peaked at the millennium, then a 24-year collapse.
+subhead: "10,000 Destinys at peak. Now: 850."
+takeaway: A top-25 name in 2000, the sound of an era's optimism. Now nearly extinct.
+support: Rose through the 1990s, peaked at the millennium, then a 24-year fall.
 script_beats:
   - kind: hook
     text: This was the most two-thousands name imaginable.
@@ -26,7 +26,7 @@ visual_anchors:
   - millennium marker
   - 90% decline annotation
   - 2024 near-extinction point
-social_caption: Destiny: the most 2000s name ever. Down 90% since the millennium.
+social_caption: "Destiny: the most 2000s name ever. Down 90% since the millennium."
 hashtags:
   - '#Destiny'
   - '#GenZ'
