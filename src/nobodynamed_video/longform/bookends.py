@@ -50,15 +50,20 @@ def bookend_duration(bookend: LongFormBookend, narration_s: float | None, fps: i
     return round(duration * fps) / fps
 
 
+def _latest(count: int | None) -> str:
+    return "<5" if count is None else f"{count:,}"
+
+
 def roster_rows(roster: Sequence[RosterEntry]) -> list[dict[str, Any]]:
     return [
         {
             "name": entry.name,
             "detail": (
                 f"{entry.peak_count:,} in {entry.peak_year} → "
-                f"{entry.latest_count:,} in {entry.latest_year}"
+                f"{_latest(entry.latest_count)} in {entry.latest_year}"
             ),
-            "value": f"−{entry.decline_pct}%",
+            # A suppressed year is only known to be under five, so no percentage.
+            "value": "<5" if entry.decline_pct is None else f"−{entry.decline_pct}%",
         }
         for entry in roster
     ]

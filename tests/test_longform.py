@@ -17,6 +17,7 @@ from nobodynamed_video.longform.bookends import (
     MAX_BOOKEND_S,
     MIN_BOOKEND_S,
     bookend_duration,
+    roster_rows,
     sample_bookend_frame,
 )
 from nobodynamed_video.longform.render import ChapterNarrator
@@ -387,3 +388,18 @@ def test_title_card_holds_at_most_four_totals() -> None:
     claims = [{"year": 2000 + i, "total": 1000} for i in range(5)]
     with pytest.raises(ValidationError):
         LongFormSpec.model_validate({**_episode().model_dump(), "aggregate_claims": claims})
+
+
+def test_a_title_card_uses_one_detail_layout() -> None:
+    with pytest.raises(ValidationError, match="roster or the totals"):
+        _episode().intro.model_copy(update={"show_totals": True}).model_validate(
+            {**_episode().intro.model_dump(), "show_totals": True}
+        )
+
+
+def test_suppressed_latest_count_renders_as_under_five() -> None:
+    entry = RosterEntry("Bertha", 1918, 5051, 2025, None)
+    row = roster_rows([entry])[0]
+    assert entry.decline_pct is None
+    assert row["detail"] == "5,051 in 1918 → <5 in 2025"
+    assert row["value"] == "<5"

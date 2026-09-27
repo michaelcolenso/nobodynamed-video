@@ -129,10 +129,13 @@ class RosterEntry:
     peak_year: int
     peak_count: int
     latest_year: int
-    latest_count: int
+    # None when SSA suppressed the latest year (<5 births); never a zero-fill.
+    latest_count: int | None
 
     @property
-    def decline_pct(self) -> int:
+    def decline_pct(self) -> int | None:
+        if self.latest_count is None:
+            return None
         return round(100 * (1 - self.latest_count / self.peak_count))
 
 
@@ -179,7 +182,7 @@ def roster_entry(story: StorySpec, snapshot: Snapshot) -> RosterEntry:
         peak_year=peak.year,
         peak_count=int(peak.count or 0),
         latest_year=snapshot.latest_year,
-        latest_count=int(latest.count or 0),
+        latest_count=latest.count,
     )
 
 

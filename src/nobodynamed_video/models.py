@@ -3,9 +3,9 @@
 import re
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Self
 
-from pydantic import BaseModel, Field, PositiveInt, field_validator
+from pydantic import BaseModel, Field, PositiveInt, field_validator, model_validator
 
 
 class Tier(str, Enum):
@@ -231,6 +231,13 @@ class LongFormBookend(BaseModel):
     show_roster: bool = False
     # Draws the episode's aggregate_claims as proportional bars.
     show_totals: bool = False
+
+    @model_validator(mode="after")
+    def _one_detail_layout(self) -> Self:
+        # Both layouts occupy the same band of the title card.
+        if self.show_roster and self.show_totals:
+            raise ValueError("a title card shows either the roster or the totals, not both")
+        return self
 
     @property
     def word_count(self) -> int:
