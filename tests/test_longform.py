@@ -29,6 +29,7 @@ from nobodynamed_video.longform.spec import (
     longform_digest,
     roster_entry,
     stated_figures,
+    stated_year_figures,
     write_longform,
 )
 from nobodynamed_video.models import AggregateClaim, LongFormSpec, StorySpec
@@ -289,8 +290,29 @@ def test_undeclared_figures_in_title_card_copy_are_rejected() -> None:
         spec.model_copy(update={"outro": outro, "aggregate_claims": []}),
         require_approval=False,
     ).blockers
-    assert "outro states 999,999, which matches no declared aggregate claim" in blockers
+    assert "outro headline states 999,999 for 2025, which has no claim" in blockers
     assert stated_figures("over 113,000 in 2000, top-25, 1998") == [113000]
+
+
+def test_each_stated_figure_must_match_its_own_year() -> None:
+    spec = _episode()
+    swapped = spec.outro.model_copy(update={"headline": "20,979 babies in 2000. 113,356 in 2025."})
+    blockers = evaluate_longform(
+        spec.model_copy(update={"outro": swapped}), require_approval=False
+    ).blockers
+    assert "outro headline states 20,979 for 2000; the declared total is 113,356" in blockers
+    assert stated_year_figures("From 113,356 in 2000 to 20,979 in 2025.") == [
+        (2000, 113356),
+        (2025, 20979),
+    ]
+    assert stated_year_figures("113,356 and 20,979 in 2000.") == [(None, 113356), (None, 20979)]
+
+
+def test_social_caption_figures_are_verified() -> None:
+    spec = _episode()
+    bad = spec.model_copy(update={"social_caption": "These five had 999,999 births in 2025."})
+    blockers = evaluate_longform(bad, require_approval=False).blockers
+    assert "social caption states 999,999 for 2025; the declared total is 20,979" in blockers
 
 
 @pytest.mark.parametrize(

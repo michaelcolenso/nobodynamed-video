@@ -32,18 +32,43 @@ CORE_TAGS = {"#namedata", "#ssadata", "#namehistory"}
 # A figure stated in title-card copy must sit within this share of a declared,
 # snapshot-verified total ("over 113,000" for 113,356 is 0.3%).
 FIGURE_TOLERANCE = 0.01
-_FIGURE = re.compile(r"(?<![\w,])(\d{1,3}(?:,\d{3})+|\d{4,})(?![\w,])")
+_BOOKEND_FIELDS = ("kicker", "headline", "subhead", "script")
+# A trailing comma is punctuation ("In 2000, ...") unless a digit follows it.
+_FIGURE = re.compile(r"(?<![\w,])(\d{1,3}(?:,\d{3})+|\d{4,})(?!\w|,\d)")
+
+
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
 
 def stated_figures(text: str) -> list[int]:
     """Numerals of 1,000+ in copy, excluding bare four-digit years (1880-2100)."""
-    figures = []
-    for token in _FIGURE.findall(text):
-        value = int(token.replace(",", ""))
-        if "," not in token and 1880 <= value <= 2100:
+    return [figure for _, figure in stated_year_figures(text)]
+
+
+def stated_year_figures(text: str) -> list[tuple[int | None, int]]:
+    """Pair each stated figure with the year it is stated for.
+
+    Within a sentence, figures and years pair in reading order when their counts
+    match ("from 113,356 in 2000 to 20,979 in 2025"); otherwise the figure is
+    unbound (``None``) and the gate rejects it rather than guess.
+    """
+    pairs: list[tuple[int | None, int]] = []
+    for sentence in _SENTENCE_END.split(text):
+        years: list[int] = []
+        figures: list[int] = []
+        for token in _FIGURE.findall(sentence):
+            value = int(token.replace(",", ""))
+            if "," not in token and 1880 <= value <= 2100:
+                years.append(value)
+            else:
+                figures.append(value)
+        if not figures:
             continue
-        figures.append(value)
-    return figures
+        if len(years) == len(figures):
+            pairs.extend(zip(years, figures, strict=True))
+        else:
+            pairs.extend((None, figure) for figure in figures)
+    return pairs
 
 
 @dataclass(frozen=True)
@@ -170,13 +195,23 @@ def evaluate_longform(spec: LongFormSpec, *, require_approval: bool = True) -> L
                     f"snapshots total {actual:,}"
                 )
 
-    declared = [claim.total for claim in spec.aggregate_claims]
-    for label, bookend in (("intro", spec.intro), ("outro", spec.outro)):
-        copy = " ".join((bookend.kicker, bookend.headline, bookend.subhead, bookend.script))
-        for figure in stated_figures(copy):
-            if not any(abs(figure - total) <= FIGURE_TOLERANCE * total for total in declared):
+    declared = {claim.year: claim.total for claim in spec.aggregate_claims}
+    published = [
+        *((f"intro {field}", getattr(spec.intro, field)) for field in _BOOKEND_FIELDS),
+        *((f"outro {field}", getattr(spec.outro, field)) for field in _BOOKEND_FIELDS),
+        ("social caption", spec.social_caption),
+        ("pinned comment", spec.share_prompt),
+    ]
+    for label, copy in published:
+        for year, figure in stated_year_figures(copy):
+            if year is None:
+                blockers.append(f"{label} states {figure:,} without one year to bind it to")
+            elif year not in declared:
+                blockers.append(f"{label} states {figure:,} for {year}, which has no claim")
+            elif abs(figure - declared[year]) > FIGURE_TOLERANCE * declared[year]:
                 blockers.append(
-                    f"{label} states {figure:,}, which matches no declared aggregate claim"
+                    f"{label} states {figure:,} for {year}; "
+                    f"the declared total is {declared[year]:,}"
                 )
 
     tags = {tag.lower() for tag in spec.hashtags}
