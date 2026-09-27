@@ -83,7 +83,13 @@ def _check_dimensions(frames_dir: Path) -> list[QCIssue]:
     return []
 
 
-def _check_mp4(mp4_path: Path, expected_frames: int, expected_duration_s: float) -> list[QCIssue]:
+def _check_mp4(
+    mp4_path: Path,
+    expected_frames: int,
+    expected_duration_s: float,
+    min_duration_s: float = _MIN_DURATION_S,
+    max_duration_s: float = _MAX_DURATION_S,
+) -> list[QCIssue]:
     if not mp4_path.exists():
         return [QCIssue("error", "MP4_INVALID", "MP4 file not found")]
     try:
@@ -131,11 +137,11 @@ def _check_mp4(mp4_path: Path, expected_frames: int, expected_duration_s: float)
     fmt = data.get("format", {})
     fmt_duration = fmt.get("duration") if isinstance(fmt, dict) else None
     duration = float(str(fmt_duration if fmt_duration is not None else video.get("duration", 0)))
-    if duration < _MIN_DURATION_S - _STREAM_DURATION_TOLERANCE_S:
-        msg = f"duration {duration:.2f}s < {_MIN_DURATION_S}s"
+    if duration < min_duration_s - _STREAM_DURATION_TOLERANCE_S:
+        msg = f"duration {duration:.2f}s < {min_duration_s}s"
         issues.append(QCIssue("error", "MP4_INVALID", msg))
-    if duration > _MAX_DURATION_S + _STREAM_DURATION_TOLERANCE_S:
-        msg = f"duration {duration:.2f}s > {_MAX_DURATION_S}s"
+    if duration > max_duration_s + _STREAM_DURATION_TOLERANCE_S:
+        msg = f"duration {duration:.2f}s > {max_duration_s}s"
         issues.append(QCIssue("error", "MP4_INVALID", msg))
 
     # Video stream duration — the encode must carry every planned frame out
@@ -215,7 +221,7 @@ def _check_cover_frame(frames_dir: Path) -> list[QCIssue]:
     return []
 
 
-def _check_black_frames(mp4_path: Path) -> list[QCIssue]:
+def _check_black_frames(mp4_path: Path, timeout_s: float = 30) -> list[QCIssue]:
     if not mp4_path.exists():
         return []
     try:
@@ -235,7 +241,7 @@ def _check_black_frames(mp4_path: Path) -> list[QCIssue]:
             ],
             capture_output=True,
             text=True,
-            timeout=30,
+            timeout=timeout_s,
         )
         data = json.loads(proc.stdout) if proc.stdout.strip() else {}
     except Exception as exc:
@@ -254,7 +260,7 @@ def _check_black_frames(mp4_path: Path) -> list[QCIssue]:
     return []
 
 
-def _check_audio_loudness(mp4_path: Path) -> list[QCIssue]:
+def _check_audio_loudness(mp4_path: Path, timeout_s: float = 45) -> list[QCIssue]:
     """Measure the encoded narration master rather than trusting filter intent."""
     try:
         proc = subprocess.run(
@@ -264,6 +270,7 @@ def _check_audio_loudness(mp4_path: Path) -> list[QCIssue]:
                 "-nostats",
                 "-i",
                 str(mp4_path),
+                "-vn",
                 "-af",
                 "loudnorm=I=-14:LRA=7:TP=-1:print_format=json",
                 "-f",
@@ -272,7 +279,7 @@ def _check_audio_loudness(mp4_path: Path) -> list[QCIssue]:
             ],
             capture_output=True,
             text=True,
-            timeout=45,
+            timeout=timeout_s,
         )
         matches = re.findall(r"\{\s*\"input_i\".*?\}", proc.stderr, flags=re.DOTALL)
         if not matches:
@@ -379,3 +386,26 @@ def run_all_checks(result: dict[str, object], out_dir: Path) -> QCResult:
         if (frames_dir / name).exists()
     ]
     return QCResult(spec_id=spec_id, passed=passed, issues=issues, keyframe_paths=keyframe_paths)
+
+
+def run_longform_checks(
+    episode_id: str,
+    mp4_path: Path,
+    cover_frames_dir: Path,
+    expected_frames: int,
+    expected_duration_s: float,
+    narrated: bool,
+    min_duration_s: float,
+    max_duration_s: float,
+) -> QCResult:
+    """Check an assembled long-form master; each chapter already passed run_all_checks."""
+    issues = _check_cover_frame(cover_frames_dir)
+    issues += _check_mp4(
+        mp4_path, expected_frames, expected_duration_s, min_duration_s, max_duration_s
+    )
+    # An episode is 5-8x a short, so allow the full-decode probes time to finish.
+    issues += _check_black_frames(mp4_path, timeout_s=240)
+    if narrated:
+        issues += _check_audio_loudness(mp4_path, timeout_s=120)
+    passed = not any(i.severity == "error" for i in issues)
+    return QCResult(spec_id=episode_id, passed=passed, issues=issues)

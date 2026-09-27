@@ -76,7 +76,7 @@ app.post("/render", async (req: Request, res: Response) => {
     return;
   }
 
-  const validTemplates: TemplateName[] = ["hook", "reveal", "narrative", "cta", "canvas"];
+  const validTemplates: TemplateName[] = ["hook", "reveal", "narrative", "cta", "canvas", "title"];
   if (!validTemplates.includes(template)) {
     res.status(400).json({
       error: `Unknown template '${template}'. Must be one of: ${validTemplates.join(", ")}.`,

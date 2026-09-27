@@ -1,0 +1,32 @@
+id: gen-z-five-2025
+title: Five names that defined Gen Z
+chapters:
+  - stories/jacob-2024.yaml
+  - stories/emily-2024.yaml
+  - stories/hannah-2024.yaml
+  - stories/madison-2024.yaml
+  - stories/destiny-2024.yaml
+intro:
+  kicker: SSA birth records · 1880–2025
+  headline: "The names that defined Gen\u00a0Z are disappearing."
+  subhead: All five were top-25 names in 2000. Here is where each one stands in 2025.
+  script: Five names defined Gen Z. In 2000, all five were top twenty-five. Here is where they stand now.
+  show_roster: true
+outro:
+  kicker: Five names · 2000 vs 2025
+  headline: 113,356 babies in 2000. 20,979 in 2025.
+  subhead: Combined SSA birth counts for Jacob, Emily, Hannah, Madison and Destiny.
+  script: In 2000, these five names went to over 113,000 babies. In 2025, about 21,000. Which one was yours?
+  show_totals: true
+aggregate_claims:
+  - year: 2000
+    total: 113356
+  - year: 2025
+    total: 20979
+social_caption: Five names defined Gen Z. Together they fell from 113,356 births in 2000 to 20,979 in 2025.
+hashtags:
+  - '#GenZ'
+  - '#NameData'
+  - '#AIVoice'
+share_prompt: Which of these five names was in your class?
+status: draft

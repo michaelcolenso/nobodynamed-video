@@ -215,6 +215,51 @@ class VideoSpec(BaseModel):
     story: StorySpec | None = None
     duration_s: float = Field(default=11.0, ge=9.0, le=14.0)
     word_timings: list[WordTiming] = Field(default_factory=list)
+    # Set when the video renders as one chapter of a long-form episode: the
+    # header shows this label and the short-form loop bridge is suppressed.
+    chapter_label: str | None = Field(default=None, max_length=40)
+
+
+class LongFormBookend(BaseModel):
+    """Narrated title card that opens or closes a long-form episode."""
+
+    kicker: str = Field(min_length=4, max_length=40)
+    headline: str = Field(min_length=4, max_length=70)
+    subhead: str = Field(min_length=4, max_length=90)
+    script: str = Field(min_length=8, max_length=240)
+    show_roster: bool = False
+    # Draws the episode's aggregate_claims as proportional bars.
+    show_totals: bool = False
+
+    @property
+    def word_count(self) -> int:
+        return len(self.script.split())
+
+
+class AggregateClaim(BaseModel):
+    """A combined birth count across every chapter name, checked against snapshots."""
+
+    year: int = Field(ge=1880, le=2100)
+    total: int = Field(ge=0)
+
+
+class LongFormSpec(BaseModel):
+    """A reviewed 60-90 second episode assembled from approved chapter stories."""
+
+    id: str = Field(pattern=r"^[a-z0-9-]+$")
+    title: str = Field(min_length=4, max_length=80)
+    chapters: list[str] = Field(min_length=3, max_length=8)
+    intro: LongFormBookend
+    outro: LongFormBookend
+    aggregate_claims: list[AggregateClaim] = Field(default_factory=list)
+    social_caption: str = Field(min_length=8, max_length=130)
+    hashtags: list[str] = Field(min_length=2, max_length=4)
+    share_prompt: str = Field(min_length=8, max_length=100)
+    voice: str | None = Field(default=None, min_length=2, max_length=80)
+    status: StoryStatus = StoryStatus.DRAFT
+    approved_by: str | None = None
+    approved_at: datetime | None = None
+    approved_content_sha256: str | None = None
 
 
 class RenderManifest(BaseModel):

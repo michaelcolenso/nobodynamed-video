@@ -261,6 +261,90 @@ def story_approve(
     console.print(f"[green]Approved:[/green] {path} ({approved.quality_score}/100)")
 
 
+longform_app = typer.Typer(
+    name="longform", help="Check, approve, and render 60-90 second long-form episodes."
+)
+app.add_typer(longform_app)
+
+
+@longform_app.command("check")
+def longform_check(path: Path = typer.Argument(..., help="Long-form episode YAML")) -> None:
+    """Run the episode gate (chapters, bookends, aggregate claims, approval)."""
+    from nobodynamed_video.longform.spec import evaluate_longform, load_longform
+
+    evaluation = evaluate_longform(load_longform(path))
+    for blocker in evaluation.blockers:
+        console.print(f"[red]✗[/red] {blocker}")
+    if not evaluation.publishable:
+        raise typer.Exit(1)
+    console.print(f"[green]Publishable:[/green] {path} ({len(evaluation.chapters)} chapters)")
+
+
+@longform_app.command("approve")
+def longform_approve(
+    path: Path = typer.Argument(..., help="Long-form episode YAML"),
+    reviewer: str = typer.Option(..., help="Human reviewer name or handle"),
+) -> None:
+    """Record approval of the episode copy and the exact chapter stories it cites."""
+    from nobodynamed_video.longform.spec import approve_longform, load_longform, write_longform
+
+    try:
+        approved = approve_longform(load_longform(path), reviewer)
+    except StoryQualityError as exc:
+        console.print(f"[red]Approval rejected:[/red] {exc}")
+        raise typer.Exit(1) from exc
+    write_longform(approved, path)
+    console.print(f"[green]Approved:[/green] {path}")
+
+
+@longform_app.command("render")
+def longform_render(
+    path: Path = typer.Argument(..., help="Long-form episode YAML"),
+    preview: bool = typer.Option(False, help="Allow a draft episode; output is never released"),
+    no_narration: bool = typer.Option(False, help="Skip AI narration (implies --preview)"),
+) -> None:
+    """Render the title cards and chapters, then assemble one 60-90 second master."""
+    from nobodynamed_video.compose.narration_pacing import (
+        FitDurationCloudflareNarrationProvider,
+    )
+    from nobodynamed_video.longform.render import render_longform
+
+    settings = get_settings()
+    narrate = settings.narration_enabled and not no_narration
+    # Chapters use the same bounded pace fit as the batch renderer, so each one
+    # matches its published short.
+    narrator = (
+        FitDurationCloudflareNarrationProvider(
+            account_id=settings.workers_ai_account_id(),
+            api_token=settings.cloudflare_api_token or settings.d1_token,
+            cache_dir=settings.out_dir / ".cache" / "narration",
+            base_url=settings.cloudflare_ai_base_url,
+            model=settings.narration_model,
+            transcription_model=settings.transcription_model,
+            default_voice=settings.narration_voice,
+        )
+        if narrate
+        else None
+    )
+    try:
+        manifest = asyncio.run(
+            render_longform(
+                path,
+                settings.satori_url,
+                settings.out_dir,
+                preview=preview or not narrate,
+                narrator=narrator,
+            )
+        )
+    except StoryQualityError as exc:
+        console.print(f"[red]Episode rejected:[/red] {exc}")
+        raise typer.Exit(1) from exc
+    console.print(
+        f"[green]Episode:[/green] {manifest['output_path']} "
+        f"({manifest['duration_s']}s, {manifest['frame_count']} frames)"
+    )
+
+
 @captions_app.command("stats")
 def captions_stats() -> None:
     """Print used vs available combination counts."""

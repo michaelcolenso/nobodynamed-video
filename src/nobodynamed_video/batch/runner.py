@@ -22,6 +22,8 @@ from nobodynamed_video.compose.ffmpeg import build_ffmpeg_cmd, get_ffmpeg_versio
 from nobodynamed_video.compose.lexicon import Lexicon
 from nobodynamed_video.compose.manifest import build_manifest, write_manifest
 from nobodynamed_video.compose.narration import (
+    CHAPTER_HOLD_S,
+    LOOP_BEAT_S,
     CloudflareNarrationProvider,
     NarrationArtifact,
     NarrationProvider,
@@ -88,7 +90,8 @@ async def render_spec(
     runtime_spec = spec
     if spec.story and narration_provider and not no_compose:
         narration = await narration_provider.generate(spec.story)
-        duration_s = adaptive_duration(spec.story, narration.duration_s)
+        tail_s = CHAPTER_HOLD_S if spec.chapter_label else LOOP_BEAT_S
+        duration_s = adaptive_duration(spec.story, narration.duration_s, tail_s)
         duration_s = round(duration_s * spec.fps) / spec.fps
         runtime_spec = spec.model_copy(
             update={"duration_s": duration_s, "word_timings": narration.word_timings}
