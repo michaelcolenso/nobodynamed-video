@@ -180,7 +180,47 @@ async def render_longform(
     preview: bool = False,
     narrator: EpisodeNarrator | None = None,
 ) -> dict[str, Any]:
-    """Render and assemble one episode; ``preview`` permits a draft but never releases."""
+    """Render and assemble one episode; ``preview`` permits a draft but never releases.
+
+    Caption rule: every released video carries a hashtag set no other video used. A
+    release render claims its set atomically up front, so two concurrent renders cannot
+    both take it, and gives the claim back if the episode does not end up releasable.
+    """
+    spec = load_longform(spec_path)
+    state = CombinationState(_STATE_DB)
+    # Case-folded to match the lowercase caption lexicon's recorded combinations.
+    tags = sorted(tag.lstrip("#").lower() for tag in spec.hashtags)
+    combo = combo_hash(tags)
+    claimed = False
+    if not preview:
+        # Gate first, so an unapproved episode never holds a combination.
+        evaluation = evaluate_longform(spec)
+        if not evaluation.publishable:
+            raise StoryQualityError("; ".join(evaluation.blockers))
+        if not state.claim(combo, tags, spec.id):
+            raise StoryQualityError(f"{spec.id}: hashtag combination already used by another video")
+        claimed = True
+    try:
+        manifest = await _render_episode(
+            spec_path, satori_url, out_dir, preview=preview, narrator=narrator
+        )
+    except BaseException:
+        if claimed:
+            state.release(combo, spec.id)
+        raise
+    if claimed and not manifest["releasable"]:
+        state.release(combo, spec.id)
+    return manifest
+
+
+async def _render_episode(
+    spec_path: Path,
+    satori_url: str,
+    out_dir: Path,
+    *,
+    preview: bool,
+    narrator: EpisodeNarrator | None,
+) -> dict[str, Any]:
     spec = load_longform(spec_path)
     evaluation = evaluate_longform(spec, require_approval=not preview)
     if not evaluation.publishable:
@@ -201,12 +241,6 @@ async def render_longform(
 
     lexicon = Lexicon.from_yaml(_CAPTIONS_YAML)
     state = CombinationState(_STATE_DB)
-    # Caption rule: every released video carries a hashtag set no other video used.
-    # Case-folded to match the lowercase caption lexicon's recorded combinations.
-    episode_tags = sorted(tag.lstrip("#").lower() for tag in spec.hashtags)
-    episode_combo = combo_hash(episode_tags)
-    if not preview and state.is_used(episode_combo):
-        raise StoryQualityError(f"{spec.id}: hashtag combination already used by another video")
     segments: list[dict[str, Any]] = []
     async with SatoriClient(satori_url) as client:
         cache_dir = out_dir / ".cache"
@@ -351,8 +385,6 @@ async def render_longform(
         },
     }
     (out_dir / f"{spec.id}.json").write_text(json.dumps(manifest, indent=2) + "\n")
-    if manifest["releasable"]:
-        state.record(episode_combo, episode_tags, spec.id)
     if not qc.passed:
         errors = [f"{i.code}: {i.message}" for i in qc.issues if i.severity == "error"]
         raise StoryQualityError(f"{spec.id} failed episode QC: {'; '.join(errors)}")

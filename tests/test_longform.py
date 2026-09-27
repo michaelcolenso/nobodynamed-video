@@ -30,6 +30,7 @@ from nobodynamed_video.longform.spec import (
     longform_digest,
     roster_entry,
     stated_figures,
+    stated_name_counts,
     stated_rank_claims,
     stated_year_figures,
     write_longform,
@@ -419,3 +420,22 @@ def test_unverifiable_numeric_notation_is_rejected(caption: str, token: str) -> 
     assert any(
         b.startswith("social caption uses numeric notation") and token in b for b in blockers
     )
+
+
+def test_name_count_phrases_must_match_the_chapter_count() -> None:
+    spec = _episode()
+    four = spec.model_copy(update={"chapters": spec.chapters[:4], "aggregate_claims": []})
+    blockers = evaluate_longform(four, require_approval=False).blockers
+    assert "title speaks of 5 names; the episode has 4 chapters" in blockers
+    assert "intro script speaks of 5 names; the episode has 4 chapters" in blockers
+    assert stated_name_counts("Which one was yours? All five were top-25.") == [5]
+
+
+def test_combination_claim_is_atomic_and_releasable(tmp_path: Path) -> None:
+    state = CombinationState(tmp_path / "combos.db")
+    assert state.claim("abc", ["genz"], "episode-a")
+    assert not state.claim("abc", ["genz"], "episode-b")
+    state.release("abc", "episode-b")
+    assert state.is_used("abc")
+    state.release("abc", "episode-a")
+    assert not state.is_used("abc")

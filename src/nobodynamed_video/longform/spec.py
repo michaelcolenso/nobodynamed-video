@@ -82,6 +82,25 @@ def unsupported_numerals(text: str) -> list[str]:
     return leftovers + percent
 
 
+_NAME_COUNT = re.compile(
+    r"\b(?:all|these|those)\s+(\d+|[a-z]+(?:-[a-z]+)?)\b|\b(\d+|[a-z]+(?:-[a-z]+)?)\s+names\b",
+    re.IGNORECASE,
+)
+
+
+def stated_name_counts(text: str) -> list[int]:
+    """Return name counts stated in copy: 'five names', 'all five', 'these five'.
+
+    Rank phrases are removed first, so 'top-25 names' is a rank, not 25 names.
+    """
+    counts = []
+    for match in _NAME_COUNT.finditer(_TOP.sub(" ", text)):
+        value = _small_number(match.group(1) or match.group(2))
+        if value:
+            counts.append(value)
+    return counts
+
+
 def stated_rank_claims(text: str) -> list[tuple[int | None, int]]:
     """'top-25 ... in 2000' / 'top twenty-five in 2000' as (year, top) pairs.
 
@@ -283,6 +302,12 @@ def evaluate_longform(spec: LongFormSpec, *, require_approval: bool = True) -> L
                 )
     declared_ranks = {(rc.year, rc.top) for rc in spec.rank_claims}
     for label, copy in published:
+        for count in stated_name_counts(copy):
+            if count != len(spec.chapters):
+                blockers.append(
+                    f"{label} speaks of {count} names; "
+                    f"the episode has {len(spec.chapters)} chapters"
+                )
         if unparsed := unsupported_numerals(copy):
             blockers.append(
                 f"{label} uses numeric notation the gate cannot verify ({', '.join(unparsed)}); "

@@ -67,6 +67,37 @@ class CombinationState:
         finally:
             conn.close()
 
+    def claim(self, combo_hash: str, tags: list[str], spec_id: str) -> bool:
+        """Atomically reserve an unused combo; False if any video already holds it."""
+        now = datetime.now(tz=UTC).isoformat()
+        conn = self._connect()
+        try:
+            cursor = conn.execute(
+                """
+                INSERT OR IGNORE INTO used_combinations
+                    (combo_hash, tags_json, first_used_at, first_used_spec)
+                VALUES (?, ?, ?, ?)
+                """,
+                (combo_hash, json.dumps(sorted(tags)), now, spec_id),
+            )
+            conn.commit()
+            return cursor.rowcount == 1
+        finally:
+            conn.close()
+
+    def release(self, combo_hash: str, spec_id: str) -> None:
+        """Drop a claim this spec made that never shipped (it was never reused)."""
+        conn = self._connect()
+        try:
+            conn.execute(
+                "DELETE FROM used_combinations"
+                " WHERE combo_hash = ? AND first_used_spec = ? AND use_count = 1",
+                (combo_hash, spec_id),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
     def tag_uses_this_week(self, tag: str) -> int:
         """Count combos recorded in the last 7 days that include *tag*."""
         cutoff = (datetime.now(tz=UTC) - timedelta(days=7)).isoformat()
