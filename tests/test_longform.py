@@ -368,3 +368,22 @@ def test_chapters_must_carry_archive_pinned_snapshots(monkeypatch: pytest.Monkey
     monkeypatch.setattr(spec_module, "verified_snapshot", dataset_only)
     blockers = evaluate_longform(_episode(), require_approval=False).blockers
     assert "every chapter snapshot must be pinned to the SSA archive" in blockers
+
+
+def test_counts_below_one_hundred_and_the_title_are_verified() -> None:
+    spec = _episode()
+    blockers = evaluate_longform(
+        spec.model_copy(
+            update={"social_caption": "Only 99 babies in 2025.", "title": "458 in 2025"}
+        ),
+        require_approval=False,
+    ).blockers
+    assert "social caption states 99 for 2025; the declared total is 20,979" in blockers
+    assert "title states 458 for 2025; the declared total is 20,979" in blockers
+    assert stated_figures("Emily held #1 and was top-25 in 2000.") == []
+
+
+def test_title_card_holds_at_most_four_totals() -> None:
+    claims = [{"year": 2000 + i, "total": 1000} for i in range(5)]
+    with pytest.raises(ValidationError):
+        LongFormSpec.model_validate({**_episode().model_dump(), "aggregate_claims": claims})

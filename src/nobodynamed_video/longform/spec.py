@@ -34,8 +34,9 @@ CORE_TAGS = {"#namedata", "#ssadata", "#namehistory"}
 FIGURE_TOLERANCE = 0.01
 _BOOKEND_FIELDS = ("kicker", "headline", "subhead", "script")
 # A trailing comma is punctuation ("In 2000, ...") unless a digit follows it.
-# Counts of 100+ are checked; smaller numerals in this copy are ordinals or ranks.
-_FIGURE = re.compile(r"(?<![\w,])(\d{1,3}(?:,\d{3})+|\d{3,})(?!\w|,\d)")
+# Every numeral is a checked count unless it is a year, a "top-N" rank (verified
+# separately) or a "#N" ordinal; copy spells out other small numbers ("five names").
+_FIGURE = re.compile(r"(?<![\w,#])(\d{1,3}(?:,\d{3})+|\d+)(?!\w|,\d)")
 _YEAR = re.compile(r"(?<![\w,])(18[89]\d|19\d\d|20\d\d|2100)(?!\w|,\d)")
 _TOP = re.compile(r"\btop[\s-]+(\d+|[a-z]+(?:-[a-z]+)?)\b", re.IGNORECASE)
 _UNITS = {
@@ -90,7 +91,7 @@ _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
 
 def stated_figures(text: str) -> list[int]:
-    """Numerals of 100+ in copy, excluding bare four-digit years (1880-2100)."""
+    """Count numerals in copy, excluding bare four-digit years (1880-2100)."""
     return [figure for _, figure in stated_year_figures(text)]
 
 
@@ -250,6 +251,7 @@ def evaluate_longform(spec: LongFormSpec, *, require_approval: bool = True) -> L
 
     declared = {claim.year: claim.total for claim in spec.aggregate_claims}
     published = [
+        ("title", spec.title),
         *((f"intro {field}", getattr(spec.intro, field)) for field in _BOOKEND_FIELDS),
         *((f"outro {field}", getattr(spec.outro, field)) for field in _BOOKEND_FIELDS),
         ("social caption", spec.social_caption),
