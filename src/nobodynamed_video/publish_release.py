@@ -34,6 +34,14 @@ RELEASE_BATCHES = {
         "wendy-2025",
         "adolph-2025",
     },
+    "gen-z": {
+        "madison-2024",
+        "jacob-2024",
+        "emily-2024",
+        "ethan-2024",
+        "hannah-2024",
+        "destiny-2024",
+    },
 }
 
 

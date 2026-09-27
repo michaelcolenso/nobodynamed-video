@@ -4,8 +4,8 @@ sex: M
 story_kind: long_decline
 thesis: Ethan peaked at more than 22,000 births in 2004 and was a top-3 boy name by
   2007. It has since fallen more than 60%.
-headline: The 2000s boy name that fell 63%.
-subhead: '22,000 Ethans at peak. Now: 8,200.'
+headline: The 2000s boy name that fell 65%.
+subhead: '22,000 Ethans at peak. Now: 7,900.'
 takeaway: Ethan was still a top-3 name in 2012. Births have fallen by more than half.
 support: Rose sharply in the 1990s, peaked in 2004, then a 20-year decline.
 script_beats:
@@ -14,7 +14,7 @@ script_beats:
   - kind: reveal
     text: Ethan peaked at 22,000 births in 2004.
   - kind: proof
-    text: By 2024, the count had fallen to 8,200.
+    text: By 2025, the count had fallen to 7,900.
   - kind: loop
     text: Watch an early 2000s classic fade.
 evidence:
@@ -22,11 +22,11 @@ evidence:
     url: https://www.ssa.gov/oact/babynames/
     kind: ssa
     supports: 'Ethan peaked at approximately 22,200 male births in 2004, ranked #3
-      in 2007, 2008 and 2012, and declined to approximately 8,200 by 2024.'
+      in 2007, 2008 and 2012, and declined to approximately 7,900 by 2025.'
 visual_anchors:
   - 2004 peak badge
   - top-3 rank marker
-  - 2024 low point
+  - 2025 latest count
   - twenty-year decline curve
 social_caption: Ethan was a top-3 boy name in 2007 and has fallen more than 60% since
   its peak.
@@ -42,8 +42,8 @@ voice_instructions: Read with documentary precision. Stress top three and twenty
 status: approved
 quality_score: 85
 approved_by: michaelcolenso (explicit approval via Claude Code, 2026-09-27)
-approved_at: '2026-09-27T09:03:33.354408Z'
-approved_content_sha256: e4d141e318c15a8614bbb2ee8e13b02b329f093f1df380ce0005a4a325558d57
+approved_at: '2026-09-27T09:09:09.234494Z'
+approved_content_sha256: bd8c8eaa0505d194cf1dc5b04d733f15f63dc09e91733359cc5c7ef773a607a5
 data_snapshot: data/ssa-2025/ethan-m.json
 data_sha256: da60194f4f75ef05a4b3530b02be024ec213b4d3108637710a2e358b99f0b66f
 count_claims:
@@ -51,3 +51,5 @@ count_claims:
     count: 22210
   - year: 2024
     count: 8201
+  - year: 2025
+    count: 7852

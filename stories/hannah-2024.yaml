@@ -5,7 +5,7 @@ story_kind: long_decline
 thesis: 'Hannah was the #2 girl name in 2000, the peak of the Gen Z naming wave. It
   has since fallen more than 80%.'
 headline: 'The #2 name in 2000 is nearly gone.'
-subhead: '23,000 Hannahs at peak. Now: 4,100.'
+subhead: '23,000 Hannahs at peak. Now: 4,000.'
 takeaway: Hannah was everywhere at the turn of the millennium. Now it's almost a memory.
 support: 'Sharp rise through the 1990s, #2 in 2000, then a relentless decline.'
 script_beats:
@@ -14,7 +14,7 @@ script_beats:
   - kind: reveal
     text: Hannah peaked at 23,000 births, number two in America.
   - kind: proof
-    text: By 2024, only 4,100 girls were named Hannah.
+    text: By 2025, only 4,000 girls were named Hannah.
   - kind: loop
     text: Watch a millennium name fade into memory.
 evidence:
@@ -22,12 +22,12 @@ evidence:
     url: https://www.ssa.gov/oact/babynames/
     kind: ssa
     supports: 'Hannah peaked at approximately 23,000 female births in 2000 at rank
-      #2, and declined to approximately 4,100 by 2024.'
+      #2, and declined to approximately 4,000 by 2025.'
 visual_anchors:
   - '2000 #2 rank badge'
   - 23,000 peak marker
   - Y2K era marker
-  - 2024 low point
+  - 2025 low point
 social_caption: Hannah was the sound of Y2K, and it has fallen more than 80% since.
 hashtags:
   - '#Hannah'
@@ -42,8 +42,8 @@ voice_instructions: Read with quiet nostalgia. Let twenty-three thousand and num
 status: approved
 quality_score: 85
 approved_by: michaelcolenso (explicit approval via Claude Code, 2026-09-27)
-approved_at: '2026-09-27T09:03:32.791163Z'
-approved_content_sha256: 4b6eacfcc0eb0bd07a14bf224c10d4b6a953c053abf63d0c5df5cbfbada91b0f
+approved_at: '2026-09-27T09:08:39.195577Z'
+approved_content_sha256: 8c88cc8d90b7bb6d3056ec6a625f7235d0ba2cad59d143f6583a94ee52ef0ec4
 data_snapshot: data/ssa-2025/hannah-f.json
 data_sha256: 60d7cd6181fee9a7dae5028d34897781bfa3381bfc8ee32ef4e47d8f81c79a24
 count_claims:
@@ -51,3 +51,5 @@ count_claims:
     count: 23087
   - year: 2024
     count: 4078
+  - year: 2025
+    count: 3973

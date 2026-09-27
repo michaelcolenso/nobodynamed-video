@@ -64,7 +64,9 @@ def publication(
     return release, remote
 
 
-@pytest.mark.parametrize("publication", ["launch-six", "next-six", "viral-ten"], indirect=True)
+@pytest.mark.parametrize(
+    "publication", ["launch-six", "next-six", "viral-ten", "gen-z"], indirect=True
+)
 def test_publish_preserves_existing_files_history_and_is_idempotent(
     publication: tuple[Path, Path],
 ) -> None:

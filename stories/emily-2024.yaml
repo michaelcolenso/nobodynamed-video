@@ -5,9 +5,9 @@ story_kind: long_decline
 thesis: Emily was the most popular girl name in America for 12 years. It was the defining
   sound of 2000s girlhood.
 headline: The most popular girl name of the 2000s.
-subhead: '26,000 Emilys born at peak. Now: 6,000.'
+subhead: '26,000 Emilys born at peak. Now: 5,500.'
 takeaway: "Emily held #1 for twelve years. It was inescapable — and now it's in retreat."
-support: '#1 from 1996 to 2007, a sustained peak, then a 77% decline.'
+support: '#1 from 1996 to 2007, a sustained peak, then a 79% decline.'
 script_beats:
   - kind: hook
     text: This was America's top girl name for twelve years.
@@ -22,7 +22,7 @@ evidence:
     url: https://www.ssa.gov/oact/babynames/
     kind: ssa
     supports: 'Emily was the #1 female name from 1996 to 2007, peaking at approximately
-      26,500 births in 1999, and declined to approximately 6,000 by 2024.'
+      26,500 births in 1999, and declined to approximately 5,500 by 2025.'
 visual_anchors:
   - '1996-2007 #1 streak badge'
   - 26,000 peak marker
@@ -43,8 +43,8 @@ voice_instructions: Read with warm documentary clarity. Let twelve years and twe
 status: approved
 quality_score: 80
 approved_by: michaelcolenso (explicit approval via Claude Code, 2026-09-27)
-approved_at: '2026-09-27T09:03:34.311247Z'
-approved_content_sha256: 6b622bbadfc45a9db7ddca167b8fcca7c9ed6e328ced38f126f25f3d3758ee6e
+approved_at: '2026-09-27T09:08:40.590399Z'
+approved_content_sha256: 56245454794a75f871f1c9dbf3d26ee8cc8b81e4c1672f430a0576ff34572b96
 data_snapshot: data/ssa-2025/emily-f.json
 data_sha256: 495d1c65e6d5f2a5f5938524425dea658e6572bb767316d09304c3820f138df7
 count_claims:
@@ -52,3 +52,5 @@ count_claims:
     count: 26542
   - year: 2024
     count: 5984
+  - year: 2025
+    count: 5451
