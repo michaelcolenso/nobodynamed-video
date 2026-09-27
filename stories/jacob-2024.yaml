@@ -2,11 +2,12 @@ id: jacob-2024
 name: Jacob
 sex: M
 story_kind: long_decline
-thesis: "Jacob was the #1 boy name in America for 14 consecutive years, from 1999 to 2012. It was the sound of Gen Z boyhood."
-headline: "The #1 name for 14 straight years."
-subhead: "36,000 Jacobs born at peak. Now: 6,500."
-takeaway: "Jacob held #1 from 1999 to 2012. It defined a generation of boys."
-support: "14 years at #1 from 1999 to 2012, then a steady decline."
+thesis: 'Jacob was the #1 boy name in America for 14 consecutive years, from 1999
+  to 2012. It was the sound of Gen Z boyhood.'
+headline: 'The #1 name for 14 straight years.'
+subhead: '36,000 Jacobs born at peak. Now: 6,500.'
+takeaway: 'Jacob held #1 from 1999 to 2012. It defined a generation of boys.'
+support: '14 years at #1 from 1999 to 2012, then a steady decline.'
 script_beats:
   - kind: hook
     text: This name was number one for fourteen years.
@@ -20,13 +21,15 @@ evidence:
   - label: Social Security baby-name data
     url: https://www.ssa.gov/oact/babynames/
     kind: ssa
-    supports: "Jacob was the #1 male name from 1999 to 2012, peaking at approximately 36,000 births in 1998, and declined to approximately 6,500 by 2024."
+    supports: 'Jacob was the #1 male name from 1999 to 2012, peaking at approximately
+      36,000 births in 1998, and declined to approximately 6,500 by 2024.'
 visual_anchors:
-  - "1999-2012 #1 streak badge"
+  - '1999-2012 #1 streak badge'
   - 36,000 peak marker
   - post-2012 decline curve
   - reign-length ruler
-social_caption: "Jacob was America's #1 boy name for 14 straight years, from 1999 to 2012."
+social_caption: "Jacob was America's #1 boy name for 14 straight years, from 1999
+  to 2012."
 hashtags:
   - '#Jacob'
   - '#GenZ'
@@ -34,6 +37,17 @@ hashtags:
   - '#AIVoice'
 share_prompt: How many Jacobs do you know?
 target_duration_s: 12.0
-voice_instructions: Read with documentary authority. Stress fourteen years and thirty-six thousand. The final line should feel like closing a chapter.
-status: draft
-quality_score: 0
+voice_instructions: Read with documentary authority. Stress fourteen years and thirty-six
+  thousand. The final line should feel like closing a chapter.
+status: approved
+quality_score: 80
+approved_by: michaelcolenso (explicit approval via Claude Code, 2026-09-27)
+approved_at: '2026-09-27T09:03:35.230376Z'
+approved_content_sha256: d362da41b745dc9283065d763811788f1b2a53d71180597c937e08b83b9e76eb
+data_snapshot: data/ssa-2025/jacob-m.json
+data_sha256: 1cb13237dc695c10389bd72b0b9abbcd42031a0028585477aa7d70759267064a
+count_claims:
+  - year: 1998
+    count: 36031
+  - year: 2024
+    count: 6541

@@ -2,9 +2,10 @@ id: destiny-2024
 name: Destiny
 sex: F
 story_kind: long_decline
-thesis: Destiny was the most 2000s name imaginable — aspirational, bold, and unmistakably of its era. It has fallen more than 90% since its peak.
+thesis: Destiny was the most 2000s name imaginable — aspirational, bold, and unmistakably
+  of its era. It has fallen more than 90% since its peak.
 headline: The most 2000s name ever.
-subhead: "10,000 Destinys at peak. Now: 640."
+subhead: '10,000 Destinys at peak. Now: 640.'
 takeaway: A top-25 name in 2000, the sound of an era's optimism. Now nearly extinct.
 support: Rose through the 1990s, peaked at the millennium, then a 24-year fall.
 script_beats:
@@ -20,13 +21,15 @@ evidence:
   - label: Social Security baby-name data
     url: https://www.ssa.gov/oact/babynames/
     kind: ssa
-    supports: Destiny peaked at approximately 9,850 female births in 2000 and declined to 643 by 2024.
+    supports: Destiny peaked at approximately 9,850 female births in 2000 and declined
+      to 643 by 2024.
 visual_anchors:
   - 2000 peak badge
   - millennium marker
   - 90% decline annotation
   - 2024 near-extinction point
-social_caption: "Destiny was the most 2000s name ever, and it is down more than 90% since the millennium."
+social_caption: Destiny was the most 2000s name ever, and it is down more than 90%
+  since the millennium.
 hashtags:
   - '#Destiny'
   - '#GenZ'
@@ -34,6 +37,18 @@ hashtags:
   - '#AIVoice'
 share_prompt: Is Destiny a mom name or a grandma name now?
 target_duration_s: 11.0
-voice_instructions: Read with documentary detachment. Let ten thousand and six hundred forty-three feel like the distance between two eras. The final line should feel like the end of a chapter.
-status: draft
-quality_score: 0
+voice_instructions: Read with documentary detachment. Let ten thousand and six hundred
+  forty-three feel like the distance between two eras. The final line should feel
+  like the end of a chapter.
+status: approved
+quality_score: 85
+approved_by: michaelcolenso (explicit approval via Claude Code, 2026-09-27)
+approved_at: '2026-09-27T09:03:33.833463Z'
+approved_content_sha256: c83440997400a1166669bd80bf78fa0c3101d426879e5d89a2e43cee18943cb7
+data_snapshot: data/ssa-2025/destiny-f.json
+data_sha256: 470ab5e3035d96743c5e9576a7b94f029cd0336f30e09ae2d0a2aa8f389d1542
+count_claims:
+  - year: 2000
+    count: 9850
+  - year: 2024
+    count: 643

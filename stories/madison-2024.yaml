@@ -2,10 +2,12 @@ id: madison-2024
 name: Madison
 sex: F
 story_kind: long_decline
-thesis: Madison was the defining girl name of the Gen Z generation. It peaked in the early 2000s and has fallen nearly 80% since.
+thesis: Madison was the defining girl name of the Gen Z generation. It peaked in the
+  early 2000s and has fallen nearly 80% since.
 headline: This name was everywhere in 2001.
-subhead: "22,000 girls named Madison. Now: 4,600."
-takeaway: Madison defined a generation. That generation is naming its kids something else.
+subhead: '22,000 girls named Madison. Now: 4,600.'
+takeaway: Madison defined a generation. That generation is naming its kids something
+  else.
 support: A steep rise in the 1990s, a sharp peak, and a sustained fall.
 script_beats:
   - kind: hook
@@ -20,13 +22,14 @@ evidence:
   - label: Social Security baby-name data
     url: https://www.ssa.gov/oact/babynames/
     kind: ssa
-    supports: Madison peaked at approximately 22,000 female births in 2001 and declined to approximately 4,600 by 2024.
+    supports: Madison peaked at approximately 22,000 female births in 2001 and declined
+      to approximately 4,600 by 2024.
 visual_anchors:
   - 2001 peak badge
   - steep 1990s rise curve
   - 2024 low point
   - generational fade loop
-social_caption: "Madison was the #2 girl name in 2001 and has fallen nearly 80% since."
+social_caption: 'Madison was the #2 girl name in 2001 and has fallen nearly 80% since.'
 hashtags:
   - '#Madison'
   - '#GenZ'
@@ -34,6 +37,17 @@ hashtags:
   - '#AIVoice'
 share_prompt: Do you know a Madison born after 2010?
 target_duration_s: 11.0
-voice_instructions: Read with quiet documentary weight. Let 22,000 and 4,600 land as hard facts. The final line should feel like an observation, not a judgment.
-status: draft
-quality_score: 0
+voice_instructions: Read with quiet documentary weight. Let 22,000 and 4,600 land
+  as hard facts. The final line should feel like an observation, not a judgment.
+status: approved
+quality_score: 85
+approved_by: michaelcolenso (explicit approval via Claude Code, 2026-09-27)
+approved_at: '2026-09-27T09:03:34.771877Z'
+approved_content_sha256: fcd1318cc84408e6cf426643f7500115d3ce56bedc61edc831c2b90841c9ec03
+data_snapshot: data/ssa-2025/madison-f.json
+data_sha256: 55810d6f7866bb1fd360019410d80b7ebb122be7db9e91d243d29c4105cd77c6
+count_claims:
+  - year: 2001
+    count: 22166
+  - year: 2024
+    count: 4581
