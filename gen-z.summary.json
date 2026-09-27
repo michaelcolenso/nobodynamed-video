@@ -1,0 +1,96 @@
+{
+  "batch": "gen-z",
+  "total": 6,
+  "succeeded": 6,
+  "failed": 0,
+  "qc_failed": [],
+  "release_ids": [
+    "madison-2024",
+    "jacob-2024",
+    "ethan-2024",
+    "emily-2024",
+    "hannah-2024",
+    "destiny-2024"
+  ],
+  "results": [
+    {
+      "id": "madison-2024",
+      "frames": 416,
+      "composed": true,
+      "mp4": "out/madison-2024.mp4",
+      "duration_s": 13.866666666666667,
+      "render_time_s": 83.584777541,
+      "caption": "Madison was the #2 girl name in 2001 and has fallen more than 75% since. #Madison #GenZ #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    },
+    {
+      "id": "jacob-2024",
+      "frames": 416,
+      "composed": true,
+      "mp4": "out/jacob-2024.mp4",
+      "duration_s": 13.866666666666667,
+      "render_time_s": 83.38275148100001,
+      "caption": "Jacob was America's #1 boy name for 14 straight years, from 1999 to 2012. #Jacob #GenZ #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    },
+    {
+      "id": "ethan-2024",
+      "frames": 416,
+      "composed": true,
+      "mp4": "out/ethan-2024.mp4",
+      "duration_s": 13.866666666666667,
+      "render_time_s": 83.85983946600004,
+      "caption": "Ethan was a top-3 boy name in 2007 and has fallen more than 60% since its peak. #Ethan #GenZ #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    },
+    {
+      "id": "emily-2024",
+      "frames": 416,
+      "composed": true,
+      "mp4": "out/emily-2024.mp4",
+      "duration_s": 13.866666666666667,
+      "render_time_s": 84.54658796500001,
+      "caption": "Emily was #1 for 12 years, the sound of 2000s girlhood, and it is now in retreat. #Emily #GenZ #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    },
+    {
+      "id": "hannah-2024",
+      "frames": 416,
+      "composed": true,
+      "mp4": "out/hannah-2024.mp4",
+      "duration_s": 13.866666666666667,
+      "render_time_s": 78.81138187199997,
+      "caption": "Hannah was the sound of Y2K, and it has fallen more than 80% since. #Hannah #GenZ #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    },
+    {
+      "id": "destiny-2024",
+      "frames": 416,
+      "composed": true,
+      "mp4": "out/destiny-2024.mp4",
+      "duration_s": 13.866666666666667,
+      "render_time_s": 80.04807239900003,
+      "caption": "Destiny was the most 2000s name ever, and it is down more than 90% since the millennium. #Destiny #GenZ #NameData #AIVoice",
+      "qc": {
+        "passed": true,
+        "issues": []
+      }
+    }
+  ],
+  "errors": []
+}

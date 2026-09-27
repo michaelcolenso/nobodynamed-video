@@ -1,0 +1,75 @@
+{
+  "id": "destiny-2024",
+  "name": "Destiny",
+  "sex": "F",
+  "story_kind": "long_decline",
+  "thesis": "Destiny was the most 2000s name imaginable — aspirational, bold, and unmistakably of its era. It has fallen more than 90% since its peak.",
+  "headline": "The most 2000s name ever.",
+  "subhead": "10,000 Destinys at peak. Now: 460.",
+  "takeaway": "A top-25 name in 2000, the sound of an era's optimism. Now nearly extinct.",
+  "support": "Rose through the 1990s, peaked at the millennium, then a 25-year fall.",
+  "script_beats": [
+    {
+      "kind": "hook",
+      "text": "This was the most two-thousands name imaginable."
+    },
+    {
+      "kind": "reveal",
+      "text": "Destiny peaked at 10,000 births in 2000."
+    },
+    {
+      "kind": "proof",
+      "text": "By 2025, only 458 girls were named Destiny."
+    },
+    {
+      "kind": "loop",
+      "text": "Watch a millennium dream fade to almost nothing."
+    }
+  ],
+  "evidence": [
+    {
+      "label": "Social Security baby-name data",
+      "url": "https://www.ssa.gov/oact/babynames/",
+      "kind": "ssa",
+      "supports": "Destiny peaked at approximately 9,850 female births in 2000 and declined to 458 by 2025."
+    }
+  ],
+  "visual_anchors": [
+    "2000 peak badge",
+    "millennium marker",
+    "90% decline annotation",
+    "2025 near-extinction point"
+  ],
+  "social_caption": "Destiny was the most 2000s name ever, and it is down more than 90% since the millennium.",
+  "hashtags": [
+    "#Destiny",
+    "#GenZ",
+    "#NameData",
+    "#AIVoice"
+  ],
+  "share_prompt": "Is Destiny a mom name or a grandma name now?",
+  "target_duration_s": 11.0,
+  "voice": null,
+  "voice_instructions": "Read with documentary detachment. Let ten thousand and four hundred fifty-eight feel like the distance between two eras. The final line should feel like the end of a chapter.",
+  "status": "approved",
+  "quality_score": 85,
+  "approved_by": "michaelcolenso (explicit approval via Claude Code, 2026-09-27)",
+  "approved_at": "2026-09-27T09:08:40.125766Z",
+  "approved_content_sha256": "87f7d5c3bb834ed865e3358758fcbb964dd630577e98ace81269365194353aac",
+  "data_snapshot": "data/ssa-2025/destiny-f.json",
+  "data_sha256": "470ab5e3035d96743c5e9576a7b94f029cd0336f30e09ae2d0a2aa8f389d1542",
+  "count_claims": [
+    {
+      "year": 2000,
+      "count": 9850
+    },
+    {
+      "year": 2024,
+      "count": 643
+    },
+    {
+      "year": 2025,
+      "count": 458
+    }
+  ]
+}
