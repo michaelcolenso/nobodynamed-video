@@ -70,6 +70,18 @@ def _small_number(token: str) -> int | None:
     return None
 
 
+def unsupported_numerals(text: str) -> list[str]:
+    """Numeric tokens the gate cannot verify, such as '999k', '#1' or '83%'.
+
+    Everything numeric must be a year, a count or a top-N rank; any other form is
+    rejected rather than published unchecked.
+    """
+    rest = _FIGURE.sub(" ", _TOP.sub(" ", text))
+    leftovers = re.findall(r"\S*\d\S*", rest)
+    percent = [m.group(0) for m in re.finditer(r"\d[\d,]*%", _TOP.sub(" ", text))]
+    return leftovers + percent
+
+
 def stated_rank_claims(text: str) -> list[tuple[int | None, int]]:
     """'top-25 ... in 2000' / 'top twenty-five in 2000' as (year, top) pairs.
 
@@ -271,6 +283,11 @@ def evaluate_longform(spec: LongFormSpec, *, require_approval: bool = True) -> L
                 )
     declared_ranks = {(rc.year, rc.top) for rc in spec.rank_claims}
     for label, copy in published:
+        if unparsed := unsupported_numerals(copy):
+            blockers.append(
+                f"{label} uses numeric notation the gate cannot verify ({', '.join(unparsed)}); "
+                "write counts as numerals and ranks as 'top-N'"
+            )
         for year, top in stated_rank_claims(copy):
             if year is None:
                 blockers.append(f"{label} states top-{top} without one year to bind it to")

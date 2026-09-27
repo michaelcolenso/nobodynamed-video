@@ -403,3 +403,19 @@ def test_suppressed_latest_count_renders_as_under_five() -> None:
     assert entry.decline_pct is None
     assert row["detail"] == "5,051 in 1918 → <5 in 2025"
     assert row["value"] == "<5"
+
+
+@pytest.mark.parametrize(
+    ("caption", "token"),
+    [
+        ("They had 999k births in 2025.", "999k"),
+        ("Jacob ranked #1 in 2000.", "#1"),
+        ("Down 83% since 2000.", "83%"),
+    ],
+)
+def test_unverifiable_numeric_notation_is_rejected(caption: str, token: str) -> None:
+    spec = _episode().model_copy(update={"social_caption": caption})
+    blockers = evaluate_longform(spec, require_approval=False).blockers
+    assert any(
+        b.startswith("social caption uses numeric notation") and token in b for b in blockers
+    )
