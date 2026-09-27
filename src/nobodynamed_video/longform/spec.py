@@ -124,8 +124,10 @@ def evaluate_longform(spec: LongFormSpec, *, require_approval: bool = True) -> L
         snapshots.append(verified_snapshot(story))
 
     ids = [story.id for story in chapters]
-    if len(ids) != len(set(ids)):
-        blockers.append("chapters must be distinct stories")
+    series = [(story.name, story.sex) for story in chapters]
+    if len(ids) != len(set(ids)) or len(series) != len(set(series)):
+        # Two stories about one SSA series would double-count it in every total.
+        blockers.append("chapters must be distinct names (one story per name and sex)")
     releases = {
         (s.latest_year, s.archive_sha256, s.source_url, s.source_dataset) for s in snapshots
     }

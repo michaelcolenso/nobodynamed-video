@@ -5,10 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from nobodynamed_video.compose.caption import combo_hash
 from nobodynamed_video.compose.ffmpeg import build_concat_cmd
-from nobodynamed_video.compose.narration import CHAPTER_HOLD_S, adaptive_duration
+from nobodynamed_video.compose.narration import CHAPTER_HOLD_S, NarrationArtifact, adaptive_duration
+from nobodynamed_video.compose.state import CombinationState
 from nobodynamed_video.data.snapshot import Snapshot, verified_snapshot
-from nobodynamed_video.editorial.story import load_story
+from nobodynamed_video.editorial.story import StoryEvaluation, chapter_narration_text, load_story
 from nobodynamed_video.exceptions import StoryQualityError
 from nobodynamed_video.longform.bookends import (
     MAX_BOOKEND_NARRATION_S,
@@ -17,6 +19,7 @@ from nobodynamed_video.longform.bookends import (
     bookend_duration,
     sample_bookend_frame,
 )
+from nobodynamed_video.longform.render import ChapterNarrator
 from nobodynamed_video.longform.spec import (
     RosterEntry,
     aggregate_total,
@@ -25,6 +28,7 @@ from nobodynamed_video.longform.spec import (
     load_longform,
     longform_digest,
     roster_entry,
+    write_longform,
 )
 from nobodynamed_video.models import AggregateClaim, LongFormSpec, StorySpec
 from nobodynamed_video.render.frame_planner import plan_frames
@@ -203,3 +207,73 @@ def test_concat_trims_each_segment_and_normalizes_once(tmp_path: Path) -> None:
     assert "loudnorm" not in silent[silent.index("-filter_complex") + 1]
     with pytest.raises(ValueError):
         build_concat_cmd(segments, [7.5], tmp_path / "e.mp4")
+
+
+def test_chapter_narration_drops_the_short_form_loop_beat() -> None:
+    story = load_story(Path("stories/jacob-2024.yaml"))
+    loop = story.script_beats[-1].text
+    text = chapter_narration_text(story)
+    assert loop not in text
+    assert text == " ".join(beat.text.strip() for beat in story.script_beats[:-1])
+
+
+@pytest.mark.asyncio
+async def test_chapter_narrator_speaks_only_the_chapter_script(tmp_path: Path) -> None:
+    spoken: list[str] = []
+
+    class Inner:
+        async def generate(self, story: StorySpec) -> NarrationArtifact:
+            raise AssertionError("chapters must not narrate the full short-form script")
+
+        async def generate_text(self, text: str, voice: str | None = None) -> NarrationArtifact:
+            spoken.append(text)
+            return NarrationArtifact(
+                audio_path=tmp_path / "a.wav",
+                word_timings=[],
+                duration_s=5.0,
+                provider="fake",
+                model="fake",
+                voice=voice or "luna",
+            )
+
+    story = load_story(Path("stories/jacob-2024.yaml"))
+    await ChapterNarrator(Inner()).generate(story)
+    assert spoken == [chapter_narration_text(story)]
+
+
+def test_two_stories_for_one_name_are_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    import nobodynamed_video.longform.spec as spec_module
+
+    real_load = spec_module.load_story
+    real_evaluate = spec_module.evaluate_story
+    jacob = real_load(Path("stories/jacob-2024.yaml"))
+
+    def load(path: Path) -> StorySpec:
+        if path.name == "emily-2024.yaml":
+            return jacob.model_copy(update={"id": "jacob-duplicate"})
+        return real_load(path)
+
+    def evaluate(story: StorySpec) -> StoryEvaluation:
+        return real_evaluate(jacob if story.id == "jacob-duplicate" else story)
+
+    monkeypatch.setattr(spec_module, "load_story", load)
+    monkeypatch.setattr(spec_module, "evaluate_story", evaluate)
+    blockers = evaluate_longform(_episode(), require_approval=False).blockers
+    assert "chapters must be distinct names (one story per name and sex)" in blockers
+
+
+@pytest.mark.asyncio
+async def test_release_render_rejects_a_used_hashtag_combination(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import nobodynamed_video.longform.render as render_module
+
+    approved = tmp_path / "episode.yaml"
+    write_longform(approve_longform(_episode(), "reviewer"), approved)
+    db = tmp_path / "combos.db"
+    tags = sorted(tag.lstrip("#") for tag in _episode().hashtags)
+    CombinationState(db).record(combo_hash(tags), tags, "earlier-video")
+    monkeypatch.setattr(render_module, "_STATE_DB", db)
+
+    with pytest.raises(StoryQualityError, match="hashtag combination already used"):
+        await render_module.render_longform(approved, "http://unused.invalid", tmp_path / "out")

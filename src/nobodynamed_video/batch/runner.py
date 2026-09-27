@@ -31,7 +31,7 @@ from nobodynamed_video.compose.narration import (
 )
 from nobodynamed_video.compose.state import CombinationState
 from nobodynamed_video.data.snapshot import SnapshotSource, verified_snapshot
-from nobodynamed_video.editorial.story import evaluate_story
+from nobodynamed_video.editorial.story import chapter_narration_text, evaluate_story
 from nobodynamed_video.exceptions import StoryQualityError
 from nobodynamed_video.models import VideoSpec
 from nobodynamed_video.qc.checks import run_all_checks
@@ -193,7 +193,11 @@ async def render_spec(
         story_kind=spec.story.story_kind.value if spec.story else None,
         story_score=spec.story.quality_score if spec.story else None,
         story_thesis=spec.story.thesis if spec.story else None,
-        script=spec.story.narration_text if spec.story else None,
+        script=(
+            chapter_narration_text(spec.story) if spec.chapter_label else spec.story.narration_text
+        )
+        if spec.story
+        else None,
         word_timings=runtime_spec.word_timings,
         narration_provider=narration.provider if narration else None,
         narration_model=narration.model if narration else None,

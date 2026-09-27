@@ -84,6 +84,17 @@ def score_story(story: StorySpec) -> tuple[int, dict[str, int]]:
     return sum(components.values()), components
 
 
+def chapter_narration_text(story: StorySpec) -> str:
+    """Approved script minus its short-form loop beat, for a long-form chapter.
+
+    A chapter cuts to the next chapter, so "watch it again" copy would be false there.
+    Only approved words are spoken; nothing is added.
+    """
+    return " ".join(
+        beat.text.strip() for beat in story.script_beats if beat.kind != ScriptBeatKind.LOOP
+    )
+
+
 def approval_digest(story: StorySpec) -> str:
     payload = story.model_dump(
         mode="json", exclude={"status", "approved_by", "approved_at", "approved_content_sha256"}

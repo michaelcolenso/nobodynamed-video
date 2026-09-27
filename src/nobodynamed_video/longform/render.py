@@ -15,6 +15,7 @@ from ruamel.yaml import YAML
 
 from nobodynamed_video.batch.runner import _renderer_digest, render_spec
 from nobodynamed_video.batch.spec import load_specs
+from nobodynamed_video.compose.caption import combo_hash
 from nobodynamed_video.compose.ffmpeg import (
     build_concat_cmd,
     build_ffmpeg_cmd,
@@ -26,6 +27,7 @@ from nobodynamed_video.compose.narration import NarrationArtifact
 from nobodynamed_video.compose.narration_pacing import fit_narration_audio
 from nobodynamed_video.compose.state import CombinationState
 from nobodynamed_video.data.snapshot import verified_snapshot
+from nobodynamed_video.editorial.story import chapter_narration_text
 from nobodynamed_video.exceptions import StoryQualityError
 from nobodynamed_video.longform.bookends import (
     MAX_BOOKEND_NARRATION_S,
@@ -57,6 +59,17 @@ class EpisodeNarrator(Protocol):
     async def generate(self, story: StorySpec) -> NarrationArtifact: ...
 
     async def generate_text(self, text: str, voice: str | None = None) -> NarrationArtifact: ...
+
+
+class ChapterNarrator:
+    """Narrate a chapter without its short-form loop beat, with the chapter pace fit."""
+
+    def __init__(self, inner: EpisodeNarrator) -> None:
+        self._inner = inner
+
+    async def generate(self, story: StorySpec) -> NarrationArtifact:
+        artifact = await self._inner.generate_text(chapter_narration_text(story), story.voice)
+        return fit_narration_audio(artifact)
 
 
 def _probe_frames(mp4_path: Path) -> int:
@@ -188,6 +201,11 @@ async def render_longform(
 
     lexicon = Lexicon.from_yaml(_CAPTIONS_YAML)
     state = CombinationState(_STATE_DB)
+    # Caption rule: every released video carries a hashtag set no other video used.
+    episode_tags = sorted(tag.lstrip("#") for tag in spec.hashtags)
+    episode_combo = combo_hash(episode_tags)
+    if not preview and state.is_used(episode_combo):
+        raise StoryQualityError(f"{spec.id}: hashtag combination already used by another video")
     segments: list[dict[str, Any]] = []
     async with SatoriClient(satori_url) as client:
         cache_dir = out_dir / ".cache"
@@ -219,7 +237,7 @@ async def render_longform(
                 chapters_dir,
                 lexicon,
                 state,
-                narration_provider=narrator,
+                narration_provider=ChapterNarrator(narrator) if narrator else None,
             )
             qc = run_all_checks(result, chapters_dir)
             # A narration-free preview cannot satisfy the narration checks; it is
@@ -332,6 +350,8 @@ async def render_longform(
         },
     }
     (out_dir / f"{spec.id}.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    if manifest["releasable"]:
+        state.record(episode_combo, episode_tags, spec.id)
     if not qc.passed:
         errors = [f"{i.code}: {i.message}" for i in qc.issues if i.severity == "error"]
         raise StoryQualityError(f"{spec.id} failed episode QC: {'; '.join(errors)}")
