@@ -34,14 +34,63 @@ CORE_TAGS = {"#namedata", "#ssadata", "#namehistory"}
 FIGURE_TOLERANCE = 0.01
 _BOOKEND_FIELDS = ("kicker", "headline", "subhead", "script")
 # A trailing comma is punctuation ("In 2000, ...") unless a digit follows it.
-_FIGURE = re.compile(r"(?<![\w,])(\d{1,3}(?:,\d{3})+|\d{4,})(?!\w|,\d)")
+# Counts of 100+ are checked; smaller numerals in this copy are ordinals or ranks.
+_FIGURE = re.compile(r"(?<![\w,])(\d{1,3}(?:,\d{3})+|\d{3,})(?!\w|,\d)")
+_YEAR = re.compile(r"(?<![\w,])(18[89]\d|19\d\d|20\d\d|2100)(?!\w|,\d)")
+_TOP = re.compile(r"\btop[\s-]+(\d+|[a-z]+(?:-[a-z]+)?)\b", re.IGNORECASE)
+_UNITS = {
+    word: value
+    for value, word in enumerate(
+        "zero one two three four five six seven eight nine ten eleven twelve thirteen "
+        "fourteen fifteen sixteen seventeen eighteen nineteen".split()
+    )
+}
+_TENS = {
+    "twenty": 20,
+    "thirty": 30,
+    "forty": 40,
+    "fifty": 50,
+    "sixty": 60,
+    "seventy": 70,
+    "eighty": 80,
+    "ninety": 90,
+}
+
+
+def _small_number(token: str) -> int | None:
+    """Parse '25', 'ten' or 'twenty-five'; None when the token is not a number."""
+    if token.isdigit():
+        return int(token)
+    parts = token.lower().split("-")
+    if len(parts) == 1:
+        return _UNITS.get(parts[0], _TENS.get(parts[0]))
+    if len(parts) == 2 and parts[0] in _TENS and parts[1] in _UNITS and _UNITS[parts[1]] < 10:
+        return _TENS[parts[0]] + _UNITS[parts[1]]
+    return None
+
+
+def stated_rank_claims(text: str) -> list[tuple[int | None, int]]:
+    """'top-25 ... in 2000' / 'top twenty-five in 2000' as (year, top) pairs.
+
+    A rank claim binds to the single year stated in its sentence; with no year or
+    several, it is unbound (``None``) and the gate rejects it.
+    """
+    claims: list[tuple[int | None, int]] = []
+    for sentence in _SENTENCE_END.split(text):
+        tops = [n for n in (_small_number(m) for m in _TOP.findall(sentence)) if n]
+        if not tops:
+            continue
+        years = [int(y) for y in _YEAR.findall(sentence)]
+        year = years[0] if len(years) == 1 else None
+        claims.extend((year, top) for top in tops)
+    return claims
 
 
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
 
 def stated_figures(text: str) -> list[int]:
-    """Numerals of 1,000+ in copy, excluding bare four-digit years (1880-2100)."""
+    """Numerals of 100+ in copy, excluding bare four-digit years (1880-2100)."""
     return [figure for _, figure in stated_year_figures(text)]
 
 
@@ -56,7 +105,7 @@ def stated_year_figures(text: str) -> list[tuple[int | None, int]]:
     for sentence in _SENTENCE_END.split(text):
         years: list[int] = []
         figures: list[int] = []
-        for token in _FIGURE.findall(sentence):
+        for token in _FIGURE.findall(_TOP.sub(" ", sentence)):
             value = int(token.replace(",", ""))
             if "," not in token and 1880 <= value <= 2100:
                 years.append(value)
@@ -172,6 +221,10 @@ def evaluate_longform(spec: LongFormSpec, *, require_approval: bool = True) -> L
     releases = {
         (s.latest_year, s.archive_sha256, s.source_url, s.source_dataset) for s in snapshots
     }
+    if not all(s.from_ssa_archive for s in snapshots):
+        # Only an archive-pinned snapshot names an immutable SSA release; a bare
+        # dataset label cannot tell two D1 retrievals apart.
+        blockers.append("every chapter snapshot must be pinned to the SSA archive")
     if len(releases) > 1:
         blockers.append("chapter snapshots must share one SSA release")
 
@@ -202,7 +255,22 @@ def evaluate_longform(spec: LongFormSpec, *, require_approval: bool = True) -> L
         ("social caption", spec.social_caption),
         ("pinned comment", spec.share_prompt),
     ]
+    for rank_claim in spec.rank_claims:
+        for story, snapshot in zip(chapters, snapshots, strict=True):
+            point = next((p for p in snapshot.observations if p.year == rank_claim.year), None)
+            if point is None or point.rank is None or point.rank > rank_claim.top:
+                rank = "unranked" if point is None or point.rank is None else f"#{point.rank}"
+                blockers.append(
+                    f"rank claim top-{rank_claim.top} in {rank_claim.year} fails: "
+                    f"{story.name} was {rank}"
+                )
+    declared_ranks = {(rc.year, rc.top) for rc in spec.rank_claims}
     for label, copy in published:
+        for year, top in stated_rank_claims(copy):
+            if year is None:
+                blockers.append(f"{label} states top-{top} without one year to bind it to")
+            elif (year, top) not in declared_ranks:
+                blockers.append(f"{label} states top-{top} in {year}, which has no rank claim")
         for year, figure in stated_year_figures(copy):
             if year is None:
                 blockers.append(f"{label} states {figure:,} without one year to bind it to")

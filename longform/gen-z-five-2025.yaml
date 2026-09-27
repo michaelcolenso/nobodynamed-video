@@ -23,6 +23,9 @@ aggregate_claims:
     total: 113356
   - year: 2025
     total: 20979
+rank_claims:
+  - year: 2000
+    top: 25
 social_caption: Five names defined Gen Z. Together they fell from 113,356 births in 2000 to 20,979 in 2025.
 hashtags:
   - '#GenZ'

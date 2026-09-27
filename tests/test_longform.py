@@ -29,10 +29,11 @@ from nobodynamed_video.longform.spec import (
     longform_digest,
     roster_entry,
     stated_figures,
+    stated_rank_claims,
     stated_year_figures,
     write_longform,
 )
-from nobodynamed_video.models import AggregateClaim, LongFormSpec, StorySpec
+from nobodynamed_video.models import AggregateClaim, LongFormSpec, RankClaim, StorySpec
 from nobodynamed_video.render.frame_planner import plan_frames
 from pydantic import ValidationError
 
@@ -326,3 +327,44 @@ def test_social_caption_figures_are_verified() -> None:
 def test_hashtags_must_be_distinct_valid_tokens(tags: list[str]) -> None:
     with pytest.raises(ValidationError):
         LongFormSpec.model_validate({**_episode().model_dump(), "hashtags": tags})
+
+
+def test_rank_claims_are_verified_against_snapshot_ranks() -> None:
+    spec = _episode()
+    too_tight = spec.model_copy(update={"rank_claims": [RankClaim(year=2000, top=10)]})
+    blockers = evaluate_longform(too_tight, require_approval=False).blockers
+    assert "rank claim top-10 in 2000 fails: Destiny was #24" in blockers
+    undeclared = spec.model_copy(update={"rank_claims": []})
+    blockers = evaluate_longform(undeclared, require_approval=False).blockers
+    assert "intro subhead states top-25 in 2000, which has no rank claim" in blockers
+    assert "intro script states top-25 in 2000, which has no rank claim" in blockers
+    assert stated_rank_claims("In 2000, all five were top twenty-five.") == [(2000, 25)]
+    assert stated_rank_claims("They held the top spot.") == []
+
+
+def test_counts_below_one_thousand_are_verified() -> None:
+    spec = _episode()
+    outro = spec.outro.model_copy(update={"headline": "Only 999 babies in 2025."})
+    blockers = evaluate_longform(
+        spec.model_copy(update={"outro": outro}), require_approval=False
+    ).blockers
+    assert "outro headline states 999 for 2025; the declared total is 20,979" in blockers
+
+
+def test_chapters_must_carry_archive_pinned_snapshots(monkeypatch: pytest.MonkeyPatch) -> None:
+    import nobodynamed_video.longform.spec as spec_module
+
+    real = spec_module.verified_snapshot
+
+    def dataset_only(story: StorySpec) -> Snapshot:
+        return real(story).model_copy(
+            update={
+                "source_url": None,
+                "archive_sha256": None,
+                "source_dataset": "nobodynamed-d1:name-vitals",
+            }
+        )
+
+    monkeypatch.setattr(spec_module, "verified_snapshot", dataset_only)
+    blockers = evaluate_longform(_episode(), require_approval=False).blockers
+    assert "every chapter snapshot must be pinned to the SSA archive" in blockers

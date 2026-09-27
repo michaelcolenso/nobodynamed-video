@@ -244,6 +244,13 @@ class AggregateClaim(BaseModel):
     total: int = Field(ge=0)
 
 
+class RankClaim(BaseModel):
+    """Every chapter name ranked within the national top ``top`` in ``year``."""
+
+    year: int = Field(ge=1880, le=2100)
+    top: int = Field(ge=1, le=1000)
+
+
 class LongFormSpec(BaseModel):
     """A reviewed 60-90 second episode assembled from approved chapter stories."""
 
@@ -253,6 +260,7 @@ class LongFormSpec(BaseModel):
     intro: LongFormBookend
     outro: LongFormBookend
     aggregate_claims: list[AggregateClaim] = Field(default_factory=list)
+    rank_claims: list[RankClaim] = Field(default_factory=list)
     social_caption: str = Field(min_length=8, max_length=130)
     # AGENTS.md caption rules: 3-5 hashtags, pinned comment <=100 chars ending in "?".
     hashtags: list[str] = Field(min_length=3, max_length=5)
