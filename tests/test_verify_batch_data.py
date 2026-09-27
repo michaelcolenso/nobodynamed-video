@@ -11,7 +11,7 @@ from ruamel.yaml import YAML
 from scripts.verify_batch_data import approved_snapshots, verify
 
 
-@pytest.mark.parametrize("batch", ["launch-six", "next-six", "viral-ten"])
+@pytest.mark.parametrize("batch", ["launch-six", "next-six", "viral-ten", "gen-z"])
 def test_supported_batch_sources_are_approved(batch: str) -> None:
     snapshots = approved_snapshots(Path(f"batches/{batch}.yaml"))
     assert len(snapshots) == (10 if batch == "viral-ten" else 6)
