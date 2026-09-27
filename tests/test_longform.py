@@ -28,6 +28,7 @@ from nobodynamed_video.longform.spec import (
     load_longform,
     longform_digest,
     roster_entry,
+    stated_figures,
     write_longform,
 )
 from nobodynamed_video.models import AggregateClaim, LongFormSpec, StorySpec
@@ -271,9 +272,35 @@ async def test_release_render_rejects_a_used_hashtag_combination(
     approved = tmp_path / "episode.yaml"
     write_longform(approve_longform(_episode(), "reviewer"), approved)
     db = tmp_path / "combos.db"
-    tags = sorted(tag.lstrip("#") for tag in _episode().hashtags)
+    # Recorded as the caption lexicon stores it: lowercase, no '#'. The episode's
+    # mixed-case '#NameData' must still collide with it.
+    tags = sorted(tag.lstrip("#").lower() for tag in _episode().hashtags)
     CombinationState(db).record(combo_hash(tags), tags, "earlier-video")
     monkeypatch.setattr(render_module, "_STATE_DB", db)
 
     with pytest.raises(StoryQualityError, match="hashtag combination already used"):
         await render_module.render_longform(approved, "http://unused.invalid", tmp_path / "out")
+
+
+def test_undeclared_figures_in_title_card_copy_are_rejected() -> None:
+    spec = _episode()
+    outro = spec.outro.model_copy(update={"headline": "999,999 babies in 2025."})
+    blockers = evaluate_longform(
+        spec.model_copy(update={"outro": outro, "aggregate_claims": []}),
+        require_approval=False,
+    ).blockers
+    assert "outro states 999,999, which matches no declared aggregate claim" in blockers
+    assert stated_figures("over 113,000 in 2000, top-25, 1998") == [113000]
+
+
+@pytest.mark.parametrize(
+    "tags",
+    [
+        ["#AIVoice", "#NameData", "#NameData"],
+        ["#AIVoice", "#NameData", "#namedata"],
+        ["#AIVoice", "#NameData", "not a tag"],
+    ],
+)
+def test_hashtags_must_be_distinct_valid_tokens(tags: list[str]) -> None:
+    with pytest.raises(ValidationError):
+        LongFormSpec.model_validate({**_episode().model_dump(), "hashtags": tags})

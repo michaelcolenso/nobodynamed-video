@@ -1,10 +1,11 @@
 """Pydantic models for the nobodynamed video pipeline."""
 
+import re
 from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field, PositiveInt
+from pydantic import BaseModel, Field, PositiveInt, field_validator
 
 
 class Tier(str, Enum):
@@ -261,6 +262,15 @@ class LongFormSpec(BaseModel):
     approved_by: str | None = None
     approved_at: datetime | None = None
     approved_content_sha256: str | None = None
+
+    @field_validator("hashtags")
+    @classmethod
+    def _distinct_hashtags(cls, tags: list[str]) -> list[str]:
+        if not all(re.fullmatch(r"#[A-Za-z0-9_]+", tag) for tag in tags):
+            raise ValueError("hashtags must be '#' followed by letters, digits or '_'")
+        if len({tag.lower() for tag in tags}) != len(tags):
+            raise ValueError("hashtags must be distinct (case-insensitive)")
+        return tags
 
 
 class RenderManifest(BaseModel):

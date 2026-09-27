@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -28,6 +29,21 @@ MIN_BOOKEND_WORDS = 8
 # At a documentary read rate this keeps narration inside the 10s title-card cap.
 MAX_BOOKEND_WORDS = 22
 CORE_TAGS = {"#namedata", "#ssadata", "#namehistory"}
+# A figure stated in title-card copy must sit within this share of a declared,
+# snapshot-verified total ("over 113,000" for 113,356 is 0.3%).
+FIGURE_TOLERANCE = 0.01
+_FIGURE = re.compile(r"(?<![\w,])(\d{1,3}(?:,\d{3})+|\d{4,})(?![\w,])")
+
+
+def stated_figures(text: str) -> list[int]:
+    """Numerals of 1,000+ in copy, excluding bare four-digit years (1880-2100)."""
+    figures = []
+    for token in _FIGURE.findall(text):
+        value = int(token.replace(",", ""))
+        if "," not in token and 1880 <= value <= 2100:
+            continue
+        figures.append(value)
+    return figures
 
 
 @dataclass(frozen=True)
@@ -152,6 +168,15 @@ def evaluate_longform(spec: LongFormSpec, *, require_approval: bool = True) -> L
                 blockers.append(
                     f"aggregate claim for {claim.year} is {claim.total:,}; "
                     f"snapshots total {actual:,}"
+                )
+
+    declared = [claim.total for claim in spec.aggregate_claims]
+    for label, bookend in (("intro", spec.intro), ("outro", spec.outro)):
+        copy = " ".join((bookend.kicker, bookend.headline, bookend.subhead, bookend.script))
+        for figure in stated_figures(copy):
+            if not any(abs(figure - total) <= FIGURE_TOLERANCE * total for total in declared):
+                blockers.append(
+                    f"{label} states {figure:,}, which matches no declared aggregate claim"
                 )
 
     tags = {tag.lower() for tag in spec.hashtags}

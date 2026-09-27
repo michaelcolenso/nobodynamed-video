@@ -202,7 +202,8 @@ async def render_longform(
     lexicon = Lexicon.from_yaml(_CAPTIONS_YAML)
     state = CombinationState(_STATE_DB)
     # Caption rule: every released video carries a hashtag set no other video used.
-    episode_tags = sorted(tag.lstrip("#") for tag in spec.hashtags)
+    # Case-folded to match the lowercase caption lexicon's recorded combinations.
+    episode_tags = sorted(tag.lstrip("#").lower() for tag in spec.hashtags)
     episode_combo = combo_hash(episode_tags)
     if not preview and state.is_used(episode_combo):
         raise StoryQualityError(f"{spec.id}: hashtag combination already used by another video")
