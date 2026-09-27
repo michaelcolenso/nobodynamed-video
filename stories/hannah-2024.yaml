@@ -2,11 +2,11 @@ id: hannah-2024
 name: Hannah
 sex: F
 story_kind: long_decline
-thesis: Hannah was the #2 girl name in 2000, the peak of the Gen Z naming wave. It has since fallen 85%.
-headline: The #2 name in 2000 is nearly gone.
-subhead: 23,000 Hannahs at peak. Now: 3,400.
-takeaway: Hannah was everywhere at the turn of the millennium. A quarter century later, it's almost a memory.
-support: Sharp rise through the 1990s, peaked at #2 in 2000, then a relentless decline.
+thesis: "Hannah was the #2 girl name in 2000, the peak of the Gen Z naming wave. It has since fallen 85%."
+headline: "The #2 name in 2000 is nearly gone."
+subhead: "23,000 Hannahs at peak. Now: 3,400."
+takeaway: Hannah was everywhere at the turn of the millennium. Now it's almost a memory.
+support: "Sharp rise through the 1990s, #2 in 2000, then a relentless decline."
 script_beats:
   - kind: hook
     text: In the year 2000, this name was everywhere.
@@ -20,9 +20,9 @@ evidence:
   - label: Social Security baby-name data
     url: https://www.ssa.gov/oact/babynames/
     kind: ssa
-    supports: Hannah peaked at approximately 23,000 female births in 2000 at rank #2, and declined to approximately 3,400 by 2024.
+    supports: "Hannah peaked at approximately 23,000 female births in 2000 at rank #2, and declined to approximately 3,400 by 2024."
 visual_anchors:
-  - 2000 #2 rank badge
+  - "2000 #2 rank badge"
   - 23,000 peak marker
   - Y2K era marker
   - 2024 low point
