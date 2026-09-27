@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
+from nobodynamed_video.exceptions import StoryQualityError
 from nobodynamed_video.longform.spec import RosterEntry
 from nobodynamed_video.models import LongFormBookend, WordTiming
 from nobodynamed_video.render.hyperframes import Hyperframe, sample_scalar_track
@@ -33,9 +34,19 @@ TOTALS_FADE_S = 0.4
 TOTALS_GROW_S = 0.9
 
 
+# Longest narration a card can carry without cutting audio or captions.
+MAX_BOOKEND_NARRATION_S = MAX_BOOKEND_S - BOOKEND_TAIL_S
+
+
 def bookend_duration(bookend: LongFormBookend, narration_s: float | None, fps: int) -> float:
+    """Card length for its narration; overlong narration is rejected, never truncated."""
     spoken = narration_s if narration_s is not None else bookend.word_count / PREVIEW_WORDS_PER_S
-    duration = min(max(spoken + BOOKEND_TAIL_S, MIN_BOOKEND_S), MAX_BOOKEND_S)
+    if spoken > MAX_BOOKEND_NARRATION_S + 1e-6:
+        raise StoryQualityError(
+            f"title card narration needs {spoken:.2f}s; "
+            f"the {MAX_BOOKEND_S:.0f}s card holds {MAX_BOOKEND_NARRATION_S:.2f}s"
+        )
+    duration = max(spoken + BOOKEND_TAIL_S, MIN_BOOKEND_S)
     return round(duration * fps) / fps
 
 

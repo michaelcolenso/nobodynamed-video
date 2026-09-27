@@ -253,8 +253,9 @@ class LongFormSpec(BaseModel):
     outro: LongFormBookend
     aggregate_claims: list[AggregateClaim] = Field(default_factory=list)
     social_caption: str = Field(min_length=8, max_length=130)
-    hashtags: list[str] = Field(min_length=2, max_length=4)
-    share_prompt: str = Field(min_length=8, max_length=100)
+    # AGENTS.md caption rules: 3-5 hashtags, pinned comment <=100 chars ending in "?".
+    hashtags: list[str] = Field(min_length=3, max_length=5)
+    share_prompt: str = Field(min_length=8, max_length=100, pattern=r"\?$")
     voice: str | None = Field(default=None, min_length=2, max_length=80)
     status: StoryStatus = StoryStatus.DRAFT
     approved_by: str | None = None

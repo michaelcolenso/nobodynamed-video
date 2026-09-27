@@ -23,10 +23,15 @@ from nobodynamed_video.compose.ffmpeg import (
 )
 from nobodynamed_video.compose.lexicon import Lexicon
 from nobodynamed_video.compose.narration import NarrationArtifact
+from nobodynamed_video.compose.narration_pacing import fit_narration_audio
 from nobodynamed_video.compose.state import CombinationState
 from nobodynamed_video.data.snapshot import verified_snapshot
 from nobodynamed_video.exceptions import StoryQualityError
-from nobodynamed_video.longform.bookends import bookend_duration, sample_bookend_frame
+from nobodynamed_video.longform.bookends import (
+    MAX_BOOKEND_NARRATION_S,
+    bookend_duration,
+    sample_bookend_frame,
+)
 from nobodynamed_video.longform.spec import (
     MAX_EPISODE_S,
     MIN_EPISODE_S,
@@ -91,6 +96,10 @@ async def _render_bookend(
     voice: str | None,
 ) -> dict[str, Any]:
     narration = await narrator.generate_text(bookend.script, voice) if narrator else None
+    if narration is not None:
+        # Same bounded pace fit as chapters (<=1.5x, pitch-preserving); anything
+        # that still does not fit is rejected by bookend_duration, not cut off.
+        narration = fit_narration_audio(narration, target_duration_s=MAX_BOOKEND_NARRATION_S)
     duration_s = bookend_duration(bookend, narration.duration_s if narration else None, fps)
     words = narration.word_timings if narration else []
     frames_dir = episode_dir / label / "frames"

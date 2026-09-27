@@ -25,7 +25,8 @@ from nobodynamed_video.models import LongFormSpec, StorySpec, StoryStatus
 MIN_EPISODE_S = 60.0
 MAX_EPISODE_S = 90.0
 MIN_BOOKEND_WORDS = 8
-MAX_BOOKEND_WORDS = 30
+# At a documentary read rate this keeps narration inside the 10s title-card cap.
+MAX_BOOKEND_WORDS = 22
 CORE_TAGS = {"#namedata", "#ssadata", "#namehistory"}
 
 
@@ -92,10 +93,16 @@ def roster_entry(story: StorySpec, snapshot: Snapshot) -> RosterEntry:
 
 
 def aggregate_total(snapshots: list[Snapshot], year: int) -> int:
+    """Sum one year across snapshots; a year a snapshot does not cover is an error.
+
+    A covered year with no count is an SSA-suppressed gap (<5) and sums as zero.
+    """
     total = 0
     for snapshot in snapshots:
         point = next((p for p in snapshot.observations if p.year == year), None)
-        total += int(point.count or 0) if point else 0
+        if point is None:
+            raise ValueError(f"{snapshot.name} snapshot has no {year} observation")
+        total += int(point.count or 0)
     return total
 
 
@@ -119,7 +126,10 @@ def evaluate_longform(spec: LongFormSpec, *, require_approval: bool = True) -> L
     ids = [story.id for story in chapters]
     if len(ids) != len(set(ids)):
         blockers.append("chapters must be distinct stories")
-    if len({s.latest_year for s in snapshots}) > 1:
+    releases = {
+        (s.latest_year, s.archive_sha256, s.source_url, s.source_dataset) for s in snapshots
+    }
+    if len(releases) > 1:
         blockers.append("chapter snapshots must share one SSA release")
 
     for label, bookend in (("intro", spec.intro), ("outro", spec.outro)):
@@ -131,7 +141,11 @@ def evaluate_longform(spec: LongFormSpec, *, require_approval: bool = True) -> L
 
     if snapshots and len(snapshots) == len(spec.chapters):
         for claim in spec.aggregate_claims:
-            actual = aggregate_total(snapshots, claim.year)
+            try:
+                actual = aggregate_total(snapshots, claim.year)
+            except ValueError as exc:
+                blockers.append(f"aggregate claim for {claim.year}: {exc}")
+                continue
             if actual != claim.total:
                 blockers.append(
                     f"aggregate claim for {claim.year} is {claim.total:,}; "

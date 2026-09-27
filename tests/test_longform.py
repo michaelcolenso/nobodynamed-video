@@ -7,10 +7,11 @@ from pathlib import Path
 import pytest
 from nobodynamed_video.compose.ffmpeg import build_concat_cmd
 from nobodynamed_video.compose.narration import CHAPTER_HOLD_S, adaptive_duration
-from nobodynamed_video.data.snapshot import verified_snapshot
+from nobodynamed_video.data.snapshot import Snapshot, verified_snapshot
 from nobodynamed_video.editorial.story import load_story
 from nobodynamed_video.exceptions import StoryQualityError
 from nobodynamed_video.longform.bookends import (
+    MAX_BOOKEND_NARRATION_S,
     MAX_BOOKEND_S,
     MIN_BOOKEND_S,
     bookend_duration,
@@ -25,8 +26,9 @@ from nobodynamed_video.longform.spec import (
     longform_digest,
     roster_entry,
 )
-from nobodynamed_video.models import AggregateClaim, LongFormSpec
+from nobodynamed_video.models import AggregateClaim, LongFormSpec, StorySpec
 from nobodynamed_video.render.frame_planner import plan_frames
+from pydantic import ValidationError
 
 from tests.test_frame_planner import make_bertha_spec
 
@@ -125,9 +127,49 @@ def test_closing_card_reveals_totals_without_jumps() -> None:
 def test_bookend_duration_is_bounded_and_frame_quantized() -> None:
     spec = _episode()
     assert bookend_duration(spec.intro, 0.5, FPS) == MIN_BOOKEND_S
-    assert bookend_duration(spec.intro, 30.0, FPS) == MAX_BOOKEND_S
+    assert bookend_duration(spec.intro, MAX_BOOKEND_NARRATION_S, FPS) == MAX_BOOKEND_S
     duration = bookend_duration(spec.intro, 6.37, FPS)
     assert duration * FPS == round(duration * FPS)
+
+
+def test_overlong_bookend_narration_is_rejected_not_truncated() -> None:
+    with pytest.raises(StoryQualityError, match="title card narration needs"):
+        bookend_duration(_episode().intro, MAX_BOOKEND_NARRATION_S + 0.5, FPS)
+
+
+def test_aggregate_claim_outside_snapshot_coverage_is_rejected() -> None:
+    spec = _episode()
+    future = spec.model_copy(update={"aggregate_claims": [AggregateClaim(year=2026, total=0)]})
+    blockers = evaluate_longform(future, require_approval=False).blockers
+    assert any(b.startswith("aggregate claim for 2026:") for b in blockers)
+
+
+def test_social_copy_follows_caption_rules() -> None:
+    raw = _episode().model_dump()
+    with pytest.raises(ValidationError):
+        LongFormSpec.model_validate({**raw, "hashtags": ["#GenZ", "#AIVoice"]})
+    with pytest.raises(ValidationError):
+        LongFormSpec.model_validate({**raw, "share_prompt": "Tell us your class name."})
+    five = ["#GenZ", "#NameData", "#AIVoice", "#Names", "#History"]
+    assert LongFormSpec.model_validate({**raw, "hashtags": five}).hashtags == five
+
+
+def test_chapters_from_different_archive_revisions_are_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import nobodynamed_video.longform.spec as spec_module
+
+    real = spec_module.verified_snapshot
+
+    def mixed(story: StorySpec) -> Snapshot:
+        snapshot = real(story)
+        if story.name == "Destiny":
+            return snapshot.model_copy(update={"archive_sha256": "0" * 64})
+        return snapshot
+
+    monkeypatch.setattr(spec_module, "verified_snapshot", mixed)
+    blockers = evaluate_longform(_episode(), require_approval=False).blockers
+    assert "chapter snapshots must share one SSA release" in blockers
 
 
 def test_chapter_mode_labels_the_header_and_drops_the_loop_bridge() -> None:
