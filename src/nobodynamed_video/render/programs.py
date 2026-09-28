@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from nobodynamed_video.models import ProgramType, VideoContext, VideoSpec, YearCount
+from nobodynamed_video.models import ProgramType, VideoContext, VideoSpec, WordTiming, YearCount
 from nobodynamed_video.render.hyperframes import Hyperframe, sample_scalar_track
 from nobodynamed_video.render.motion import (
     ease_out_back,
@@ -125,7 +125,11 @@ def _stats_cards(ctx: VideoContext) -> list[dict[str, str]]:
 
 
 def _caption_state(spec: VideoSpec, t: float) -> dict[str, Any]:
-    words = spec.word_timings
+    return caption_state(spec.word_timings, t)
+
+
+def caption_state(words: Sequence[WordTiming], t: float) -> dict[str, Any]:
+    """Four-word caption group active at ``t``, shared by every narrated template."""
     if not words:
         return {"alpha": 0.0, "text": "", "current_word": "", "progress": 0.0}
 
@@ -243,8 +247,11 @@ def sample_program_frame(
     # the reviewed story duration. This preserves smoothness while allowing
     # narration-driven 9-14 second cuts.
     t = actual_t * TOTAL_DURATION_S / spec.duration_s
+    # A long-form chapter hands off to the next chapter instead of looping.
     loop_progress = (
-        smootherstep((actual_t - (spec.duration_s - 0.75)) / 0.75) if spec.story else 0.0
+        smootherstep((actual_t - (spec.duration_s - 0.75)) / 0.75)
+        if spec.story and spec.chapter_label is None
+        else 0.0
     )
     dot_visible = t >= DOT_LAND_T - DOT_FADE_LEAD
     layout_progress = sample_scalar_track(LAYOUT_PROGRESS, t)
@@ -308,7 +315,9 @@ def sample_program_frame(
         "tier": spec.tier.value,
         "header": {
             "alpha": round(sample_scalar_track(HEADER_ALPHA, t), 6),
-            "label": _status_label(ctx, spec),
+            "label": f"{spec.chapter_label} · {_status_label(ctx, spec)}"
+            if spec.chapter_label
+            else _status_label(ctx, spec),
             "name": ctx.name,
             "status": ctx.tier.value.upper(),
             "status_override": ("BELOW THRESHOLD" if not current_reported else "NAME HISTORY")

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from nobodynamed_video.data.snapshot import Snapshot, verified_snapshot
 from nobodynamed_video.editorial.story import evaluate_story, load_story
+from nobodynamed_video.longform.spec import evaluate_longform, load_longform
 from nobodynamed_video.publish_release import RELEASE_BATCHES
 from ruamel.yaml import YAML
 
@@ -40,8 +41,24 @@ def approved_snapshots(batch: Path) -> list[Snapshot]:
     return snapshots
 
 
+def longform_snapshots(episode: Path, *, require_approval: bool = True) -> list[Snapshot]:
+    """Chapter snapshots for a long-form episode, after the episode gate passes."""
+    evaluation = evaluate_longform(load_longform(episode), require_approval=require_approval)
+    if not evaluation.publishable:
+        raise ValueError(f"{episode}: {'; '.join(evaluation.blockers)}")
+    snapshots = [verified_snapshot(story) for story in evaluation.chapters]
+    if not all(snapshot.from_ssa_archive for snapshot in snapshots):
+        raise ValueError(f"{episode}: every chapter requires archive provenance")
+    if len({(s.latest_year, s.archive_sha256) for s in snapshots}) != 1:
+        raise ValueError("episode snapshots must use one reviewed SSA release")
+    return snapshots
+
+
 async def verify(batch: Path, out: Path) -> None:
-    snapshots = approved_snapshots(batch)
+    await verify_snapshots(approved_snapshots(batch), out)
+
+
+async def verify_snapshots(snapshots: list[Snapshot], out: Path) -> None:
     await generate(
         out=out,
         anchor_dir=Path("data/ssa-2025"),
@@ -62,5 +79,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("batch", type=Path)
     parser.add_argument("--out", type=Path, default=Path("out/d1-preflight"))
+    parser.add_argument(
+        "--longform", action="store_true", help="Treat the path as a long-form episode YAML"
+    )
+    parser.add_argument(
+        "--preview", action="store_true", help="With --longform, accept a draft episode"
+    )
     args = parser.parse_args()
-    asyncio.run(verify(args.batch, args.out))
+    if args.longform:
+        episode_snapshots = longform_snapshots(args.batch, require_approval=not args.preview)
+        asyncio.run(verify_snapshots(episode_snapshots, args.out))
+    else:
+        asyncio.run(verify(args.batch, args.out))

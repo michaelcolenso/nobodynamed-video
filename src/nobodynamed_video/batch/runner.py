@@ -22,6 +22,8 @@ from nobodynamed_video.compose.ffmpeg import build_ffmpeg_cmd, get_ffmpeg_versio
 from nobodynamed_video.compose.lexicon import Lexicon
 from nobodynamed_video.compose.manifest import build_manifest, write_manifest
 from nobodynamed_video.compose.narration import (
+    CHAPTER_HOLD_S,
+    LOOP_BEAT_S,
     CloudflareNarrationProvider,
     NarrationArtifact,
     NarrationProvider,
@@ -29,7 +31,7 @@ from nobodynamed_video.compose.narration import (
 )
 from nobodynamed_video.compose.state import CombinationState
 from nobodynamed_video.data.snapshot import SnapshotSource, verified_snapshot
-from nobodynamed_video.editorial.story import evaluate_story
+from nobodynamed_video.editorial.story import chapter_narration_text, evaluate_story
 from nobodynamed_video.exceptions import StoryQualityError
 from nobodynamed_video.models import VideoSpec
 from nobodynamed_video.qc.checks import run_all_checks
@@ -88,7 +90,8 @@ async def render_spec(
     runtime_spec = spec
     if spec.story and narration_provider and not no_compose:
         narration = await narration_provider.generate(spec.story)
-        duration_s = adaptive_duration(spec.story, narration.duration_s)
+        tail_s = CHAPTER_HOLD_S if spec.chapter_label else LOOP_BEAT_S
+        duration_s = adaptive_duration(spec.story, narration.duration_s, tail_s)
         duration_s = round(duration_s * spec.fps) / spec.fps
         runtime_spec = spec.model_copy(
             update={"duration_s": duration_s, "word_timings": narration.word_timings}
@@ -190,7 +193,11 @@ async def render_spec(
         story_kind=spec.story.story_kind.value if spec.story else None,
         story_score=spec.story.quality_score if spec.story else None,
         story_thesis=spec.story.thesis if spec.story else None,
-        script=spec.story.narration_text if spec.story else None,
+        script=(
+            chapter_narration_text(spec.story) if spec.chapter_label else spec.story.narration_text
+        )
+        if spec.story
+        else None,
         word_timings=runtime_spec.word_timings,
         narration_provider=narration.provider if narration else None,
         narration_model=narration.model if narration else None,

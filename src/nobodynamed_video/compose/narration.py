@@ -69,7 +69,7 @@ class CloudflareNarrationProvider:
     def _model_url(self, model: str) -> str:
         return f"{self.base_url}/accounts/{self.account_id}/ai/run/{model}"
 
-    def _cache_key(self, story: StorySpec, voice: str) -> str:
+    def _cache_key(self, text: str, voice: str) -> str:
         payload = json.dumps(
             {
                 "provider": "cloudflare-workers-ai",
@@ -77,7 +77,7 @@ class CloudflareNarrationProvider:
                 "model": self.model,
                 "transcription_model": self.transcription_model,
                 "voice": voice,
-                "text": story.narration_text,
+                "text": text,
             },
             sort_keys=True,
             separators=(",", ":"),
@@ -109,8 +109,12 @@ class CloudflareNarrationProvider:
         )
 
     async def generate(self, story: StorySpec) -> NarrationArtifact:
-        voice = story.voice or self.default_voice
-        key = self._cache_key(story, voice)
+        return await self.generate_text(story.narration_text, story.voice)
+
+    async def generate_text(self, text: str, voice: str | None = None) -> NarrationArtifact:
+        """Narrate arbitrary reviewed copy, such as a long-form title card."""
+        voice = voice or self.default_voice
+        key = self._cache_key(text, voice)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         audio_path = self.cache_dir / f"{key}.wav"
         timing_path = self.cache_dir / f"{key}.words.json"
@@ -129,7 +133,7 @@ class CloudflareNarrationProvider:
                 self._model_url(self.model),
                 headers=headers,
                 json={
-                    "text": story.narration_text,
+                    "text": text,
                     "speaker": voice,
                     "encoding": "linear16",
                     "container": "wav",
@@ -150,7 +154,7 @@ class CloudflareNarrationProvider:
                     "task": "transcribe",
                     "language": "en",
                     "vad_filter": False,
-                    "initial_prompt": story.narration_text,
+                    "initial_prompt": text,
                 },
             )
             if transcription.status_code >= 400:
@@ -167,7 +171,7 @@ class CloudflareNarrationProvider:
             if owns_client:
                 await client.aclose()
 
-        words = _extract_word_timings(payload, story.narration_text, duration_s)
+        words = _extract_word_timings(payload, text, duration_s)
         if not words:
             raise NarrationError("Cloudflare transcription returned no usable timing data")
 
@@ -347,9 +351,17 @@ def _vtt_seconds(value: str) -> float:
     return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
 
 
-def adaptive_duration(story: StorySpec, narration_duration_s: float) -> float:
+LOOP_BEAT_S = 0.85
+# A long-form chapter cuts to the next chapter instead of looping, so it only
+# holds long enough for the last caption group to clear.
+CHAPTER_HOLD_S = 0.4
+
+
+def adaptive_duration(
+    story: StorySpec, narration_duration_s: float, tail_s: float = LOOP_BEAT_S
+) -> float:
     """Fit narration plus a loop beat inside the editorial 9-14 second envelope."""
-    required = narration_duration_s + 0.85
+    required = narration_duration_s + tail_s
     duration = max(story.target_duration_s, required)
     if duration > 14.0:
         raise NarrationError(
