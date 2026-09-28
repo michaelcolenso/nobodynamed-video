@@ -1,0 +1,121 @@
+name: Render Long-form Episode
+
+on:
+  workflow_dispatch:
+    inputs:
+      episode:
+        description: Long-form episode YAML
+        required: true
+        default: longform/gen-z-five-2025.yaml
+        type: string
+      preview:
+        description: Render a draft episode (artifact is marked non-releasable)
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install Python deps
+        run: uv sync
+
+      - name: Validate episode path
+        env:
+          EPISODE: ${{ inputs.episode }}
+        run: |
+          if [[ ! "$EPISODE" =~ ^longform/[a-z0-9-]+\.yaml$ || ! -f "$EPISODE" ]]; then
+            echo "::error::Episode must be an existing longform/<id>.yaml file"
+            exit 1
+          fi
+
+      - name: Verify release credentials
+        env:
+          D1_URL: ${{ secrets.D1_URL }}
+          D1_TOKEN: ${{ secrets.D1_TOKEN }}
+        run: |
+          if [[ -z "$D1_URL" || -z "$D1_TOKEN" ]]; then
+            echo "::error::Missing GitHub Actions secret D1_URL or D1_TOKEN"
+            exit 1
+          fi
+          if [[ "$D1_URL" != *"/accounts/"* ]]; then
+            echo "::error::D1_URL does not contain a Cloudflare account path; Workers AI account ID cannot be inferred"
+            exit 1
+          fi
+
+      - name: Verify episode gate and current D1 data for every chapter
+        env:
+          EPISODE: ${{ inputs.episode }}
+          PREVIEW: ${{ inputs.preview }}
+          D1_URL: ${{ secrets.D1_URL }}
+          D1_TOKEN: ${{ secrets.D1_TOKEN }}
+        run: |
+          flags=(--longform)
+          if [[ "$PREVIEW" == "true" ]]; then flags+=(--preview); fi
+          uv run python -m scripts.verify_batch_data "$EPISODE" "${flags[@]}"
+
+      - name: Install satori-service deps
+        working-directory: satori-service
+        run: pnpm install --frozen-lockfile
+
+      - name: Start satori sidecar
+        working-directory: satori-service
+        run: pnpm exec tsx src/server.ts &
+        env:
+          PORT: "3001"
+
+      - name: Wait for satori
+        run: |
+          for i in $(seq 1 30); do
+            curl -s http://localhost:3001/health > /dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -sf http://localhost:3001/health || { echo "satori sidecar failed to start"; exit 1; }
+
+      - name: Render episode
+        env:
+          EPISODE: ${{ inputs.episode }}
+          PREVIEW: ${{ inputs.preview }}
+          SATORI_URL: "http://localhost:3001"
+          D1_URL: ${{ secrets.D1_URL }}
+          D1_TOKEN: ${{ secrets.D1_TOKEN }}
+        run: |
+          flags=()
+          if [[ "$PREVIEW" == "true" ]]; then flags+=(--preview); fi
+          uv run nbn longform render "$EPISODE" "${flags[@]}"
+
+      - name: Upload episode
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: longform-${{ github.run_id }}
+          path: |
+            out/*.mp4
+            out/*.json
+          retention-days: 90
+          if-no-files-found: warn
