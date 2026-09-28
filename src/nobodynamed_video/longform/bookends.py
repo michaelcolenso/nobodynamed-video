@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
+from nobodynamed_video.compose.narration_pacing import PACED_OVERSHOOT_TOLERANCE_S
 from nobodynamed_video.exceptions import StoryQualityError
 from nobodynamed_video.longform.spec import RosterEntry
 from nobodynamed_video.models import LongFormBookend, WordTiming
@@ -36,6 +37,9 @@ TOTALS_GROW_S = 0.9
 
 # Longest narration a card can carry without cutting audio or captions.
 MAX_BOOKEND_NARRATION_S = MAX_BOOKEND_S - BOOKEND_TAIL_S
+# Pace-fit target, kept below the limit by more than atempo's allowed overshoot so
+# every narration the fit accepts also fits the card.
+BOOKEND_FIT_TARGET_S = MAX_BOOKEND_NARRATION_S - PACED_OVERSHOOT_TOLERANCE_S - 0.05
 
 
 def bookend_duration(bookend: LongFormBookend, narration_s: float | None, fps: int) -> float:

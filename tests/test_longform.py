@@ -2,17 +2,23 @@
 
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 
 import pytest
 from nobodynamed_video.compose.caption import combo_hash
 from nobodynamed_video.compose.ffmpeg import build_concat_cmd
 from nobodynamed_video.compose.narration import CHAPTER_HOLD_S, NarrationArtifact, adaptive_duration
+from nobodynamed_video.compose.narration_pacing import (
+    PACED_OVERSHOOT_TOLERANCE_S,
+    fit_narration_audio,
+)
 from nobodynamed_video.compose.state import CombinationState
 from nobodynamed_video.data.snapshot import Snapshot, verified_snapshot
 from nobodynamed_video.editorial.story import StoryEvaluation, chapter_narration_text, load_story
 from nobodynamed_video.exceptions import StoryQualityError
 from nobodynamed_video.longform.bookends import (
+    BOOKEND_FIT_TARGET_S,
     MAX_BOOKEND_NARRATION_S,
     MAX_BOOKEND_S,
     MIN_BOOKEND_S,
@@ -144,6 +150,39 @@ def test_bookend_duration_is_bounded_and_frame_quantized() -> None:
 def test_overlong_bookend_narration_is_rejected_not_truncated() -> None:
     with pytest.raises(StoryQualityError, match="title card narration needs"):
         bookend_duration(_episode().intro, MAX_BOOKEND_NARRATION_S + 0.5, FPS)
+
+
+def test_any_accepted_pace_fit_fits_the_title_card() -> None:
+    # Regression: a 9.11s fit against a 9.10s limit rejected the whole episode.
+    worst_accepted = BOOKEND_FIT_TARGET_S + PACED_OVERSHOOT_TOLERANCE_S
+    assert worst_accepted < MAX_BOOKEND_NARRATION_S
+    assert bookend_duration(_episode().intro, worst_accepted, FPS) <= MAX_BOOKEND_S
+
+
+def test_overlong_bookend_narration_is_pace_fitted_onto_the_card(tmp_path: Path) -> None:
+    wav = tmp_path / "card.wav"
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-v",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=frequency=220:duration=12.5",
+            "-c:a",
+            "pcm_s16le",
+            str(wav),
+        ],
+        check=True,
+    )
+    artifact = NarrationArtifact(
+        audio_path=wav, word_timings=[], duration_s=12.5, provider="t", model="t", voice="t"
+    )
+    fitted = fit_narration_audio(artifact, target_duration_s=BOOKEND_FIT_TARGET_S)
+    assert fitted.duration_s <= MAX_BOOKEND_NARRATION_S
+    assert bookend_duration(_episode().intro, fitted.duration_s, FPS) <= MAX_BOOKEND_S
 
 
 def test_aggregate_claim_outside_snapshot_coverage_is_rejected() -> None:
