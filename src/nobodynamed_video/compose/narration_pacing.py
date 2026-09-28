@@ -18,6 +18,8 @@ from nobodynamed_video.models import StorySpec, WordTiming
 # resampling/frame quantization cannot push a narration back over 14 seconds.
 NARRATION_FIT_TARGET_S = 13.0
 MAX_NARRATION_SPEEDUP = 1.5
+# atempo output length is approximate; a paced result may overshoot the target by this much.
+PACED_OVERSHOOT_TOLERANCE_S = 0.1
 
 
 def _wav_file_duration_s(path: Path) -> float:
@@ -97,7 +99,7 @@ def fit_narration_audio(
         raise NarrationError("ffmpeg failed while fitting narration duration") from exc
 
     paced_duration_s = _wav_file_duration_s(paced_path)
-    if paced_duration_s > target_duration_s + 0.1:
+    if paced_duration_s > target_duration_s + PACED_OVERSHOOT_TOLERANCE_S:
         raise NarrationError(
             f"Paced narration is still {paced_duration_s:.2f}s; expected about "
             f"{target_duration_s:.2f}s"

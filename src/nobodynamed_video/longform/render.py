@@ -30,7 +30,7 @@ from nobodynamed_video.data.snapshot import verified_snapshot
 from nobodynamed_video.editorial.story import chapter_narration_text
 from nobodynamed_video.exceptions import StoryQualityError
 from nobodynamed_video.longform.bookends import (
-    MAX_BOOKEND_NARRATION_S,
+    BOOKEND_FIT_TARGET_S,
     bookend_duration,
     sample_bookend_frame,
 )
@@ -112,7 +112,7 @@ async def _render_bookend(
     if narration is not None:
         # Same bounded pace fit as chapters (<=1.5x, pitch-preserving); anything
         # that still does not fit is rejected by bookend_duration, not cut off.
-        narration = fit_narration_audio(narration, target_duration_s=MAX_BOOKEND_NARRATION_S)
+        narration = fit_narration_audio(narration, target_duration_s=BOOKEND_FIT_TARGET_S)
     duration_s = bookend_duration(bookend, narration.duration_s if narration else None, fps)
     words = narration.word_timings if narration else []
     frames_dir = episode_dir / label / "frames"
