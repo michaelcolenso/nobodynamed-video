@@ -8,15 +8,19 @@ chapters:
   - stories/destiny-2024.yaml
 intro:
   kicker: SSA birth records · 1880–2025
-  headline: "The names that defined Gen\u00a0Z are disappearing."
+  headline: The names that defined Gen Z are disappearing.
   subhead: All five were top-25 names in 2000. Here is where each one stands in 2025.
-  script: Five names defined Gen Z. In 2000, all five were top twenty-five. Here is where they stand now.
+  script: Five names defined Gen Z. In 2000, all five were top twenty-five. Here is
+    where they stand now.
   show_roster: true
+  show_totals: false
 outro:
   kicker: Five names · 2000 vs 2025
   headline: 113,356 babies in 2000. 20,979 in 2025.
   subhead: Combined SSA birth counts for Jacob, Emily, Hannah, Madison and Destiny.
-  script: In 2000, these five names went to over 113,000 babies. In 2025, about 21,000. Which one was yours?
+  script: In 2000, these five names went to over 113,000 babies. In 2025, about 21,000.
+    Which one was yours?
+  show_roster: false
   show_totals: true
 aggregate_claims:
   - year: 2000
@@ -26,10 +30,14 @@ aggregate_claims:
 rank_claims:
   - year: 2000
     top: 25
-social_caption: Five names defined Gen Z. Together they fell from 113,356 births in 2000 to 20,979 in 2025.
+social_caption: Five names defined Gen Z. Together they fell from 113,356 births in
+  2000 to 20,979 in 2025.
 hashtags:
   - '#GenZ'
   - '#NameData'
   - '#AIVoice'
 share_prompt: Which of these five names was in your class?
-status: draft
+status: approved
+approved_by: michaelcolenso (explicit approval via Claude Code, 2026-09-28)
+approved_at: '2026-09-28T00:50:58.410202Z'
+approved_content_sha256: e920c6eb635aa82681052c9367582fcb6914749297d5aae862f0f5dfa82007df
