@@ -233,6 +233,20 @@ def test_chapter_mode_labels_the_header_and_drops_the_loop_bridge() -> None:
     assert looped[-1]["loop_progress"] > 0.99
 
 
+def test_chapter_mode_hides_the_footer_but_keeps_the_ai_disclosure() -> None:
+    # Regression: the footer faded in under the still-running chapter captions.
+    story = load_story(Path("stories/bertha-2024.yaml"))
+    base = make_bertha_spec().model_copy(
+        update={"story": story, "duration_s": story.target_duration_s}
+    )
+    chapter = base.model_copy(update={"chapter_label": "PART 2 OF 5"})
+    frames = [props for _s, _i, _t, props in plan_frames(chapter, fps=FPS)]
+    assert all(frame["footer"]["alpha"] == 0.0 for frame in frames)
+    assert all(frame["footer"]["disclosure"] == "AI NARRATION" for frame in frames)
+    standalone = [props for _s, _i, _t, props in plan_frames(base, fps=FPS)]
+    assert standalone[-1]["footer"]["alpha"] > 0.99
+
+
 def test_chapter_hold_is_shorter_than_the_loop_beat() -> None:
     story = load_story(Path("stories/bertha-2024.yaml"))
     assert adaptive_duration(story, 12.5, CHAPTER_HOLD_S) == 12.9

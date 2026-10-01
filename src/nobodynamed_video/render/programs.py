@@ -396,7 +396,9 @@ def sample_program_frame(
             "name": ctx.comparison_name,
         },
         "footer": {
-            "alpha": round(sample_scalar_track(FOOTER_ALPHA, t), 6),
+            # A chapter's footer would land on its captions; the episode's
+            # closing card carries the site and follow line instead.
+            "alpha": 0.0 if spec.chapter_label else round(sample_scalar_track(FOOTER_ALPHA, t), 6),
             "site": "nobodynamed.com",
             "cta": "Follow for the history behind names"
             if spec.story
